@@ -5,11 +5,21 @@ const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Check auth status on load
+  // Fetch settings & authenticate user on initial load
   useEffect(() => {
-    const fetchMe = async () => {
+    const initAuth = async () => {
+      try {
+        const settingsRes = await api.get('/settings/public');
+        if (settingsRes.data.success) {
+          setSettings(settingsRes.data.settings);
+        }
+      } catch (err) {
+        console.warn('Failed to fetch public settings:', err);
+      }
+
       const token = localStorage.getItem('union_token');
       if (!token) {
         setLoading(false);
@@ -31,20 +41,11 @@ export const AuthProvider = ({ children }) => {
       }
     };
 
-    fetchMe();
+    initAuth();
   }, []);
 
   const login = async (email, password) => {
     const res = await api.post('/auth/login', { email, password });
-    if (res.data.success) {
-      localStorage.setItem('union_token', res.data.token);
-      setUser(res.data.user);
-    }
-    return res.data;
-  };
-
-  const register = async (formData) => {
-    const res = await api.post('/auth/register', formData);
     if (res.data.success) {
       localStorage.setItem('union_token', res.data.token);
       setUser(res.data.user);
@@ -68,9 +69,8 @@ export const AuthProvider = ({ children }) => {
     return res.data;
   };
 
-  // Demo Switcher helper for user testing
   const switchDemoUser = async (roleType) => {
-    const targetEmail = roleType === 'admin' ? 'admin@unionsuyradev.com' : 'priya.sharma@nexusfintech.io';
+    const targetEmail = roleType === 'admin' ? 'admin@mpwzunion.org' : 'sunita.chouhan@mpwzunion.org';
     try {
       const res = await login(targetEmail, 'password123');
       return res;
@@ -82,9 +82,9 @@ export const AuthProvider = ({ children }) => {
   return (
     <AuthContext.Provider value={{
       user,
+      settings,
       loading,
       login,
-      register,
       logout,
       updateProfile,
       switchDemoUser,

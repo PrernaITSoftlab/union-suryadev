@@ -1,79 +1,70 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { ConnectionProvider } from './context/ConnectionContext';
 import { NotificationProvider } from './context/NotificationContext';
 
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ScrollToTop from './components/ScrollToTop';
+import AnnouncementPopup from './components/AnnouncementPopup';
 
 // Public Pages
 import Home from './pages/Home';
 import About from './pages/About';
-import NetworkVisualization from './pages/NetworkVisualization';
-import Members from './pages/Members';
-import Opportunities from './pages/Opportunities';
 import Events from './pages/Events';
 import Contact from './pages/Contact';
+import JoinNow from './pages/JoinNow';
+import Login from './pages/Login';
 
-// User Portal Pages
-import Dashboard from './pages/Dashboard';
-import ProfileEdit from './pages/ProfileEdit';
-import Connections from './pages/Connections';
-
-// Admin Pages
+// User & Admin Dashboards
+import UserDashboard from './pages/UserDashboard';
 import AdminDashboard from './pages/AdminDashboard';
-import AdminMembers from './pages/AdminMembers';
-import AdminOpportunities from './pages/AdminOpportunities';
-import AdminEvents from './pages/AdminEvents';
 
 // Protected Admin Route Component
 const ProtectedAdminRoute = ({ children }) => {
   const { user, isAdmin, loading } = useAuth();
-  if (loading) return <div className="py-20 text-center text-slate-400">Verifying administrator rights...</div>;
-  if (!user || !isAdmin) return <Navigate to="/" replace />;
+  if (loading) return <div className="py-20 text-center text-slate-500 font-mono text-xs">Verifying administrator privileges...</div>;
+  if (!user || !isAdmin) return <Navigate to="/login" replace />;
   return children;
 };
 
-// Protected User Route Component
-const ProtectedUserRoute = ({ children }) => {
+// Protected Member Route Component
+const ProtectedMemberRoute = ({ children }) => {
   const { user, loading } = useAuth();
-  if (loading) return <div className="py-20 text-center text-slate-400">Verifying session...</div>;
-  if (!user) return <Navigate to="/" replace />;
+  if (loading) return <div className="py-20 text-center text-slate-500 font-mono text-xs">Loading member account...</div>;
+  if (!user) return <Navigate to="/login" replace />;
   return children;
 };
 
 function AppContent() {
   return (
-    <div className="flex flex-col min-h-screen bg-navy-950 text-slate-100">
+    <div className="flex flex-col min-h-screen bg-slate-50 text-slate-900 selection:bg-amber-500 selection:text-slate-950 font-sans">
       <Navbar />
+      
+      {/* Top Announcement Popup Banner */}
+      <AnnouncementPopup />
+
       <main className="flex-grow">
         <Routes>
-          {/* Public Routes */}
+          {/* Public Union Routes */}
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
-          <Route path="/network" element={<NetworkVisualization />} />
-          <Route path="/members" element={<Members />} />
-          <Route path="/opportunities" element={<Opportunities />} />
           <Route path="/events" element={<Events />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/join" element={<JoinNow />} />
+          <Route path="/login" element={<Login />} />
 
-          {/* Member Portal Routes */}
-          <Route path="/dashboard" element={<ProtectedUserRoute><Dashboard /></ProtectedUserRoute>} />
-          <Route path="/profile/edit" element={<ProtectedUserRoute><ProfileEdit /></ProtectedUserRoute>} />
-          <Route path="/connections" element={<ProtectedUserRoute><Connections /></ProtectedUserRoute>} />
+          {/* Member Protected Dashboard Route */}
+          <Route path="/dashboard/*" element={<ProtectedMemberRoute><UserDashboard /></ProtectedMemberRoute>} />
 
-          {/* Admin Routes */}
-          <Route path="/admin" element={<ProtectedAdminRoute><AdminDashboard /></ProtectedAdminRoute>} />
-          <Route path="/admin/members" element={<ProtectedAdminRoute><AdminMembers /></ProtectedAdminRoute>} />
-          <Route path="/admin/opportunities" element={<ProtectedAdminRoute><AdminOpportunities /></ProtectedAdminRoute>} />
-          <Route path="/admin/events" element={<ProtectedAdminRoute><AdminEvents /></ProtectedAdminRoute>} />
+          {/* Admin Protected Dashboard Route */}
+          <Route path="/admin/*" element={<ProtectedAdminRoute><AdminDashboard /></ProtectedAdminRoute>} />
 
-          {/* Catch all fallback to home */}
+          {/* Fallback Catch-all Route */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
+
       <Footer />
     </div>
   );
@@ -84,11 +75,9 @@ export default function App() {
     <Router>
       <ScrollToTop />
       <AuthProvider>
-        <ConnectionProvider>
-          <NotificationProvider>
-            <AppContent />
-          </NotificationProvider>
-        </ConnectionProvider>
+        <NotificationProvider>
+          <AppContent />
+        </NotificationProvider>
       </AuthProvider>
     </Router>
   );

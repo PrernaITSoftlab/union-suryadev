@@ -57,7 +57,7 @@ const HeroSlider = () => {
 
   return (
     <div 
-      className="relative w-full h-[360px] xs:h-[400px] sm:h-[460px] lg:h-[500px] rounded-3xl overflow-hidden border border-slate-700/80 shadow-card-dark group glass-card"
+      className="relative w-full h-[360px] xs:h-[400px] sm:h-[460px] lg:h-[500px] rounded-3xl overflow-hidden border border-slate-200 shadow-md group bg-white"
     >
       {/* Background Images Crossfade */}
       {SLIDER_IMAGES.map((slide, index) => (
@@ -73,18 +73,18 @@ const HeroSlider = () => {
             className="w-full h-full object-cover object-center transform scale-100 group-hover:scale-105 transition-transform duration-700"
           />
           {/* Gradient Overlay for crisp text contrast */}
-          <div className="absolute inset-0 bg-gradient-to-t from-navy-950 via-navy-950/60 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-r from-navy-950/80 via-transparent to-navy-950/40" />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/40 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/60 via-transparent to-slate-950/30" />
         </div>
       ))}
 
       {/* Top Floating Badge */}
       <div className="absolute top-4 left-4 sm:top-5 sm:left-5 z-20 flex items-center gap-2">
-        <span className="px-3 py-1 rounded-full bg-navy-950/90 border border-brand-cyan/40 text-brand-cyan text-[11px] font-extrabold uppercase tracking-wider shadow-glow-cyan flex items-center gap-1.5 backdrop-blur-md">
-          <Sparkles className="w-3.5 h-3.5 animate-pulse shrink-0" />
+        <span className="px-3 py-1 rounded-full bg-white/90 border border-blue-200 text-blue-800 text-[11px] font-extrabold uppercase tracking-wider shadow-sm flex items-center gap-1.5 backdrop-blur-md">
+          <Sparkles className="w-3.5 h-3.5 text-blue-600 animate-pulse shrink-0" />
           {currentSlide.badge}
         </span>
-        <span className="px-2.5 py-1 rounded-full bg-slate-900/80 border border-slate-700 text-slate-300 text-[10px] font-mono backdrop-blur-md">
+        <span className="px-2.5 py-1 rounded-full bg-slate-900/80 border border-slate-700 text-white text-[10px] font-mono backdrop-blur-md">
           {currentIndex + 1} / {SLIDER_IMAGES.length}
         </span>
       </div>
@@ -92,7 +92,7 @@ const HeroSlider = () => {
       {/* Left Arrow Navigation */}
       <button
         onClick={goToPrev}
-        className="absolute left-3 top-1/2 -translate-y-1/2 z-20 p-2.5 rounded-full bg-navy-950/70 border border-slate-700 text-slate-200 hover:text-white hover:bg-brand-cyan hover:text-navy-950 transition-all opacity-80 sm:opacity-0 group-hover:opacity-100 backdrop-blur-md shadow-lg"
+        className="absolute left-3 top-1/2 -translate-y-1/2 z-20 p-2.5 rounded-full bg-white/90 border border-slate-200 text-slate-800 hover:text-white hover:bg-blue-600 transition-all opacity-80 sm:opacity-0 group-hover:opacity-100 backdrop-blur-md shadow-md"
         aria-label="Previous Slide"
       >
         <ChevronLeft className="w-5 h-5" />
@@ -101,7 +101,7 @@ const HeroSlider = () => {
       {/* Right Arrow Navigation */}
       <button
         onClick={goToNext}
-        className="absolute right-3 top-1/2 -translate-y-1/2 z-20 p-2.5 rounded-full bg-navy-950/70 border border-slate-700 text-slate-200 hover:text-white hover:bg-brand-cyan hover:text-navy-950 transition-all opacity-80 sm:opacity-0 group-hover:opacity-100 backdrop-blur-md shadow-lg"
+        className="absolute right-3 top-1/2 -translate-y-1/2 z-20 p-2.5 rounded-full bg-white/90 border border-slate-200 text-slate-800 hover:text-white hover:bg-blue-600 transition-all opacity-80 sm:opacity-0 group-hover:opacity-100 backdrop-blur-md shadow-md"
         aria-label="Next Slide"
       >
         <ChevronRight className="w-5 h-5" />
@@ -112,7 +112,7 @@ const HeroSlider = () => {
         <h3 className="text-lg sm:text-2xl font-extrabold text-white leading-tight drop-shadow-md">
           {currentSlide.title}
         </h3>
-        <p className="text-xs sm:text-sm text-slate-300 max-w-xl line-clamp-2 leading-relaxed drop-shadow">
+        <p className="text-xs sm:text-sm text-slate-200 max-w-xl line-clamp-2 leading-relaxed drop-shadow">
           {currentSlide.subtitle}
         </p>
 
@@ -124,8 +124,8 @@ const HeroSlider = () => {
               onClick={() => setCurrentIndex(idx)}
               className={`h-2 rounded-full transition-all duration-300 ${
                 idx === currentIndex
-                  ? 'w-8 bg-brand-cyan shadow-glow-cyan'
-                  : 'w-2 bg-slate-600/80 hover:bg-slate-400'
+                  ? 'w-8 bg-blue-500 shadow-sm'
+                  : 'w-2 bg-white/60 hover:bg-white'
               }`}
               aria-label={`Go to slide ${idx + 1}`}
             />

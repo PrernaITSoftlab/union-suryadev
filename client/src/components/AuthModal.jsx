@@ -55,26 +55,26 @@ const AuthModal = ({ initialTab = 'login', onClose }) => {
     }
   };
 
-  const handleDemoFill = async (type) => {
-    setLoading(true);
-    try {
-      await switchDemoUser(type);
-      onClose();
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
+  const handleDemoFill = (type) => {
+    setError('');
+    setTab('login');
+    if (type === 'admin') {
+      setLoginEmail('admin@mpwzunion.org');
+      setLoginPassword('password123');
+    } else {
+      setLoginEmail('sunita.chouhan@mpwzunion.org');
+      setLoginPassword('password123');
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-navy-950/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-      <div className="glass-panel max-w-md w-full rounded-3xl p-5 sm:p-8 border border-slate-700 shadow-card-dark relative animate-in zoom-in-95 my-auto max-h-[92vh] overflow-y-auto no-scrollbar">
+    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+      <div className="bg-white max-w-md w-full rounded-3xl p-5 sm:p-8 border border-slate-200 shadow-2xl relative animate-in zoom-in-95 my-auto max-h-[92vh] overflow-y-auto no-scrollbar text-slate-900">
         
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 rounded-xl bg-slate-800/80 text-slate-400 hover:text-white transition-colors"
+          className="absolute top-4 right-4 p-2 rounded-xl bg-slate-100 text-slate-500 hover:text-slate-900 hover:bg-slate-200 transition-colors"
           aria-label="Close"
         >
           <X className="w-5 h-5" />
@@ -82,47 +82,67 @@ const AuthModal = ({ initialTab = 'login', onClose }) => {
 
         {/* Modal Brand Logo Header */}
         <div className="text-center mb-5">
-          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-brand-cyan to-brand-blue flex items-center justify-center mx-auto mb-2.5 shadow-glow-cyan">
-            <Network className="w-5 h-5 sm:w-6 sm:h-6 text-navy-950 font-bold" />
+          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-blue-600 flex items-center justify-center mx-auto mb-2.5 shadow-md">
+            <Zap className="w-6 h-6 text-white fill-white" />
           </div>
-          <h2 className="text-lg sm:text-xl font-extrabold text-white">
-            UNION <span className="gradient-text-cyan">SUYRADEV</span>
+          <h2 className="text-lg sm:text-xl font-extrabold text-slate-900">
+            MPWZ <span className="text-blue-600">UNION</span>
           </h2>
-          <p className="text-xs text-slate-400 mt-0.5">
-            {tab === 'login' ? 'Welcome back! Sign in to access your network.' : 'Create your executive profile & join the network.'}
+          <p className="text-xs text-slate-500 mt-0.5">
+            {tab === 'login' ? 'Welcome back! Sign in to access member services.' : 'Create your employee profile & join the union.'}
           </p>
         </div>
 
         {/* Quick Demo Logins Pill */}
-        <div className="p-3 rounded-2xl bg-slate-900/90 border border-slate-800 mb-4">
-          <span className="text-[10px] font-extrabold uppercase text-amber-400 flex items-center gap-1 mb-2">
-            <Zap className="w-3 h-3 fill-amber-400 shrink-0" /> Instant One-Click Demo Access
-          </span>
+        <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 mb-4 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-extrabold uppercase text-amber-700 flex items-center gap-1">
+              <Zap className="w-3 h-3 fill-amber-600 shrink-0 text-amber-600" /> Fill Portal Credentials
+            </span>
+            <span className="text-[9px] text-slate-500">Click to fill</span>
+          </div>
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
-              onClick={() => handleDemoFill('member')}
-              className="py-1.5 px-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-[11px] font-bold text-slate-200 flex items-center justify-center gap-1"
+              onClick={() => handleDemoFill('user')}
+              className="p-2 rounded-xl bg-white hover:bg-slate-100 border border-slate-300 text-left shadow-sm transition-colors cursor-pointer"
             >
-              <User className="w-3 h-3 text-brand-cyan shrink-0" /> Member Demo
+              <div className="flex items-center gap-1 text-[11px] font-bold text-slate-800 mb-0.5">
+                <User className="w-3.5 h-3.5 text-blue-600 shrink-0" /> Member Portal
+              </div>
+              <div className="text-[10px] text-slate-600 font-mono truncate">
+                sunita.chouhan@mpwzunion.org
+              </div>
+              <div className="text-[10px] text-slate-500 font-mono">
+                Pass: password123
+              </div>
             </button>
+
             <button
               type="button"
               onClick={() => handleDemoFill('admin')}
-              className="py-1.5 px-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-[11px] font-bold text-amber-300 flex items-center justify-center gap-1"
+              className="p-2 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-300 text-left shadow-sm transition-colors cursor-pointer"
             >
-              <ShieldCheck className="w-3 h-3 text-amber-400 shrink-0" /> Admin Demo
+              <div className="flex items-center gap-1 text-[11px] font-bold text-amber-900 mb-0.5">
+                <ShieldCheck className="w-3.5 h-3.5 text-amber-600 shrink-0" /> Admin Portal
+              </div>
+              <div className="text-[10px] text-amber-900 font-mono truncate">
+                admin@mpwzunion.org
+              </div>
+              <div className="text-[10px] text-amber-800 font-mono">
+                Pass: password123
+              </div>
             </button>
           </div>
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex rounded-xl bg-slate-900 p-1 mb-4 border border-slate-800">
+        <div className="flex rounded-xl bg-slate-100 p-1 mb-4 border border-slate-200">
           <button
             type="button"
             onClick={() => { setTab('login'); setError(''); }}
             className={`flex-1 py-2 text-xs font-extrabold rounded-lg transition-all ${
-              tab === 'login' ? 'bg-brand-cyan text-navy-950 shadow-glow-cyan' : 'text-slate-400 hover:text-white'
+              tab === 'login' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             Sign In
@@ -131,7 +151,7 @@ const AuthModal = ({ initialTab = 'login', onClose }) => {
             type="button"
             onClick={() => { setTab('register'); setError(''); }}
             className={`flex-1 py-2 text-xs font-extrabold rounded-lg transition-all ${
-              tab === 'register' ? 'bg-brand-cyan text-navy-950 shadow-glow-cyan' : 'text-slate-400 hover:text-white'
+              tab === 'register' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             Register Profile
@@ -140,7 +160,7 @@ const AuthModal = ({ initialTab = 'login', onClose }) => {
 
         {/* Error Alert */}
         {error && (
-          <div className="p-3 mb-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-semibold">
+          <div className="p-3 mb-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold">
             ⚠️ {error}
           </div>
         )}
@@ -149,31 +169,31 @@ const AuthModal = ({ initialTab = 'login', onClose }) => {
         {tab === 'login' ? (
           <form onSubmit={handleLoginSubmit} className="space-y-3.5">
             <div>
-              <label className="text-xs font-bold text-slate-300 block mb-1">Email Address</label>
+              <label className="text-xs font-bold text-slate-700 block mb-1">Email Address</label>
               <div className="relative">
-                <Mail className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
                 <input
                   type="email"
                   required
-                  placeholder="priya.sharma@nexusfintech.io"
+                  placeholder="rajesh.sharma@mpwz.in"
                   value={loginEmail}
                   onChange={(e) => setLoginEmail(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-brand-cyan"
+                  className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 font-medium"
                 />
               </div>
             </div>
 
             <div>
-              <label className="text-xs font-bold text-slate-300 block mb-1">Password</label>
+              <label className="text-xs font-bold text-slate-700 block mb-1">Password</label>
               <div className="relative">
-                <Lock className="w-4 h-4 text-slate-500 absolute left-3 top-3" />
+                <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
                 <input
                   type="password"
                   required
                   placeholder="••••••••"
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-brand-cyan"
+                  className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 font-medium"
                 />
               </div>
             </div>
@@ -181,9 +201,9 @@ const AuthModal = ({ initialTab = 'login', onClose }) => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-brand-blue to-brand-cyan text-navy-950 font-extrabold text-xs shadow-glow-cyan hover:opacity-95 transition-all flex items-center justify-center gap-2 mt-2"
+              className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs shadow-md transition-all flex items-center justify-center gap-2 mt-2"
             >
-              {loading ? 'Authenticating...' : 'Sign In to Network'}
+              {loading ? 'Authenticating...' : 'Sign In to Union Portal'}
               <Sparkles className="w-4 h-4" />
             </button>
           </form>
@@ -191,61 +211,61 @@ const AuthModal = ({ initialTab = 'login', onClose }) => {
           /* Register Form */
           <form onSubmit={handleRegisterSubmit} className="space-y-3">
             <div>
-              <label className="text-[11px] font-bold text-slate-300 block mb-1">Full Name</label>
+              <label className="text-[11px] font-bold text-slate-700 block mb-1">Full Name</label>
               <input
                 type="text"
                 required
-                placeholder="Dr. Rajesh Kumar"
+                placeholder="Er. Rajesh Sharma"
                 value={regData.full_name}
                 onChange={(e) => setRegData({ ...regData, full_name: e.target.value })}
-                className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-brand-cyan"
+                className="w-full px-3.5 py-2 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 font-medium"
               />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               <div>
-                <label className="text-[11px] font-bold text-slate-300 block mb-1">Email</label>
+                <label className="text-[11px] font-bold text-slate-700 block mb-1">Email</label>
                 <input
                   type="email"
                   required
-                  placeholder="rajesh@company.com"
+                  placeholder="rajesh@mpwz.in"
                   value={regData.email}
                   onChange={(e) => setRegData({ ...regData, email: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white focus:outline-none focus:border-brand-cyan"
+                  className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 font-medium"
                 />
               </div>
               <div>
-                <label className="text-[11px] font-bold text-slate-300 block mb-1">Password</label>
+                <label className="text-[11px] font-bold text-slate-700 block mb-1">Password</label>
                 <input
                   type="password"
                   required
                   placeholder="••••••••"
                   value={regData.password}
                   onChange={(e) => setRegData({ ...regData, password: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white focus:outline-none focus:border-brand-cyan"
+                  className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 font-medium"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               <div>
-                <label className="text-[11px] font-bold text-slate-300 block mb-1">Company</label>
+                <label className="text-[11px] font-bold text-slate-700 block mb-1">Circle / Office</label>
                 <input
                   type="text"
-                  placeholder="Apex Ventures"
+                  placeholder="Indore City Circle"
                   value={regData.company}
                   onChange={(e) => setRegData({ ...regData, company: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white focus:outline-none focus:border-brand-cyan"
+                  className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 font-medium"
                 />
               </div>
               <div>
-                <label className="text-[11px] font-bold text-slate-300 block mb-1">Title</label>
+                <label className="text-[11px] font-bold text-slate-700 block mb-1">Designation</label>
                 <input
                   type="text"
-                  placeholder="Founder / VP"
+                  placeholder="Junior Engineer"
                   value={regData.title}
                   onChange={(e) => setRegData({ ...regData, title: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white focus:outline-none focus:border-brand-cyan"
+                  className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 font-medium"
                 />
               </div>
             </div>
@@ -253,7 +273,7 @@ const AuthModal = ({ initialTab = 'login', onClose }) => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full mt-2 py-3 rounded-xl bg-gradient-to-r from-brand-blue to-brand-cyan text-navy-950 font-extrabold text-xs shadow-glow-cyan hover:opacity-95 transition-all flex items-center justify-center gap-2"
+              className="w-full mt-2 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs shadow-md transition-all flex items-center justify-center gap-2"
             >
               {loading ? 'Creating Account...' : 'Complete Profile & Join'}
               <Sparkles className="w-4 h-4" />

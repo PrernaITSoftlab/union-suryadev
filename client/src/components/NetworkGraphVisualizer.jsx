@@ -27,33 +27,33 @@ const NetworkGraphVisualizer = () => {
 
   const getNodeIcon = (type) => {
     switch (type) {
-      case 'person': return <Users className="w-3.5 h-3.5 text-brand-cyan shrink-0" />;
-      case 'business': return <Building className="w-3.5 h-3.5 text-brand-blue shrink-0" />;
-      case 'opportunity': return <Briefcase className="w-3.5 h-3.5 text-amber-400 shrink-0" />;
-      default: return <Layers className="w-3.5 h-3.5 text-purple-400 shrink-0" />;
+      case 'person': return <Users className="w-3.5 h-3.5 text-blue-600 shrink-0" />;
+      case 'business': return <Building className="w-3.5 h-3.5 text-indigo-600 shrink-0" />;
+      case 'opportunity': return <Briefcase className="w-3.5 h-3.5 text-amber-600 shrink-0" />;
+      default: return <Layers className="w-3.5 h-3.5 text-purple-600 shrink-0" />;
     }
   };
 
   const getNodeColor = (type, isSelected) => {
-    if (isSelected) return 'border-brand-cyan bg-brand-cyan/20 text-white shadow-glow-cyan scale-[1.02]';
+    if (isSelected) return 'border-blue-600 bg-blue-50 text-blue-900 shadow-md font-extrabold scale-[1.02]';
     switch (type) {
-      case 'person': return 'border-cyan-500/40 bg-slate-900/90 text-slate-200 hover:border-brand-cyan';
-      case 'business': return 'border-blue-500/40 bg-slate-900/90 text-slate-200 hover:border-brand-blue';
-      case 'opportunity': return 'border-amber-500/40 bg-slate-900/90 text-slate-200 hover:border-amber-400';
-      default: return 'border-purple-500/40 bg-slate-900/90 text-slate-200';
+      case 'person': return 'border-slate-200 bg-white text-slate-800 hover:border-blue-500 shadow-sm';
+      case 'business': return 'border-slate-200 bg-white text-slate-800 hover:border-indigo-500 shadow-sm';
+      case 'opportunity': return 'border-slate-200 bg-white text-slate-800 hover:border-amber-500 shadow-sm';
+      default: return 'border-slate-200 bg-white text-slate-800 shadow-sm';
     }
   };
 
   return (
-    <div className="glass-panel rounded-3xl p-4 sm:p-6 lg:p-8 border border-slate-700/80 shadow-card-dark">
+    <div className="bg-white rounded-3xl p-4 sm:p-6 lg:p-8 border border-slate-200 shadow-sm text-slate-900">
       
       {/* Header & Category Filters */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6 border-b border-slate-800">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6 border-b border-slate-200">
         <div>
-          <h3 className="text-lg sm:text-xl font-extrabold text-white flex items-center gap-2">
-            <Network className="w-5 h-5 sm:w-6 sm:h-6 text-brand-cyan" /> Interactive Network Topology
+          <h3 className="text-lg sm:text-xl font-extrabold text-slate-900 flex items-center gap-2">
+            <Network className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" /> Interactive Network Topology
           </h3>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-slate-500 mt-1">
             Visualizing real-time connections between Members → Businesses → Industries → Opportunities
           </p>
         </div>
@@ -66,8 +66,8 @@ const NetworkGraphVisualizer = () => {
               onClick={() => setActiveTab(cat)}
               className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all shrink-0 ${
                 activeTab === cat
-                  ? 'bg-brand-cyan text-navy-950 shadow-glow-cyan font-extrabold'
-                  : 'bg-slate-800/80 text-slate-300 hover:bg-slate-700'
+                  ? 'bg-blue-600 text-white shadow-sm font-extrabold'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200'
               }`}
             >
               {cat}
@@ -80,13 +80,13 @@ const NetworkGraphVisualizer = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-6 items-start">
         
         {/* Nodes Flow Layout (Left 2 cols) */}
-        <div className="lg:col-span-2 relative min-h-[340px] bg-navy-950/70 rounded-2xl p-4 sm:p-6 border border-slate-800 network-bg-grid flex flex-col justify-between">
+        <div className="lg:col-span-2 relative min-h-[340px] bg-slate-50 rounded-2xl p-4 sm:p-6 border border-slate-200 network-bg-grid flex flex-col justify-between">
           
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 relative z-10">
             
             {/* Column 1: People Nodes */}
             <div className="space-y-2.5">
-              <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-brand-cyan flex items-center gap-1 mb-1">
+              <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-blue-700 flex items-center gap-1 mb-1">
                 <Users className="w-3.5 h-3.5" /> Professionals
               </span>
               {filteredNodes.filter(n => n.type === 'person').map((node) => (
@@ -106,7 +106,7 @@ const NetworkGraphVisualizer = () => {
 
             {/* Column 2: Business Nodes */}
             <div className="space-y-2.5">
-              <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-brand-blue flex items-center gap-1 mb-1">
+              <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-indigo-700 flex items-center gap-1 mb-1">
                 <Building className="w-3.5 h-3.5" /> Entities
               </span>
               {filteredNodes.filter(n => n.type === 'business').map((node) => (
@@ -126,7 +126,7 @@ const NetworkGraphVisualizer = () => {
 
             {/* Column 3: Opportunity Nodes */}
             <div className="space-y-2.5">
-              <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-amber-400 flex items-center gap-1 mb-1">
+              <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-amber-700 flex items-center gap-1 mb-1">
                 <Briefcase className="w-3.5 h-3.5" /> Opportunities
               </span>
               {filteredNodes.filter(n => n.type === 'opportunity').map((node) => (
@@ -146,38 +146,38 @@ const NetworkGraphVisualizer = () => {
 
           </div>
 
-          <div className="mt-6 pt-3 border-t border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between text-[11px] text-slate-400 gap-2">
-            <span className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-brand-cyan animate-pulse" />
+          <div className="mt-6 pt-3 border-t border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between text-[11px] text-slate-500 gap-2">
+            <span className="flex items-center gap-1.5 font-medium">
+              <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
               Click any node to inspect relationship data
             </span>
-            <span className="font-mono text-brand-cyan">Active Topology Nodes: {filteredNodes.length}</span>
+            <span className="font-mono text-blue-700 font-bold">Active Topology Nodes: {filteredNodes.length}</span>
           </div>
 
         </div>
 
         {/* Selected Node Details Card (Right 1 col) */}
         {selectedNode && (
-          <div className="glass-card rounded-2xl p-5 sm:p-6 border border-slate-700/80 space-y-4 animate-in fade-in w-full">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <span className="px-2.5 py-1 rounded-full bg-brand-cyan/20 text-brand-cyan text-[10px] font-extrabold uppercase tracking-wider">
+          <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-4 animate-in fade-in w-full text-slate-900">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <span className="px-2.5 py-1 rounded-full bg-blue-100 text-blue-800 text-[10px] font-extrabold uppercase tracking-wider">
                 Node Inspector
               </span>
               <span className="text-xs text-slate-400 font-mono">{selectedNode.id}</span>
             </div>
 
             <div>
-              <h4 className="text-base sm:text-lg font-extrabold text-white">{selectedNode.label}</h4>
-              <p className="text-xs text-brand-cyan mt-0.5">{selectedNode.category} Sector</p>
+              <h4 className="text-base sm:text-lg font-extrabold text-slate-900">{selectedNode.label}</h4>
+              <p className="text-xs text-blue-600 font-bold mt-0.5">{selectedNode.category} Sector</p>
             </div>
 
-            <div className="p-3 rounded-xl bg-slate-900/90 border border-slate-800 text-xs text-slate-300 leading-relaxed">
+            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700 leading-relaxed">
               {selectedNode.detail}
             </div>
 
             <div className="space-y-2">
-              <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                <Zap className="w-3.5 h-3.5 text-amber-400" /> Relational Ties ({selectedNode.connections.length})
+              <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                <Zap className="w-3.5 h-3.5 text-amber-600" /> Relational Ties ({selectedNode.connections.length})
               </span>
               <div className="flex flex-wrap gap-1.5">
                 {selectedNode.connections.map((connId) => {
@@ -186,9 +186,9 @@ const NetworkGraphVisualizer = () => {
                     <span
                       key={connId}
                       onClick={() => target && setSelectedNode(target)}
-                      className="px-2 py-1 rounded-lg bg-slate-800 text-[11px] text-slate-300 hover:text-brand-cyan cursor-pointer border border-slate-700 flex items-center gap-1"
+                      className="px-2.5 py-1 rounded-lg bg-slate-100 text-[11px] text-slate-700 hover:text-blue-700 hover:bg-slate-200 cursor-pointer border border-slate-200 flex items-center gap-1 font-medium transition-colors"
                     >
-                      <CheckCircle2 className="w-3 h-3 text-brand-cyan" /> {target?.label || connId}
+                      <CheckCircle2 className="w-3 h-3 text-blue-600" /> {target?.label || connId}
                     </span>
                   );
                 })}

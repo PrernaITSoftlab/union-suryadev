@@ -4,40 +4,33 @@ import { authenticateToken } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-// Get notifications for logged-in user
-router.get('/', authenticateToken, (req, res) => {
-  const userId = req.user.id;
-  const userNotifs = inMemoryStore.notifications
-    .filter(n => n.user_id === userId)
-    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
+// Get User Notifications & Unread Count
+router.get('/my-notifications', authenticateToken, (req, res) => {
+  const userNotifs = inMemoryStore.notifications.filter(n => n.user_id === req.user.id);
   const unreadCount = userNotifs.filter(n => !n.is_read).length;
 
   res.json({
     success: true,
-    unread_count: unreadCount,
-    notifications: userNotifs
+    notifications: userNotifs,
+    unreadCount
   });
 });
 
-// Mark notification as read
+// Mark single notification read
 router.put('/:id/read', authenticateToken, (req, res) => {
-  const notifId = parseInt(req.params.id);
-  const userId = req.user.id;
-
-  const notif = inMemoryStore.notifications.find(n => n.id === notifId && n.user_id === userId);
-  if (notif) {
-    notif.is_read = true;
+  const notif = inMemoryStore.notifications.find(n => n.id === Number(req.params.id) && n.user_id === req.user.id);
+  if (!notif) {
+    return res.status(404).json({ success: false, message: 'Notification not found.' });
   }
 
-  res.json({ success: true, message: 'Notification marked as read.' });
+  notif.is_read = true;
+  res.json({ success: true, notification: notif });
 });
 
 // Mark all as read
 router.put('/read-all', authenticateToken, (req, res) => {
-  const userId = req.user.id;
   inMemoryStore.notifications
-    .filter(n => n.user_id === userId)
+    .filter(n => n.user_id === req.user.id)
     .forEach(n => { n.is_read = true; });
 
   res.json({ success: true, message: 'All notifications marked as read.' });

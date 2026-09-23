@@ -14,8 +14,8 @@ const ProfileEdit = () => {
     avatar_url: profile.avatar_url || '',
     title: profile.title || '',
     company: profile.company || '',
-    industry: profile.industry || 'Financial Technology',
-    location: profile.location || 'Mumbai, India',
+    industry: profile.industry || 'Electrical Engineering',
+    location: profile.location || 'Indore, India',
     bio: profile.bio || '',
     skills: Array.isArray(profile.skills) ? profile.skills.join(', ') : profile.skills || '',
     services: Array.isArray(profile.services) ? profile.services.join(', ') : profile.services || '',
@@ -54,34 +54,34 @@ const ProfileEdit = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-8">
       
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <button
           onClick={() => navigate('/dashboard')}
-          className="px-3 py-1.5 rounded-xl bg-slate-800 text-xs text-slate-300 hover:text-white flex items-center gap-1"
+          className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 border border-slate-200 flex items-center gap-1 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" /> Back to Dashboard
         </button>
-        <h1 className="text-2xl font-extrabold text-white">Member Profile Editor</h1>
+        <h1 className="text-2xl font-extrabold text-slate-900">Member Profile Editor</h1>
       </div>
 
       {successMsg && (
-        <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-bold flex items-center gap-2">
-          <CheckCircle2 className="w-5 h-5" /> {successMsg}
+        <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2 shadow-sm">
+          <CheckCircle2 className="w-5 h-5 text-emerald-600" /> {successMsg}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="glass-panel rounded-3xl p-6 sm:p-8 border border-slate-700/80 space-y-6 text-xs">
+      <form onSubmit={handleSubmit} className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-6 text-xs sm:text-sm">
         
         {/* Avatar Selection */}
         <div>
-          <label className="font-bold text-slate-300 block mb-2">Profile Photo Avatar</label>
+          <label className="font-bold text-slate-700 block mb-2">Profile Photo Avatar</label>
           <div className="flex items-center gap-4">
             <img
               src={formData.avatar_url || sampleAvatars[0]}
               alt="Avatar Preview"
-              className="w-16 h-16 rounded-2xl object-cover ring-2 ring-brand-cyan shadow-glow-cyan"
+              className="w-16 h-16 rounded-2xl object-cover ring-2 ring-blue-100 shrink-0"
             />
             <div className="flex flex-wrap gap-2">
               {sampleAvatars.map((url, idx) => (
@@ -90,8 +90,8 @@ const ProfileEdit = () => {
                   src={url}
                   alt={`Avatar ${idx}`}
                   onClick={() => setFormData({ ...formData, avatar_url: url })}
-                  className={`w-10 h-10 rounded-xl object-cover cursor-pointer hover:opacity-100 transition-opacity ${
-                    formData.avatar_url === url ? 'ring-2 ring-brand-cyan' : 'opacity-60'
+                  className={`w-10 h-10 rounded-xl object-cover cursor-pointer hover:opacity-100 transition-all ${
+                    formData.avatar_url === url ? 'ring-2 ring-blue-600' : 'opacity-60'
                   }`}
                 />
               ))}
@@ -102,85 +102,85 @@ const ProfileEdit = () => {
         {/* Basic Info */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="font-bold text-slate-300 block mb-1">Full Name</label>
+            <label className="font-bold text-slate-700 block mb-1">Full Name</label>
             <input
               type="text"
               required
               value={formData.full_name}
               onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:border-brand-cyan"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all"
             />
           </div>
           <div>
-            <label className="font-bold text-slate-300 block mb-1">Professional Title</label>
+            <label className="font-bold text-slate-700 block mb-1">Professional Title</label>
             <input
               type="text"
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:border-brand-cyan"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all"
             />
           </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <label className="font-bold text-slate-300 block mb-1">Company / Organization</label>
+            <label className="font-bold text-slate-700 block mb-1">Company / Organization</label>
             <input
               type="text"
               value={formData.company}
               onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:border-brand-cyan"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all"
             />
           </div>
           <div>
-            <label className="font-bold text-slate-300 block mb-1">Industry</label>
+            <label className="font-bold text-slate-700 block mb-1">Industry / Circle</label>
             <input
               type="text"
               value={formData.industry}
               onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:border-brand-cyan"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all"
             />
           </div>
           <div>
-            <label className="font-bold text-slate-300 block mb-1">Location</label>
+            <label className="font-bold text-slate-700 block mb-1">Location</label>
             <input
               type="text"
               value={formData.location}
               onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:border-brand-cyan"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all"
             />
           </div>
         </div>
 
         <div>
-          <label className="font-bold text-slate-300 block mb-1">Executive Bio</label>
+          <label className="font-bold text-slate-700 block mb-1">Executive Bio</label>
           <textarea
             rows="4"
             value={formData.bio}
             onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-            className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:border-brand-cyan"
+            className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all"
           />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="font-bold text-slate-300 block mb-1">Skills (comma separated)</label>
+            <label className="font-bold text-slate-700 block mb-1">Skills (comma separated)</label>
             <input
               type="text"
-              placeholder="Fintech, M&A Advisory, Enterprise Sales"
+              placeholder="Distribution Grid, Substation Safety, Billing Audit"
               value={formData.skills}
               onChange={(e) => setFormData({ ...formData, skills: e.target.value })}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:border-brand-cyan"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all"
             />
           </div>
           <div>
-            <label className="font-bold text-slate-300 block mb-1">Services (comma separated)</label>
+            <label className="font-bold text-slate-700 block mb-1">Services (comma separated)</label>
             <input
               type="text"
-              placeholder="Consulting, Payment API Integration"
+              placeholder="Employee Representation, Technical Advice"
               value={formData.services}
               onChange={(e) => setFormData({ ...formData, services: e.target.value })}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:border-brand-cyan"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all"
             />
           </div>
         </div>
@@ -188,42 +188,42 @@ const ProfileEdit = () => {
         {/* Social Links */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <label className="font-bold text-slate-300 block mb-1">Website URL</label>
+            <label className="font-bold text-slate-700 block mb-1">Website URL</label>
             <input
               type="url"
-              placeholder="https://company.com"
+              placeholder="https://mpwzunion.org"
               value={formData.website}
               onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:border-brand-cyan"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all"
             />
           </div>
           <div>
-            <label className="font-bold text-slate-300 block mb-1">LinkedIn Profile</label>
+            <label className="font-bold text-slate-700 block mb-1">LinkedIn Profile</label>
             <input
               type="url"
               placeholder="https://linkedin.com/in/username"
               value={formData.linkedin}
               onChange={(e) => setFormData({ ...formData, linkedin: e.target.value })}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:border-brand-cyan"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all"
             />
           </div>
           <div>
-            <label className="font-bold text-slate-300 block mb-1">Phone Number</label>
+            <label className="font-bold text-slate-700 block mb-1">Phone Number</label>
             <input
               type="text"
-              placeholder="+91 98765 43210"
+              placeholder="+91 98260 00000"
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:border-brand-cyan"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all"
             />
           </div>
         </div>
 
-        <div className="pt-4 border-t border-slate-800 text-right">
+        <div className="pt-4 border-t border-slate-100 text-right">
           <button
             type="submit"
             disabled={saving}
-            className="px-8 py-3 rounded-2xl bg-gradient-to-r from-brand-blue to-brand-cyan text-navy-950 font-extrabold shadow-glow-cyan hover:opacity-95 flex items-center justify-center gap-2 ml-auto"
+            className="px-8 py-3 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold shadow-md flex items-center justify-center gap-2 transition-all ml-auto"
           >
             <Save className="w-4 h-4" /> {saving ? 'Saving Changes...' : 'Save Profile'}
           </button>

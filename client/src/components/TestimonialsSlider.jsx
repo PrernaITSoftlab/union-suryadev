@@ -99,22 +99,22 @@ const TestimonialsSlider = () => {
       {/* Slider Controls Top */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
-          <span className="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-extrabold flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5" /> Verified Outcome Stories
+          <span className="px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-extrabold flex items-center gap-1.5 shadow-sm">
+            <Sparkles className="w-3.5 h-3.5 text-emerald-600" /> Verified Outcome Stories
           </span>
         </div>
 
         <div className="flex items-center gap-2">
           <button
             onClick={prevSlide}
-            className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition-all"
+            className="p-2 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 shadow-sm transition-all"
             aria-label="Previous testimonial"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
           <button
             onClick={nextSlide}
-            className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition-all"
+            className="p-2 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 shadow-sm transition-all"
             aria-label="Next testimonial"
           >
             <ChevronRight className="w-4 h-4" />
@@ -130,43 +130,43 @@ const TestimonialsSlider = () => {
           return (
             <div 
               key={item.id}
-              className="glass-card rounded-3xl p-6 border border-slate-700/80 glass-panel-hover flex flex-col justify-between space-y-4 group transition-all duration-500 transform hover:-translate-y-1.5 hover:border-brand-cyan/40 hover:shadow-glow-cyan"
+              className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm hover:border-blue-300 hover:shadow-md flex flex-col justify-between space-y-4 group transition-all duration-300 transform hover:-translate-y-1"
             >
               <div className="space-y-3">
                 {/* Result Badge & Rating */}
                 <div className="flex items-center justify-between gap-2">
-                  <span className="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-extrabold flex items-center gap-1">
+                  <span className="px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-extrabold flex items-center gap-1">
                     ✨ {item.result_badge}
                   </span>
-                  <div className="flex items-center gap-0.5 text-amber-400">
+                  <div className="flex items-center gap-0.5 text-amber-500">
                     {[...Array(item.rating)].map((_, i) => (
-                      <Star key={i} className="w-3.5 h-3.5 fill-amber-400" />
+                      <Star key={i} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
                     ))}
                   </div>
                 </div>
 
                 {/* Quote */}
-                <p className="text-xs text-slate-200 leading-relaxed italic relative pt-2">
-                  <Quote className="w-4 h-4 text-brand-cyan/40 inline-block mr-1 -mt-1" />
+                <p className="text-xs text-slate-700 leading-relaxed italic relative pt-2">
+                  <Quote className="w-4 h-4 text-blue-500/30 inline-block mr-1 -mt-1" />
                   "{item.quote}"
                 </p>
               </div>
 
               {/* Author Footer */}
-              <div className="pt-4 border-t border-slate-800/80 flex items-center gap-3">
+              <div className="pt-4 border-t border-slate-100 flex items-center gap-3">
                 <img
                   src={item.author_avatar}
                   alt={item.author_name}
-                  className="w-10 h-10 rounded-full object-cover ring-2 ring-brand-cyan/50 shrink-0 group-hover:ring-brand-cyan transition-all"
+                  className="w-10 h-10 rounded-full object-cover ring-2 ring-blue-500/30 shrink-0 group-hover:ring-blue-600 transition-all"
                 />
                 <div className="truncate">
-                  <h4 className="text-xs font-extrabold text-white truncate group-hover:text-brand-cyan transition-colors">
+                  <h4 className="text-xs font-extrabold text-slate-900 truncate group-hover:text-blue-600 transition-colors">
                     {item.author_name}
                   </h4>
-                  <p className="text-[11px] font-semibold text-slate-400 truncate">
+                  <p className="text-[11px] font-semibold text-slate-500 truncate">
                     {item.author_title}
                   </p>
-                  <p className="text-[10px] text-brand-cyan/80 truncate">
+                  <p className="text-[10px] text-blue-700 font-bold truncate">
                     {item.company}
                   </p>
                 </div>
@@ -184,8 +184,8 @@ const TestimonialsSlider = () => {
             onClick={() => setCurrentIndex(idx)}
             className={`h-2 rounded-full transition-all duration-300 ${
               idx === currentIndex
-                ? 'w-7 bg-brand-cyan shadow-glow-cyan'
-                : 'w-2 bg-slate-700 hover:bg-slate-500'
+                ? 'w-7 bg-blue-600 shadow-sm'
+                : 'w-2 bg-slate-300 hover:bg-slate-400'
             }`}
             aria-label={`Go to testimonial ${idx + 1}`}
           />

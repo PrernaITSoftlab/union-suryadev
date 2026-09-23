@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import api from '../services/api';
 import { useAuth } from './AuthContext';
 
@@ -8,42 +8,48 @@ export const NotificationProvider = ({ children }) => {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [activePopups, setActivePopups] = useState([]);
+  const [dismissedPopupIds, setDismissedPopupIds] = useState([]);
 
-  const fetchNotifications = useCallback(async () => {
-    if (!user) {
-      setNotifications([]);
-      setUnreadCount(0);
-      return;
-    }
-
+  // Fetch notifications & active popups
+  const fetchNotifications = async () => {
     try {
-      const res = await api.get('/notifications');
-      if (res.data.success) {
-        setNotifications(res.data.notifications || []);
-        setUnreadCount(res.data.unread_count || 0);
+      // Top active popups for all visitors/users
+      const popupsRes = await api.get('/announcements/active-popups');
+      if (popupsRes.data.success) {
+        setActivePopups(popupsRes.data.popups);
+      }
+
+      // User specific notifications if logged in
+      if (user) {
+        const notifRes = await api.get('/notifications/my-notifications');
+        if (notifRes.data.success) {
+          setNotifications(notifRes.data.notifications);
+          setUnreadCount(notifRes.data.unreadCount);
+        }
       }
     } catch (err) {
-      console.error('Error fetching notifications:', err);
+      console.warn('Error fetching notifications:', err);
     }
-  }, [user]);
+  };
 
   useEffect(() => {
     fetchNotifications();
-    const interval = setInterval(fetchNotifications, 15000); // refresh every 15s
+    const interval = setInterval(fetchNotifications, 15000); // 15s refresh
     return () => clearInterval(interval);
-  }, [fetchNotifications]);
+  }, [user]);
 
-  const markAsRead = async (notifId) => {
+  const markAsRead = async (id) => {
     try {
-      await api.put(`/notifications/${notifId}/read`);
-      setNotifications(prev => prev.map(n => n.id === notifId ? { ...n, is_read: true } : n));
+      await api.put(`/notifications/${id}/read`);
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
       setUnreadCount(prev => Math.max(0, prev - 1));
     } catch (err) {
       console.error('Failed to mark read:', err);
     }
   };
 
-  const markAllRead = async () => {
+  const markAllAsRead = async () => {
     try {
       await api.put('/notifications/read-all');
       setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
@@ -53,17 +59,26 @@ export const NotificationProvider = ({ children }) => {
     }
   };
 
+  const dismissPopup = (id) => {
+    setDismissedPopupIds(prev => [...prev, id]);
+  };
+
+  // Filter out popups user manually dismissed
+  const visiblePopups = activePopups.filter(p => !dismissedPopupIds.includes(p.id));
+
   return (
     <NotificationContext.Provider value={{
       notifications,
       unreadCount,
-      fetchNotifications,
+      visiblePopups,
       markAsRead,
-      markAllRead
+      markAllAsRead,
+      dismissPopup,
+      refreshNotifications: fetchNotifications
     }}>
       {children}
     </NotificationContext.Provider>
   );
 };
 
-export const useNotifications = () => useContext(NotificationContext);
+export const useNotification = () => useContext(NotificationContext);
