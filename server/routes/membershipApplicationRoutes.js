@@ -9,20 +9,21 @@ const router = express.Router();
 router.post('/submit', async (req, res, next) => {
   try {
     const {
-      full_name, father_husband_name, dob, gender, mobile, whatsapp, email,
-      address, city, district, state, pin_code, occupation, company, designation,
-      union_info, profile_photo_url, identity_doc_url, additional_doc_url,
-      emergency_contact, transaction_id, payment_proof_url, payment_date, payment_note
+      company_name, district_name, circle_name, division_name, office_name,
+      joining_year, full_name, father_name, father_husband_name, post_name,
+      dept_post, union_post, cug_mobile, whatsapp_mobile, mobile,
+      membership_year, membership_fee_status, membership_receipt_date,
+      membership_receipt_no, donation_amount, donation_receipt_date,
+      donation_receipt_no, reference_name, transaction_id, payment_proof_url,
+      payment_date, payment_note, email, address, city, district, state, pin_code
     } = req.body;
 
-    if (!full_name || !mobile || !email) {
-      return res.status(400).json({ success: false, message: 'Full Name, Mobile Number, and Email are required fields.' });
-    }
+    const applicantFullName = (full_name || '').trim();
+    const applicantMobile = (whatsapp_mobile || cug_mobile || mobile || '').trim();
+    const applicantEmail = (email || `${applicantMobile || Date.now()}@mpwzunion.org`).trim().toLowerCase();
 
-    // Check if email or mobile already registered as an active member or pending application
-    const existingUser = inMemoryStore.users.find(u => u.email.toLowerCase() === email.toLowerCase());
-    if (existingUser) {
-      return res.status(400).json({ success: false, message: 'An active member account already exists with this email address.' });
+    if (!applicantFullName || !applicantMobile) {
+      return res.status(400).json({ success: false, message: 'Full Name and WhatsApp Mobile Number are required fields.' });
     }
 
     const application_no = `APP-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
@@ -30,27 +31,44 @@ router.post('/submit', async (req, res, next) => {
     const newApplication = {
       id: inMemoryStore.membershipApplications.length + 1,
       application_no,
-      full_name: full_name.trim(),
-      father_husband_name: father_husband_name || '',
-      dob: dob || '',
-      gender: gender || 'Male',
-      mobile: mobile.trim(),
-      whatsapp: whatsapp || mobile,
-      email: email.trim().toLowerCase(),
+      // 21 Form Fields
+      company_name: company_name || 'MP West Zone Electricity Discom',
+      district_name: district_name || 'Indore',
+      circle_name: circle_name || '',
+      division_name: division_name || '',
+      office_name: office_name || '',
+      joining_year: joining_year || '',
+      full_name: applicantFullName,
+      father_name: (father_name || father_husband_name || '').trim(),
+      father_husband_name: (father_name || father_husband_name || '').trim(),
+      post_name: post_name || 'Junior Engineer (JE)',
+      dept_post: dept_post || '',
+      union_post: union_post || 'Member',
+      cug_mobile: (cug_mobile || '').trim(),
+      whatsapp_mobile: applicantMobile,
+      mobile: applicantMobile,
+      membership_year: membership_year || '2026-2027',
+      membership_fee_status: membership_fee_status || 'PAID_60',
+      membership_receipt_date: membership_receipt_date || '',
+      membership_receipt_no: membership_receipt_no || '',
+      donation_amount: donation_amount || '',
+      donation_receipt_date: donation_receipt_date || '',
+      donation_receipt_no: donation_receipt_no || '',
+      reference_name: reference_name || '',
+
+      // General fields
+      email: applicantEmail,
       address: address || '',
-      city: city || 'Indore',
-      district: district || 'Indore',
+      city: district_name || city || 'Indore',
+      district: district_name || district || 'Indore',
       state: state || 'Madhya Pradesh',
       pin_code: pin_code || '452001',
-      occupation: occupation || 'Discom Service',
-      company: company || 'MP West Zone Electricity Discom',
-      designation: designation || 'Staff Member',
-      union_info: union_info || '',
-      profile_photo_url: profile_photo_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=400&q=80',
-      identity_doc_url: identity_doc_url || '',
-      additional_doc_url: additional_doc_url || '',
-      emergency_contact: emergency_contact || '',
-      registration_fee: inMemoryStore.systemSettings.registration_fee || 500,
+      occupation: 'Discom Service',
+      company: company_name || 'MP West Zone Electricity Discom',
+      designation: post_name || 'Staff Member',
+      union_info: `Reference: ${reference_name || 'N/A'}, Receipt No: ${membership_receipt_no || 'N/A'}`,
+      profile_photo_url: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=400&q=80',
+      registration_fee: inMemoryStore.systemSettings.registration_fee || 60,
       payment_status: transaction_id ? 'SUBMITTED' : 'PENDING',
       application_status: 'PENDING',
       transaction_id: transaction_id || '',
