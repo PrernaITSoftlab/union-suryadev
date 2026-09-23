@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { UserPlus, QrCode, CheckCircle, AlertCircle, ArrowRight, ShieldCheck, FileText, Phone, MessageSquare, ExternalLink, Building2, MapPin, User, Calendar, Award, Receipt, Heart, CreditCard } from 'lucide-react';
+import { UserPlus, QrCode, CheckCircle, AlertCircle, ArrowRight, FileText, MessageSquare, ExternalLink } from 'lucide-react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -88,19 +88,7 @@ export default function JoinNow() {
     whatsapp_mobile: '',
     // 14. Year of Membership * — radio/select
     membership_year: '2026-2027',
-    // 15. Membership Rs-60/- * — radio option
-    membership_fee_status: 'Paid (₹60 जमा है)',
-    // 16. Date of Membership Receipt (Rs-60) (सदस्यता राशि दिनांक) * — date picker
-    membership_receipt_date: new Date().toISOString().split('T')[0],
-    // 17. Membership Receipt Number (Rs-60) (सदस्यता रसीद नंबर) * — text input
-    membership_receipt_no: '',
-    // 18. Donation Amount — number input
-    donation_amount: '',
-    // 19. Date of Donation Receipt Number (सहयोग राशि रसीद की दिनांक) — date picker
-    donation_receipt_date: '',
-    // 20. Donation Receipt Number (सहयोग राशि रसीद नंबर) * — text input
-    donation_receipt_no: '',
-    // 21. Name (By reference) (रेफरेंस कराने वाले पदाधिकारी/सदस्य का नाम) * — text input
+    // 15. Name (By reference) (रेफरेंस कराने वाले पदाधिकारी/सदस्य का नाम) * — text input
     reference_name: '',
 
     // Terms & Payment details
@@ -160,24 +148,8 @@ export default function JoinNow() {
 
     // 14. Year of Membership *
     if (!formData.membership_year) errors.membership_year = 'Year of Membership is required.';
-    // 15. Membership Rs-60/- *
-    if (!formData.membership_fee_status) errors.membership_fee_status = 'Membership Fee Rs-60 status is required.';
-    // 16. Date of Membership Receipt (Rs-60) *
-    if (!formData.membership_receipt_date) errors.membership_receipt_date = 'Date of Membership Receipt is required.';
-    // 17. Membership Receipt Number (Rs-60) *
-    if (!formData.membership_receipt_no || !formData.membership_receipt_no.trim()) errors.membership_receipt_no = 'Membership Receipt Number (Rs-60) is required.';
 
-    // 18. Donation Amount (Optional validation)
-    if (formData.donation_amount && Number(formData.donation_amount) < 0) {
-      errors.donation_amount = 'Donation amount cannot be negative.';
-    }
-
-    // 20. Donation Receipt Number *
-    if (!formData.donation_receipt_no || !formData.donation_receipt_no.trim()) {
-      errors.donation_receipt_no = 'Donation Receipt Number is required.';
-    }
-
-    // 21. Name (By reference) *
+    // 15. Name (By reference) *
     if (!formData.reference_name || !formData.reference_name.trim()) {
       errors.reference_name = 'Name (By reference) of official/member is required.';
     }
@@ -234,7 +206,7 @@ export default function JoinNow() {
   };
 
   const cleanPhone = whatsappNo.replace(/[^0-9]/g, '');
-  const waMsg = encodeURIComponent(`*MPWZ UNION MEMBERSHIP REGISTRATION*\nName: ${formData.full_name}\nDistrict: ${formData.district_name}\nReceipt No: ${formData.membership_receipt_no}\nUTR: ${formData.transaction_id || 'N/A'}\nPlease verify my membership application. Thank you!`);
+  const waMsg = encodeURIComponent(`*MPWZ UNION MEMBERSHIP REGISTRATION*\nName: ${formData.full_name}\nDistrict: ${formData.district_name}\nUTR: ${formData.transaction_id || 'N/A'}\nPlease verify my membership application. Thank you!`);
   const waLink = `https://wa.me/${cleanPhone.startsWith('91') ? cleanPhone : '91' + cleanPhone}?text=${waMsg}`;
 
   return (
@@ -281,19 +253,19 @@ export default function JoinNow() {
           </div>
         )}
 
-        {/* STEP 1: Application Form (Fields 1 to 21 in Exact Order) */}
+        {/* STEP 1: Application Form */}
         {step === 1 && (
           <form onSubmit={handleStep1Submit} className="bg-white border border-slate-200 rounded-3xl p-5 sm:p-8 space-y-6 shadow-sm">
             
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h2 className="text-lg font-extrabold text-slate-900 flex items-center gap-2">
                 <FileText className="w-5 h-5 text-amber-600" />
-                <span>Membership Form Fields (1 to 21)</span>
+                <span>Membership Form</span>
               </h2>
               <span className="text-xs font-semibold text-slate-500">* Required Fields</span>
             </div>
 
-            {/* Grid for 21 Form Fields */}
+            {/* Grid for Form Fields */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               
               {/* 1. Name of Company * — dropdown */}
@@ -520,115 +492,10 @@ export default function JoinNow() {
                 {fieldErrors.membership_year && <p className="text-[11px] text-red-600 mt-1 font-semibold">{fieldErrors.membership_year}</p>}
               </div>
 
-              {/* 15. Membership Rs-60/- * — radio option */}
-              <div className="md:col-span-1">
-                <label className="block text-xs font-bold text-slate-800 mb-1">
-                  15. Membership Rs-60/- <span className="text-red-500">*</span>
-                </label>
-                <div className="flex items-center gap-4 pt-1">
-                  <label className="inline-flex items-center gap-2 text-xs text-slate-800 cursor-pointer font-medium bg-amber-50 border border-amber-300 px-3 py-1.5 rounded-lg text-amber-900">
-                    <input
-                      type="radio"
-                      name="membership_fee_status"
-                      value="Paid (₹60 जमा है)"
-                      checked={formData.membership_fee_status === 'Paid (₹60 जमा है)'}
-                      onChange={(e) => handleChange('membership_fee_status', e.target.value)}
-                      className="accent-amber-600 w-3.5 h-3.5"
-                    />
-                    <span>Paid (₹60 जमा है)</span>
-                  </label>
-                  <label className="inline-flex items-center gap-2 text-xs text-slate-800 cursor-pointer font-medium bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg">
-                    <input
-                      type="radio"
-                      name="membership_fee_status"
-                      value="Pending (जमा करना शेष है)"
-                      checked={formData.membership_fee_status === 'Pending (जमा करना शेष है)'}
-                      onChange={(e) => handleChange('membership_fee_status', e.target.value)}
-                      className="accent-amber-600 w-3.5 h-3.5"
-                    />
-                    <span>Pending</span>
-                  </label>
-                </div>
-                {fieldErrors.membership_fee_status && <p className="text-[11px] text-red-600 mt-1 font-semibold">{fieldErrors.membership_fee_status}</p>}
-              </div>
-
-              {/* 16. Date of Membership Receipt (Rs-60) (सदस्यता राशि दिनांक) * — date picker */}
-              <div className="md:col-span-1">
-                <label className="block text-xs font-bold text-slate-800 mb-1">
-                  16. Date of Membership Receipt (Rs-60) (सदस्यता राशि दिनांक) <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="date"
-                  value={formData.membership_receipt_date}
-                  onChange={(e) => handleChange('membership_receipt_date', e.target.value)}
-                  className={`w-full bg-slate-50 border ${fieldErrors.membership_receipt_date ? 'border-red-500 bg-red-50/50' : 'border-slate-300'} rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-amber-500 font-medium`}
-                />
-                {fieldErrors.membership_receipt_date && <p className="text-[11px] text-red-600 mt-1 font-semibold">{fieldErrors.membership_receipt_date}</p>}
-              </div>
-
-              {/* 17. Membership Receipt Number (Rs-60) (सदस्यता रसीद नंबर) * — text input */}
-              <div className="md:col-span-1">
-                <label className="block text-xs font-bold text-slate-800 mb-1">
-                  17. Membership Receipt Number (Rs-60) (सदस्यता रसीद नंबर) <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. RCP-60-2026-0012"
-                  value={formData.membership_receipt_no}
-                  onChange={(e) => handleChange('membership_receipt_no', e.target.value)}
-                  className={`w-full bg-slate-50 border ${fieldErrors.membership_receipt_no ? 'border-red-500 bg-red-50/50' : 'border-slate-300'} rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-amber-500 font-medium`}
-                />
-                {fieldErrors.membership_receipt_no && <p className="text-[11px] text-red-600 mt-1 font-semibold">{fieldErrors.membership_receipt_no}</p>}
-              </div>
-
-              {/* 18. Donation Amount — number input */}
-              <div className="md:col-span-1">
-                <label className="block text-xs font-bold text-slate-800 mb-1">
-                  18. Donation Amount (सहयोग राशि रुपये)
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  placeholder="e.g. 500"
-                  value={formData.donation_amount}
-                  onChange={(e) => handleChange('donation_amount', e.target.value)}
-                  className={`w-full bg-slate-50 border ${fieldErrors.donation_amount ? 'border-red-500 bg-red-50/50' : 'border-slate-300'} rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-amber-500 font-medium`}
-                />
-                {fieldErrors.donation_amount && <p className="text-[11px] text-red-600 mt-1 font-semibold">{fieldErrors.donation_amount}</p>}
-              </div>
-
-              {/* 19. Date of Donation Receipt Number (सहयोग राशि रसीद की दिनांक) — date picker */}
-              <div className="md:col-span-1">
-                <label className="block text-xs font-bold text-slate-800 mb-1">
-                  19. Date of Donation Receipt Number (सहयोग राशि रसीद की दिनांक)
-                </label>
-                <input
-                  type="date"
-                  value={formData.donation_receipt_date}
-                  onChange={(e) => handleChange('donation_receipt_date', e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-amber-500 font-medium"
-                />
-              </div>
-
-              {/* 20. Donation Receipt Number (सहयोग राशि रसीद नंबर) * — text input */}
-              <div className="md:col-span-1">
-                <label className="block text-xs font-bold text-slate-800 mb-1">
-                  20. Donation Receipt Number (सहयोग राशि रसीद नंबर) <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. DON-2026-0045"
-                  value={formData.donation_receipt_no}
-                  onChange={(e) => handleChange('donation_receipt_no', e.target.value)}
-                  className={`w-full bg-slate-50 border ${fieldErrors.donation_receipt_no ? 'border-red-500 bg-red-50/50' : 'border-slate-300'} rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-amber-500 font-medium`}
-                />
-                {fieldErrors.donation_receipt_no && <p className="text-[11px] text-red-600 mt-1 font-semibold">{fieldErrors.donation_receipt_no}</p>}
-              </div>
-
-              {/* 21. Name (By reference) (रेफरेंस कराने वाले पदाधिकारी/सदस्य का नाम) * — text input */}
+              {/* 15. Name (By reference) (रेफरेंस कराने वाले पदाधिकारी/सदस्य का नाम) * — text input */}
               <div className="md:col-span-2">
                 <label className="block text-xs font-bold text-slate-800 mb-1">
-                  21. Name (By reference) (रेफरेंस कराने वाले पदाधिकारी/सदस्य का नाम) <span className="text-red-500">*</span>
+                  15. Name (By reference) (रेफरेंस कराने वाले पदाधिकारी/सदस्य का नाम) <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -652,7 +519,7 @@ export default function JoinNow() {
                 className="mt-1 accent-amber-600 w-4 h-4 rounded cursor-pointer"
               />
               <label htmlFor="terms" className="text-xs text-amber-950 leading-relaxed cursor-pointer font-medium">
-                I hereby declare that all provided details (Fields 1-21) are correct and genuine. I agree to abide by the Constitution, Rules, and Agitation Guidelines of the MP West Zone Electricity Discom Employees Union.
+                I hereby declare that all provided details are correct and genuine. I agree to abide by the Constitution, Rules, and Agitation Guidelines of the MP West Zone Electricity Discom Employees Union.
               </label>
             </div>
             {fieldErrors.terms_accepted && (
@@ -690,9 +557,8 @@ export default function JoinNow() {
                 <div><span className="text-slate-500">District:</span> <strong className="text-amber-800">{formData.district_name}</strong></div>
               </div>
               <div className="flex flex-wrap justify-between gap-2 text-[11px] text-slate-600">
-                <div><span>Receipt No:</span> <strong>{formData.membership_receipt_no}</strong></div>
-                <div><span>Receipt Date:</span> <strong>{formData.membership_receipt_date}</strong></div>
                 <div><span>Referred By:</span> <strong>{formData.reference_name}</strong></div>
+                <div><span>Year of Membership:</span> <strong>{formData.membership_year}</strong></div>
               </div>
             </div>
 
@@ -822,10 +688,6 @@ export default function JoinNow() {
                 <span className="text-slate-800">{submittedApplication.district_name}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Receipt No:</span>
-                <span className="text-slate-900 font-bold">{submittedApplication.membership_receipt_no}</span>
-              </div>
-              <div className="flex justify-between">
                 <span className="text-slate-500">Referred By:</span>
                 <span className="text-slate-900 font-bold">{submittedApplication.reference_name}</span>
               </div>
@@ -840,7 +702,7 @@ export default function JoinNow() {
             </div>
 
             <p className="text-xs text-slate-500 max-w-lg mx-auto font-medium">
-              Once Admin verifies your application details and receipt payment, your union membership profile will be activated.
+              Once Admin verifies your application details and payment, your union membership profile will be activated.
             </p>
 
             <div className="pt-4 flex items-center justify-center gap-4">

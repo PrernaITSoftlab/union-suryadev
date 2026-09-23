@@ -66,7 +66,7 @@ router.post('/submit', async (req, res, next) => {
       occupation: 'Discom Service',
       company: company_name || 'MP West Zone Electricity Discom',
       designation: post_name || 'Staff Member',
-      union_info: `Reference: ${reference_name || 'N/A'}, Receipt No: ${membership_receipt_no || 'N/A'}`,
+      union_info: `Reference: ${reference_name || 'N/A'}, District: ${district_name || 'N/A'}`,
       profile_photo_url: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=400&q=80',
       registration_fee: inMemoryStore.systemSettings.registration_fee || 60,
       payment_status: transaction_id ? 'SUBMITTED' : 'PENDING',
