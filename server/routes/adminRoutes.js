@@ -9,6 +9,7 @@ router.get('/dashboard-analytics', authenticateToken, requireAdmin, (req, res) =
   const totalMembers = inMemoryStore.users.length;
   const activeMembers = inMemoryStore.users.filter(u => u.status === 'active').length;
   const pendingApplications = inMemoryStore.membershipApplications.filter(a => a.application_status === 'PENDING').length;
+  const pendingApprovals = inMemoryStore.membershipApplications.filter(a => a.application_status === 'PENDING').length;
   const pendingPayments = inMemoryStore.payments.filter(p => p.status === 'SUBMITTED' || p.status === 'PENDING').length;
   const upcomingEvents = inMemoryStore.events.filter(e => e.status === 'PUBLISHED' || e.status === 'REGISTRATION_OPEN').length;
   const totalEventRegistrations = inMemoryStore.eventRegistrations.length;
@@ -24,6 +25,7 @@ router.get('/dashboard-analytics', authenticateToken, requireAdmin, (req, res) =
       totalMembers,
       activeMembers,
       pendingApplications,
+      pendingApprovals,
       pendingPayments,
       upcomingEvents,
       totalEventRegistrations,

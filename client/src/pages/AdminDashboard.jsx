@@ -14,6 +14,7 @@ export default function AdminDashboard() {
   // State data
   const [analytics, setAnalytics] = useState(null);
   const [applications, setApplications] = useState([]);
+  const [pendingApprovals, setPendingApprovals] = useState([]);
   const [members, setMembers] = useState([]);
   const [events, setEvents] = useState([]);
   const [eventRegs, setEventRegs] = useState([]);
@@ -30,10 +31,10 @@ export default function AdminDashboard() {
   // Modals
   const [viewAppModal, setViewAppModal] = useState(null);
   const [createUserModal, setCreateUserModal] = useState(null);
+  const [generatedCredentialsModal, setGeneratedCredentialsModal] = useState(null);
   const [createEventModal, setCreateEventModal] = useState(false);
   const [createAnnounceModal, setCreateAnnounceModal] = useState(false);
 
-  // Forms
   const [eventForm, setEventForm] = useState({
     title: '', description: '', banner_url: '', event_type: 'GENERAL',
     start_date: '', end_date: '', start_time: '10:00 AM', venue: '',
@@ -59,6 +60,9 @@ export default function AdminDashboard() {
       if (activeModule === 'analytics') {
         const res = await api.get('/admin/dashboard-analytics');
         if (res.data.success) setAnalytics(res.data);
+      } else if (activeModule === 'pending_approvals') {
+        const res = await api.get('/membership-applications/list?status=PENDING');
+        if (res.data.success) setPendingApprovals(res.data.applications);
       } else if (activeModule === 'applications') {
         const res = await api.get(`/membership-applications/list${statusFilter !== 'all' ? `?status=${statusFilter}` : ''}`);
         if (res.data.success) setApplications(res.data.applications);
@@ -88,6 +92,19 @@ export default function AdminDashboard() {
       console.error('Admin module fetch error:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleApproveAndGenerate = async (appId) => {
+    try {
+      const res = await api.post(`/membership-applications/${appId}/approve-and-generate`);
+      if (res.data.success) {
+        setFeedback({ success: res.data.message });
+        setGeneratedCredentialsModal(res.data.credentials);
+        fetchModuleData();
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to approve application and generate credentials.');
     }
   };
 
@@ -224,7 +241,8 @@ export default function AdminDashboard() {
         <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-slate-200 scrollbar-none">
           {[
             { id: 'analytics', label: 'Analytics Hub', icon: LayoutDashboard },
-            { id: 'applications', label: 'Membership Requests', icon: UserCheck },
+            { id: 'pending_approvals', label: 'Pending Member Approvals', icon: UserCheck },
+            { id: 'applications', label: 'Membership Requests', icon: FileText },
             { id: 'members', label: 'Members', icon: Users },
             { id: 'events', label: 'Events & Agitations', icon: Calendar },
             { id: 'registrations', label: 'Event Passes', icon: Award },
@@ -263,16 +281,24 @@ export default function AdminDashboard() {
         {activeModule === 'analytics' && analytics && (
           <div className="space-y-8">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div 
+                onClick={() => setActiveModule('pending_approvals')}
+                className="p-6 rounded-3xl bg-amber-50 border border-amber-300 hover:border-amber-500 space-y-2 shadow-sm cursor-pointer transition-all group"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-extrabold text-amber-900 uppercase tracking-wider block">Pending Member Approvals</span>
+                  <ChevronRight className="w-4 h-4 text-amber-700 group-hover:translate-x-1 transition-transform" />
+                </div>
+                <div className="text-3xl font-extrabold text-amber-900">{analytics.stats.pendingApprovals || analytics.stats.pendingApplications}</div>
+                <span className="text-xs text-amber-800 font-bold flex items-center gap-1">
+                  <Sparkles className="w-3.5 h-3.5" /> Paid & awaiting credentials
+                </span>
+              </div>
+
               <div className="p-6 rounded-3xl bg-white border border-slate-200 space-y-2 shadow-sm">
                 <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Total Active Members</span>
                 <div className="text-3xl font-extrabold text-slate-900">{analytics.stats.activeMembers} / {analytics.stats.totalMembers}</div>
                 <span className="text-xs text-emerald-700 font-bold">Registered discom staff</span>
-              </div>
-
-              <div className="p-6 rounded-3xl bg-white border border-slate-200 space-y-2 shadow-sm">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Pending Applications</span>
-                <div className="text-3xl font-extrabold text-amber-700">{analytics.stats.pendingApplications}</div>
-                <span className="text-xs text-slate-500 font-semibold">Awaiting user creation</span>
               </div>
 
               <div className="p-6 rounded-3xl bg-white border border-slate-200 space-y-2 shadow-sm">
@@ -301,6 +327,87 @@ export default function AdminDashboard() {
                     <span className="text-[10px] text-slate-500 font-bold">{new Date(log.created_at).toLocaleString()}</span>
                   </div>
                 ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* MODULE: PENDING MEMBER APPROVALS */}
+        {activeModule === 'pending_approvals' && (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                  <UserCheck className="w-5 h-5 text-amber-600" />
+                  <span>Pending Member Approvals</span>
+                </h2>
+                <p className="text-xs text-slate-500 font-medium mt-0.5">
+                  Listing users who've paid but aren't yet approved. Click "Approve & Generate Credentials" next to each to generate & email login access.
+                </p>
+              </div>
+              <span className="px-3 py-1 rounded-full bg-amber-100 border border-amber-300 text-amber-900 text-xs font-bold font-mono">
+                {pendingApprovals.length} Pending Approval{pendingApprovals.length !== 1 ? 's' : ''}
+              </span>
+            </div>
+
+            <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-50 text-slate-600 font-bold uppercase tracking-wider border-b border-slate-200">
+                    <tr>
+                      <th className="p-4">App No</th>
+                      <th className="p-4">Applicant Details</th>
+                      <th className="p-4">District / Office</th>
+                      <th className="p-4">UTR Transaction</th>
+                      <th className="p-4">Payment Status</th>
+                      <th className="p-4 text-right">Approval Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 font-mono">
+                    {pendingApprovals.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="p-8 text-center text-slate-500 font-sans">
+                          ✨ No pending member approvals! All paid applicants have been approved & credentials generated.
+                        </td>
+                      </tr>
+                    ) : (
+                      pendingApprovals.map(app => (
+                        <tr key={app.id} className="hover:bg-slate-50">
+                          <td className="p-4 font-bold text-amber-800">{app.application_no}</td>
+                          <td className="p-4 font-sans">
+                            <span className="font-bold text-slate-900 block">{app.full_name}</span>
+                            <span className="text-[11px] text-slate-500">{app.email}</span>
+                            <span className="text-[10px] text-slate-400 block">{app.mobile}</span>
+                          </td>
+                          <td className="p-4 font-sans text-slate-700">
+                            <div>{app.district_name || app.district}</div>
+                            <div className="text-[10px] text-slate-500">{app.office_name || app.post_name}</div>
+                          </td>
+                          <td className="p-4">
+                            <span className="text-sky-800 font-bold block">{app.transaction_id || 'N/A'}</span>
+                            <span className="text-[10px] text-slate-500 font-sans">{app.payment_date}</span>
+                          </td>
+                          <td className="p-4">
+                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                              app.payment_status === 'VERIFIED' ? 'bg-emerald-100 text-emerald-900 border border-emerald-300' : 'bg-amber-100 text-amber-900'
+                            }`}>
+                              {app.payment_status}
+                            </span>
+                          </td>
+                          <td className="p-4 text-right">
+                            <button
+                              onClick={() => handleApproveAndGenerate(app.id)}
+                              className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-sans font-extrabold text-xs shadow-sm transition-colors flex items-center justify-end gap-1.5 ml-auto"
+                            >
+                              <Sparkles className="w-4 h-4 text-slate-950 shrink-0" />
+                              <span>Approve & Generate Credentials</span>
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
@@ -374,21 +481,22 @@ export default function AdminDashboard() {
                             </span>
                           </td>
                           <td className="p-4 text-right space-x-2">
-                            {app.payment_status !== 'VERIFIED' && (
+                            {app.application_status === 'PENDING' ? (
                               <button
-                                onClick={() => handleVerifyAppPayment(app.id)}
-                                className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-sans font-bold text-[11px]"
+                                onClick={() => handleApproveAndGenerate(app.id)}
+                                className="px-3 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-sans font-extrabold text-[11px] inline-flex items-center gap-1 shadow-sm"
                               >
-                                Verify UTR
+                                <Sparkles className="w-3.5 h-3.5 text-slate-950" />
+                                <span>Approve & Generate Credentials</span>
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => handleOpenCreateUserFromApp(app.id)}
+                                className="px-3 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 font-sans font-bold text-[11px]"
+                              >
+                                View User Details
                               </button>
                             )}
-
-                            <button
-                              onClick={() => handleOpenCreateUserFromApp(app.id)}
-                              className="px-3 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-sans font-extrabold text-[11px]"
-                            >
-                              Create User
-                            </button>
                           </td>
                         </tr>
                       ))
@@ -809,6 +917,69 @@ export default function AdminDashboard() {
                 Broadcast & Trigger Popup Notice
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* GENERATED CREDENTIALS SUCCESS MODAL */}
+      {generatedCredentialsModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-200 rounded-3xl max-w-md w-full p-6 space-y-5 shadow-2xl animate-in zoom-in-95">
+            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2 text-emerald-700 font-extrabold text-base">
+                <CheckCircle2 className="w-6 h-6 text-emerald-600" />
+                <span>Member Approved & Credentials Generated</span>
+              </div>
+              <button onClick={() => setGeneratedCredentialsModal(null)} className="text-slate-400 hover:text-slate-700"><X className="w-5 h-5" /></button>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 space-y-3">
+              <div className="text-xs font-bold text-amber-900 uppercase tracking-wider flex items-center justify-between">
+                <span>Portal Login Credentials</span>
+                <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold uppercase">Dispatched to Email</span>
+              </div>
+
+              <div className="space-y-2 text-xs font-mono bg-white p-3.5 rounded-xl border border-amber-200">
+                <div className="flex justify-between border-b border-slate-100 pb-1.5">
+                  <span className="text-slate-500 font-sans">Member Name:</span>
+                  <strong className="text-slate-900 font-sans">{generatedCredentialsModal.applicant_name}</strong>
+                </div>
+                <div className="flex justify-between border-b border-slate-100 pb-1.5">
+                  <span className="text-slate-500 font-sans">Login ID / Member ID:</span>
+                  <strong className="text-amber-800 font-bold">{generatedCredentialsModal.member_id}</strong>
+                </div>
+                <div className="flex justify-between border-b border-slate-100 pb-1.5">
+                  <span className="text-slate-500 font-sans">Registered Email:</span>
+                  <strong className="text-sky-800">{generatedCredentialsModal.email}</strong>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500 font-sans">Temporary Password:</span>
+                  <strong className="text-slate-950 font-bold bg-amber-100 px-2 py-0.5 rounded text-xs">{generatedCredentialsModal.temp_password}</strong>
+                </div>
+              </div>
+
+              <p className="text-[11px] text-amber-950 font-medium">
+                ✉️ An automated notification has been dispatched to <strong>{generatedCredentialsModal.email}</strong>. The member can now log in using either their Email or Member ID and this temporary password.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(`MPWZ Union Credentials:\nLogin ID / Member ID: ${generatedCredentialsModal.member_id}\nEmail: ${generatedCredentialsModal.email}\nTemp Password: ${generatedCredentialsModal.temp_password}`);
+                  alert('Credentials copied to clipboard!');
+                }}
+                className="flex-1 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs transition-colors"
+              >
+                Copy Credentials
+              </button>
+              <button
+                onClick={() => setGeneratedCredentialsModal(null)}
+                className="flex-1 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition-colors shadow-sm"
+              >
+                Done
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -55,18 +55,6 @@ const AuthModal = ({ initialTab = 'login', onClose }) => {
     }
   };
 
-  const handleDemoFill = (type) => {
-    setError('');
-    setTab('login');
-    if (type === 'admin') {
-      setLoginEmail('admin@mpwzunion.org');
-      setLoginPassword('password123');
-    } else {
-      setLoginEmail('sunita.chouhan@mpwzunion.org');
-      setLoginPassword('password123');
-    }
-  };
-
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
       <div className="bg-white max-w-md w-full rounded-3xl p-5 sm:p-8 border border-slate-200 shadow-2xl relative animate-in zoom-in-95 my-auto max-h-[92vh] overflow-y-auto no-scrollbar text-slate-900">
@@ -91,49 +79,6 @@ const AuthModal = ({ initialTab = 'login', onClose }) => {
           <p className="text-xs text-slate-500 mt-0.5">
             {tab === 'login' ? 'Welcome back! Sign in to access member services.' : 'Create your employee profile & join the union.'}
           </p>
-        </div>
-
-        {/* Quick Demo Logins Pill */}
-        <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 mb-4 space-y-2">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-extrabold uppercase text-amber-700 flex items-center gap-1">
-              <Zap className="w-3 h-3 fill-amber-600 shrink-0 text-amber-600" /> Fill Portal Credentials
-            </span>
-            <span className="text-[9px] text-slate-500">Click to fill</span>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={() => handleDemoFill('user')}
-              className="p-2 rounded-xl bg-white hover:bg-slate-100 border border-slate-300 text-left shadow-sm transition-colors cursor-pointer"
-            >
-              <div className="flex items-center gap-1 text-[11px] font-bold text-slate-800 mb-0.5">
-                <User className="w-3.5 h-3.5 text-blue-600 shrink-0" /> Member Portal
-              </div>
-              <div className="text-[10px] text-slate-600 font-mono truncate">
-                sunita.chouhan@mpwzunion.org
-              </div>
-              <div className="text-[10px] text-slate-500 font-mono">
-                Pass: password123
-              </div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleDemoFill('admin')}
-              className="p-2 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-300 text-left shadow-sm transition-colors cursor-pointer"
-            >
-              <div className="flex items-center gap-1 text-[11px] font-bold text-amber-900 mb-0.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-amber-600 shrink-0" /> Admin Portal
-              </div>
-              <div className="text-[10px] text-amber-900 font-mono truncate">
-                admin@mpwzunion.org
-              </div>
-              <div className="text-[10px] text-amber-800 font-mono">
-                Pass: password123
-              </div>
-            </button>
-          </div>
         </div>
 
         {/* Tab Switcher */}

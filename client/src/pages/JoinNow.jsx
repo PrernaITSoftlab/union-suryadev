@@ -701,9 +701,14 @@ export default function JoinNow() {
               </div>
             </div>
 
-            <p className="text-xs text-slate-500 max-w-lg mx-auto font-medium">
-              Once Admin verifies your application details and payment, your union membership profile will be activated.
-            </p>
+            <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 max-w-lg mx-auto text-xs text-amber-950 font-medium space-y-1.5 leading-relaxed text-left">
+              <div className="font-extrabold text-amber-900 flex items-center gap-1.5 text-xs">
+                <span>🔐 Payment & Onboarding Access Policy</span>
+              </div>
+              <p>
+                Your registration is currently stored as <strong className="text-amber-900">PENDING</strong>. Once Union Admin verifies your payment UTR (<span className="font-mono font-bold text-amber-900">{submittedApplication.transaction_id || 'N/A'}</span>), your unique <strong>Union Member Login ID</strong> and <strong>Temporary Password</strong> will be automatically generated and dispatched to <strong className="text-slate-900">{submittedApplication.email}</strong>.
+              </p>
+            </div>
 
             <div className="pt-4 flex items-center justify-center gap-4">
               <button

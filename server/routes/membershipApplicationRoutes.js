@@ -263,4 +263,138 @@ router.get('/:id/prefill-user', authenticateToken, requireAdmin, (req, res) => {
   });
 });
 
+// 7. Approve Application & Generate Credentials (Payment-Gated Member Onboarding Flow)
+router.post('/:id/approve-and-generate', authenticateToken, requireAdmin, async (req, res, next) => {
+  try {
+    const appId = Number(req.params.id);
+    const app = inMemoryStore.membershipApplications.find(a => a.id === appId);
+    if (!app) {
+      return res.status(404).json({ success: false, message: 'Membership application not found.' });
+    }
+
+    // Check if user already exists
+    let existingUser = inMemoryStore.users.find(u => u.email.toLowerCase() === app.email.toLowerCase());
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: `User account for ${app.email} already exists (Member ID: ${existingUser.member_id}).`
+      });
+    }
+
+    // Generate Unique Member ID and Temporary Password
+    const rawCode = (app.district_name || app.city || 'IND').replace(/[^a-zA-Z]/g, '');
+    const cityCode = (rawCode.length >= 3 ? rawCode : 'IND').substring(0, 3).toUpperCase();
+    const randIdNum = Math.floor(100 + Math.random() * 900);
+    const generatedMemberId = `UNION-${cityCode}-${randIdNum}`;
+    
+    const tempPassword = `MPWZ@${Math.floor(1000 + Math.random() * 9000)}`;
+    const salt = await bcrypt.genSalt(10);
+    const password_hash = await bcrypt.hash(tempPassword, salt);
+
+    // Create Active User Account
+    const newUser = {
+      id: inMemoryStore.users.length + 1,
+      email: app.email.trim().toLowerCase(),
+      password_hash,
+      role: 'user',
+      status: 'active',
+      member_id: generatedMemberId,
+      created_at: new Date().toISOString(),
+      profile: {
+        id: inMemoryStore.users.length + 1,
+        user_id: inMemoryStore.users.length + 1,
+        full_name: app.full_name,
+        father_husband_name: app.father_name || app.father_husband_name || '',
+        phone: app.whatsapp_mobile || app.mobile || app.cug_mobile || '',
+        whatsapp: app.whatsapp_mobile || app.mobile || '',
+        address: app.address || '',
+        city: app.city || app.district_name || 'Indore',
+        district: app.district_name || app.district || 'Indore',
+        state: app.state || 'Madhya Pradesh',
+        pin_code: app.pin_code || '452001',
+        occupation: app.occupation || 'Discom Service',
+        company: app.company_name || app.company || 'MP West Zone Electricity Discom',
+        designation: app.post_name || app.designation || 'Staff Member',
+        circle: app.circle_name || `${app.district_name || 'Indore'} Circle`,
+        union_designation: app.union_post || 'Union Member',
+        bio: `Member of MPWZ Union (${app.district_name || 'Indore'}).`,
+        joining_date: new Date().toISOString().split('T')[0],
+        is_public: true,
+        contact_privacy: { showPhone: true, showEmail: true, showAddress: false }
+      }
+    };
+
+    inMemoryStore.users.unshift(newUser);
+
+    // Update Application Status & Store Credentials Details
+    app.application_status = 'APPROVED';
+    app.payment_status = 'VERIFIED';
+    app.verified_by = req.user.id;
+    app.verified_at = new Date().toISOString();
+    app.generated_credentials = {
+      member_id: generatedMemberId,
+      email: app.email,
+      temp_password: tempPassword,
+      generated_at: new Date().toISOString(),
+      sent_to: app.email
+    };
+
+    // Update / Create Payment Record
+    const pay = inMemoryStore.payments.find(p => p.membership_application_id === app.id);
+    if (pay) {
+      pay.status = 'VERIFIED';
+      pay.verified_by = req.user.id;
+      pay.verified_at = new Date().toISOString();
+      pay.user_id = newUser.id;
+    } else {
+      inMemoryStore.payments.unshift({
+        id: inMemoryStore.payments.length + 1,
+        user_id: newUser.id,
+        membership_application_id: app.id,
+        payment_type: 'MEMBERSHIP',
+        amount: app.registration_fee || 500,
+        transaction_id: app.transaction_id || 'VERIFIED-ADMIN',
+        payment_date: app.payment_date || new Date().toISOString().split('T')[0],
+        status: 'VERIFIED',
+        verified_by: req.user.id,
+        verified_at: new Date().toISOString(),
+        remarks: `Approved by admin & credentials generated`,
+        created_at: new Date().toISOString()
+      });
+    }
+
+    // Add Audit Log
+    inMemoryStore.auditLogs.unshift({
+      id: inMemoryStore.auditLogs.length + 1,
+      action: 'MEMBER_APPROVED_CREDENTIALS_GENERATED',
+      actor_id: req.user.id,
+      actor_name: req.user.profile?.full_name || 'Admin',
+      entity_type: 'MEMBERSHIP_APPLICATION',
+      entity_id: String(app.id),
+      details: `Approved application ${app.application_no} for ${app.full_name}, generated Member ID ${generatedMemberId}`,
+      created_at: new Date().toISOString()
+    });
+
+    console.log(`✉️ [EMAIL DISPATCH SIMULATION] Sent to ${app.email}:`);
+    console.log(`    Subject: Welcome to MPWZ Union! Your Login ID & Temporary Password`);
+    console.log(`    Member ID: ${generatedMemberId} | Password: ${tempPassword}`);
+
+    res.json({
+      success: true,
+      message: `Member ${app.full_name} approved! Credentials generated & sent to ${app.email}.`,
+      credentials: {
+        member_id: generatedMemberId,
+        email: app.email,
+        temp_password: tempPassword,
+        applicant_name: app.full_name,
+        whatsapp: app.whatsapp_mobile || app.mobile
+      },
+      application: app,
+      user: newUser
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 export default router;

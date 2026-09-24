@@ -14,6 +14,7 @@ export const INITIAL_SYSTEM_SETTINGS = {
   registration_qr_url: "/images/payment-qr.png",
   upi_id: "mpvidyut@sbi",
   account_name: "MP VIDYUT MANDAL ARAKSHIT VAR",
+  
   bank_name: "State Bank of India (SBI)",
   account_number: "389201928341",
   ifsc_code: "SBIN0001234",
