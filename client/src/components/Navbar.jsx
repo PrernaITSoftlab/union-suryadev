@@ -45,25 +45,31 @@ export default function Navbar() {
           <nav className="hidden lg:flex items-center gap-1">
             <Link 
               to="/" 
-              className={`px-3.5 py-2 rounded-xl text-sm font-semibold transition-colors ${isActive('/') ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'}`}
+              className={`px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-colors ${isActive('/') ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'}`}
             >
               Home
             </Link>
             <Link 
               to="/about" 
-              className={`px-3.5 py-2 rounded-xl text-sm font-semibold transition-colors ${isActive('/about') ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'}`}
+              className={`px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-colors ${isActive('/about') ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'}`}
             >
               About Us
             </Link>
             <Link 
               to="/events" 
-              className={`px-3.5 py-2 rounded-xl text-sm font-semibold transition-colors ${isActive('/events') ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'}`}
+              className={`px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-colors ${isActive('/events') ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'}`}
+            >
+              Notices
+            </Link>
+            <Link 
+              to="/events" 
+              className={`px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-colors ${isActive('/events') ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'}`}
             >
               Events
             </Link>
             <Link 
               to="/contact" 
-              className={`px-3.5 py-2 rounded-xl text-sm font-semibold transition-colors ${isActive('/contact') ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'}`}
+              className={`px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-colors ${isActive('/contact') ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'}`}
             >
               Contact Us
             </Link>
@@ -71,17 +77,17 @@ export default function Navbar() {
             {user ? (
               <Link 
                 to={isAdmin ? '/admin/dashboard' : '/dashboard'} 
-                className={`px-3.5 py-2 rounded-xl text-sm font-bold transition-colors flex items-center gap-1.5 ${location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/admin') ? 'bg-amber-600 text-white shadow-md shadow-amber-600/20' : 'text-amber-700 bg-amber-50 border border-amber-200 hover:bg-amber-100'}`}
+                className={`px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-colors flex items-center gap-1.5 ${location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/admin') ? 'bg-amber-600 text-white shadow-md shadow-amber-600/20' : 'text-amber-700 bg-amber-50 border border-amber-200 hover:bg-amber-100'}`}
               >
-                <LayoutDashboard className="w-4 h-4" />
+                <LayoutDashboard className="w-3.5 h-3.5" />
                 <span>{isAdmin ? 'Admin Portal' : 'Member Dashboard'}</span>
               </Link>
             ) : (
               <Link 
                 to="/join" 
-                className={`ml-2 px-4 py-2 rounded-xl text-sm font-bold transition-all shadow-md flex items-center gap-1.5 ${isActive('/join') ? 'bg-amber-600 text-white' : 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold shadow-amber-500/20'}`}
+                className={`ml-1.5 px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition-all shadow-md flex items-center gap-1.5 ${isActive('/join') ? 'bg-amber-600 text-white' : 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 shadow-amber-500/20'}`}
               >
-                <UserPlus className="w-4 h-4" />
+                <UserPlus className="w-3.5 h-3.5" />
                 <span>Join Now</span>
               </Link>
             )}
@@ -280,6 +286,13 @@ export default function Navbar() {
             className="block px-3 py-2 rounded-lg text-base font-semibold text-slate-800 hover:bg-slate-100"
           >
             About Us
+          </Link>
+          <Link
+            to="/events"
+            onClick={() => setMobileMenuOpen(false)}
+            className="block px-3 py-2 rounded-lg text-base font-semibold text-slate-800 hover:bg-slate-100"
+          >
+            Notices
           </Link>
           <Link
             to="/events"
