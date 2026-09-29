@@ -256,7 +256,7 @@ const JoiningFee = () => {
                       <div className="text-xs text-slate-500">Official Receipt No.</div>
                       <div className="text-base font-black text-blue-700">{submittedReceipt.receipt_no}</div>
                     </div>
-                    <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                    <span className="px-3 py-1 rounded-full text-xs font-bold bg-sky-100 text-sky-800 border border-sky-300">
                       {submittedReceipt.status}
                     </span>
                   </div>

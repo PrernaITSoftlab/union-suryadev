@@ -123,7 +123,7 @@ const HeroSlider = ({ compact = false }) => {
       {/* Left Arrow Navigation */}
       <button
         onClick={goToPrev}
-        className="absolute left-3 top-1/2 -translate-y-1/2 z-20 p-2.5 rounded-full bg-slate-950/60 text-white hover:text-slate-950 hover:bg-amber-400 transition-all opacity-80 sm:opacity-0 group-hover:opacity-100 backdrop-blur-md shadow-lg"
+        className="absolute left-3 top-1/2 -translate-y-1/2 z-20 p-2.5 rounded-full bg-slate-950/60 text-white hover:text-slate-950 hover:bg-sky-400 transition-all opacity-80 sm:opacity-0 group-hover:opacity-100 backdrop-blur-md shadow-lg"
         aria-label="Previous Slide"
       >
         <ChevronLeft className="w-5 h-5" />
@@ -132,7 +132,7 @@ const HeroSlider = ({ compact = false }) => {
       {/* Right Arrow Navigation */}
       <button
         onClick={goToNext}
-        className="absolute right-3 top-1/2 -translate-y-1/2 z-20 p-2.5 rounded-full bg-slate-950/60 text-white hover:text-slate-950 hover:bg-amber-400 transition-all opacity-80 sm:opacity-0 group-hover:opacity-100 backdrop-blur-md shadow-lg"
+        className="absolute right-3 top-1/2 -translate-y-1/2 z-20 p-2.5 rounded-full bg-slate-950/60 text-white hover:text-slate-950 hover:bg-sky-400 transition-all opacity-80 sm:opacity-0 group-hover:opacity-100 backdrop-blur-md shadow-lg"
         aria-label="Next Slide"
       >
         <ChevronRight className="w-5 h-5" />
@@ -146,7 +146,7 @@ const HeroSlider = ({ compact = false }) => {
             onClick={() => setCurrentIndex(idx)}
             className={`rounded-full transition-all duration-300 ${compact ? 'h-1.5' : 'h-2'
               } ${idx === currentIndex
-                ? compact ? 'w-6 bg-amber-400 shadow-sm' : 'w-8 bg-amber-400 shadow-sm'
+                ? compact ? 'w-6 bg-sky-400 shadow-sm' : 'w-8 bg-sky-400 shadow-sm'
                 : compact ? 'w-1.5 bg-white/50 hover:bg-white' : 'w-2 bg-white/50 hover:bg-white'
               }`}
             aria-label={`Go to slide ${idx + 1}`}

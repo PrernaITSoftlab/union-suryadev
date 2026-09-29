@@ -41,9 +41,9 @@ export default function Login() {
         
         {/* Header */}
         <div className="text-center space-y-3">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-500 to-amber-600 p-0.5 shadow-md shadow-amber-500/20 mx-auto">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-sky-500 to-blue-600 p-0.5 shadow-md shadow-sky-500/20 mx-auto">
             <div className="w-full h-full bg-white rounded-[14px] flex items-center justify-center">
-              <Shield className="w-8 h-8 text-amber-600" />
+              <Shield className="w-8 h-8 text-sky-600" />
             </div>
           </div>
           <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">
@@ -73,7 +73,7 @@ export default function Login() {
                 placeholder="email@mpwzunion.org"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-300 rounded-xl pl-10 pr-4 py-3 text-xs text-slate-900 focus:outline-none focus:border-amber-500"
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl pl-10 pr-4 py-3 text-xs text-slate-900 focus:outline-none focus:border-sky-500"
               />
             </div>
           </div>
@@ -88,7 +88,7 @@ export default function Login() {
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-300 rounded-xl pl-10 pr-4 py-3 text-xs text-slate-900 focus:outline-none focus:border-amber-500"
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl pl-10 pr-4 py-3 text-xs text-slate-900 focus:outline-none focus:border-sky-500"
               />
             </div>
           </div>
@@ -96,7 +96,7 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3.5 rounded-xl font-bold text-xs bg-amber-500 hover:bg-amber-400 text-slate-950 transition-colors flex items-center justify-center gap-2 shadow-sm"
+            className="w-full py-3.5 rounded-xl font-bold text-xs bg-sky-600 hover:bg-sky-500 text-white transition-colors flex items-center justify-center gap-2 shadow-md"
           >
             <LogIn className="w-4 h-4" />
             <span>{loading ? 'Authenticating...' : 'Sign In to Portal'}</span>
@@ -104,7 +104,7 @@ export default function Login() {
 
           <div className="pt-2 text-center text-xs text-slate-600 font-medium">
             Don't have a Union Member Account yet?{' '}
-            <Link to="/join" className="text-amber-700 font-extrabold hover:underline">
+            <Link to="/join" className="text-sky-700 font-extrabold hover:underline">
               Apply via Join Now
             </Link>
           </div>

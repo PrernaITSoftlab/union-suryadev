@@ -33,20 +33,14 @@ export default function AnnouncementPopup() {
 
   return (
     <div className="fixed top-20 right-4 left-4 md:left-auto md:right-6 md:w-[350px] sm:w-[320px] z-50 transition-all duration-300 transform translate-y-0">
-      <div className={`relative overflow-hidden rounded-xl border shadow-xl backdrop-blur-xl ${
-        isUrgent 
-          ? 'bg-red-50/95 border-red-300 text-red-950 shadow-red-500/10'
-          : 'bg-white/95 border-amber-300 text-slate-900 shadow-lg'
-      }`}>
+      <div className="relative overflow-hidden rounded-xl border border-sky-200 bg-white/95 text-slate-900 shadow-xl shadow-sky-500/10 backdrop-blur-xl">
         {/* Top Header Bar */}
-        <div className={`px-3 py-1 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider ${
-          isUrgent ? 'bg-red-600 text-white' : 'bg-amber-500 text-slate-950'
-        }`}>
+        <div className="px-3 py-1 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider bg-gradient-to-r from-sky-600 via-sky-700 to-blue-700 text-white">
           <div className="flex items-center gap-1.5">
-            {isUrgent ? <ShieldAlert className="w-3.5 h-3.5 text-white animate-pulse" /> : <Bell className="w-3.5 h-3.5 text-slate-950" />}
+            <Bell className="w-3.5 h-3.5 text-sky-100" />
             <span>{currentPopup.type} NOTICE</span>
             {visiblePopups.length > 1 && (
-              <span className="ml-1 px-1 py-0.2 rounded bg-black/20 text-white text-[9px]">
+              <span className="ml-1 px-1 py-0.2 rounded bg-white/20 text-white text-[9px]">
                 {currentPopupIndex + 1}/{visiblePopups.length}
               </span>
             )}
@@ -56,16 +50,16 @@ export default function AnnouncementPopup() {
             <span className="text-[9px] font-mono opacity-80">{timeRemaining}s</span>
             <button
               onClick={() => dismissPopup(currentPopup.id)}
-              className="p-0.5 rounded hover:bg-black/10 transition-colors"
+              className="p-0.5 rounded hover:bg-white/20 transition-colors"
               title="Close notice"
             >
-              <X className="w-3.5 h-3.5" />
+              <X className="w-3.5 h-3.5 text-white" />
             </button>
           </div>
         </div>
 
         {/* Content Body */}
-        <div className="p-3 flex flex-col gap-1">
+        <div className="p-3.5 flex flex-col gap-1">
           <h4 className="font-bold text-xs leading-snug tracking-tight text-slate-900">
             {currentPopup.title}
           </h4>
@@ -73,16 +67,14 @@ export default function AnnouncementPopup() {
             {currentPopup.description}
           </p>
 
-          <div className="mt-1 flex items-center justify-between pt-1 border-t border-slate-200/60">
+          <div className="mt-1 flex items-center justify-between pt-2 border-t border-slate-100">
             <Link
               to="/events"
               onClick={() => dismissPopup(currentPopup.id)}
-              className={`inline-flex items-center gap-1 text-[11px] font-bold ${
-                isUrgent ? 'text-red-700 hover:text-red-900' : 'text-amber-700 hover:text-amber-900'
-              }`}
+              className="inline-flex items-center gap-1 text-[11px] font-bold text-sky-600 hover:text-sky-800"
             >
               <span>View Details</span>
-              <ArrowRight className="w-3 h-3" />
+              <ArrowRight className="w-3 h-3 text-sky-600" />
             </Link>
 
             {visiblePopups.length > 1 && (
@@ -97,9 +89,9 @@ export default function AnnouncementPopup() {
         </div>
 
         {/* Timer progress bar */}
-        <div className="h-0.5 bg-slate-200 w-full">
+        <div className="h-0.5 bg-slate-100 w-full">
           <div 
-            className={`h-full transition-all duration-1000 ${isUrgent ? 'bg-red-600' : 'bg-amber-500'}`} 
+            className="h-full bg-gradient-to-r from-sky-500 to-blue-600 transition-all duration-1000" 
             style={{ width: `${(timeRemaining / 10) * 100}%` }}
           />
         </div>

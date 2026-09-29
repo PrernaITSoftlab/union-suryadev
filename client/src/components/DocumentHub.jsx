@@ -242,7 +242,7 @@ const DocumentHub = () => {
                       {doc.category}
                     </span>
                     <span className="px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-600 text-[10px] font-semibold flex items-center gap-1">
-                      {doc.access_level === 'public' ? <Globe className="w-3 h-3 text-emerald-600" /> : <Lock className="w-3 h-3 text-amber-600" />}
+                      {doc.access_level === 'public' ? <Globe className="w-3 h-3 text-emerald-600" /> : <Lock className="w-3 h-3 text-sky-600" />}
                       {doc.file_type || 'PDF'}
                     </span>
                   </div>

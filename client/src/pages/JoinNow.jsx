@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { UserPlus, QrCode, CheckCircle, AlertCircle, ArrowRight, FileText, MessageSquare, ExternalLink } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { UserPlus, QrCode, CheckCircle, AlertCircle, ArrowRight, FileText, MessageSquare, ExternalLink, ShieldCheck, ChevronDown, Search } from 'lucide-react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -14,27 +14,85 @@ const COMPANIES = [
   "Other Discom / Company"
 ];
 
+// All 55 Districts of Madhya Pradesh
 const DISTRICTS = [
-  "Indore (इन्दौर)",
-  "Ujjain (उज्जैन)",
+  "Agar Malwa (आगर मालवा)",
+  "Alirajpur (अलीराजपुर)",
+  "Anuppur (अनूपपुर)",
+  "Ashoknagar (अशोकनगर)",
+  "Balaghat (बालाघाट)",
+  "Barwani (बड़वानी)",
+  "Betul (बैतूल)",
+  "Bhind (भिंड)",
+  "Bhopal (भोपाल)",
+  "Burhanpur (बुरहानपुर)",
+  "Chhatarpur (छतरपुर)",
+  "Chhindwara (छिंदवाड़ा)",
+  "Damoh (दमोह)",
+  "Datia (दतिया)",
   "Dewas (देवास)",
   "Dhar (धार)",
-  "Khargone / West Nimar (खरगौन)",
-  "Khandwa / East Nimar (खंडवा)",
-  "Burhanpur (बुरहानपुर)",
-  "Barwani (बड़वानी)",
-  "Ratlam (रतलाम)",
-  "Mandsaur (मंदसौर)",
-  "Neemuch (नीमच)",
-  "Jhabua (झाबुआ)",
-  "Alirajpur (अलीराजपुर)",
-  "Bhopal (भोपाल)",
+  "Dindori (डिंडोरी)",
+  "Guna (गुणा)",
   "Gwalior (ग्वालियर)",
+  "Harda (हरदा)",
+  "Hoshangabad / Narmadapuram (नर्मदापुरम)",
+  "Indore (इन्दौर)",
   "Jabalpur (जबलपुर)",
-  "Sagar (सागर)",
+  "Jhabua (झाबुआ)",
+  "Katni (कटनी)",
+  "Khandwa / East Nimar (खंडवा)",
+  "Khargone / West Nimar (खरगौन)",
+  "Maihar (मैहर)",
+  "Mandla (मंडला)",
+  "Mandsaur (मंदसौर)",
+  "Mauganj (मऊगंज)",
+  "Morena (मुरैना)",
+  "Narsinghpur (नरसिंहपुर)",
+  "Neemuch (नीमच)",
+  "Niwari (निवाड़ी)",
+  "Pandhurna (पांढुर्णा)",
+  "Panna (पन्ना)",
+  "Raisen (रायसेन)",
+  "Rajgarh (राजगढ़)",
+  "Ratlam (रतलाम)",
   "Rewa (रीवा)",
+  "Sagar (सागर)",
   "Satna (सतना)",
+  "Sehore (सीहोर)",
+  "Seoni (सिवनी)",
+  "Shahdol (शहडोल)",
+  "Shajapur (शाजापुर)",
+  "Sheopur (श्योपुर)",
+  "Shivpuri (शिवपुरी)",
+  "Sidhi (सीधी)",
+  "Singrauli (सिंगरौली)",
+  "Tikamgarh (टीकमगढ़)",
+  "Ujjain (उज्जैन)",
+  "Umaria (उमरिया)",
+  "Vidisha (विदिशा)",
   "Other District"
+];
+
+const EMPLOYEE_TYPES = [
+  "Regular",
+  "Contract Based",
+  "OutSource",
+  "Other"
+];
+
+const CATEGORIES = [
+  "ST",
+  "SC",
+  "OBC",
+  "Other"
+];
+
+const EMPLOYEE_CLASSES = [
+  "Class 1",
+  "Class 2",
+  "Class 3",
+  "Class 4"
 ];
 
 const POSTS = [
@@ -60,35 +118,26 @@ export default function JoinNow() {
 
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
-    // 1. Name of Company * — dropdown
     company_name: COMPANIES[0],
-    // 2. Name of District * — dropdown
-    district_name: DISTRICTS[0],
-    // 3. Circle Name — text input
+    district_name: DISTRICTS[21], // Default Indore
     circle_name: '',
-    // 4. Division Name — text input
     division_name: '',
-    // 5. Office Name (DC/Zone/etc.) * — text input
     office_name: '',
-    // 6. Joining Year (किस वर्ष में नौकरी ज्वाइन की) — dropdown
     joining_year: '',
-    // 7. Your Name * — text input
     full_name: '',
-    // 8. Father’s Name * — text input
     father_name: '',
-    // 9. Name of Post * — dropdown
     post_name: POSTS[0],
-    // 10. Post in Department (विभाग में पद) — text input
     dept_post: '',
-    // 11. Post in Union (Member, etc.) (संगठन में पद) — text input
     union_post: 'Member',
-    // 12. Mobile Number (CUG) (Official) — phone input
+    
+    // New requested fields
+    employee_type: EMPLOYEE_TYPES[0], // Regular
+    category: CATEGORIES[2], // OBC
+    employee_class: EMPLOYEE_CLASSES[2], // Class 3
+
     cug_mobile: '',
-    // 13. Mobile Number (WhatsApp) (Personal) * — phone input
     whatsapp_mobile: '',
-    // 14. Year of Membership * — radio/select
     membership_year: '2026-2027',
-    // 15. Name (By reference) (रेफरेंस कराने वाले पदाधिकारी/सदस्य का नाम) * — text input
     reference_name: '',
 
     // Terms & Payment details
@@ -104,11 +153,27 @@ export default function JoinNow() {
   const [feedback, setFeedback] = useState(null);
   const [submittedApplication, setSubmittedApplication] = useState(null);
 
-  const regFee = settings?.registration_fee || 60;
+  // Custom District Dropdown state
+  const [districtOpen, setDistrictOpen] = useState(false);
+  const [districtSearch, setDistrictSearch] = useState('');
+  const districtDropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (districtDropdownRef.current && !districtDropdownRef.current.contains(event.target)) {
+        setDistrictOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Fee calculation: Class 1 or Class 2 -> ₹1000; Class 3 or Class 4 -> ₹500
+  const regFee = (formData.employee_class === 'Class 1' || formData.employee_class === 'Class 2') ? 1000 : 500;
+  
   const qrUrl = settings?.registration_qr_url || '/images/payment-qr.png';
   const whatsappNo = settings?.payment_whatsapp_number || '+91 98260 11223';
 
-  // Field change handler
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     if (fieldErrors[field]) {
@@ -116,45 +181,35 @@ export default function JoinNow() {
     }
   };
 
-  // Step 1 Validation & Proceed
   const handleStep1Submit = (e) => {
     e.preventDefault();
     const errors = {};
 
-    // 1. Company Name *
     if (!formData.company_name) errors.company_name = 'Name of Company is required.';
-    // 2. District Name *
     if (!formData.district_name) errors.district_name = 'Name of District is required.';
-    // 5. Office Name *
     if (!formData.office_name || !formData.office_name.trim()) errors.office_name = 'Office Name (DC/Zone/etc.) is required.';
-    // 7. Your Name *
     if (!formData.full_name || formData.full_name.trim().length < 2) errors.full_name = 'Your Name is required (at least 2 characters).';
-    // 8. Father's Name *
     if (!formData.father_name || formData.father_name.trim().length < 2) errors.father_name = "Father's Name is required.";
-    // 9. Name of Post *
     if (!formData.post_name) errors.post_name = 'Name of Post is required.';
+    if (!formData.employee_type) errors.employee_type = 'Employee Type is required.';
+    if (!formData.category) errors.category = 'Category is required.';
+    if (!formData.employee_class) errors.employee_class = 'Employee Class is required.';
     
-    // 12. CUG Mobile (Optional format check)
     const cleanCug = formData.cug_mobile.replace(/\D/g, '');
     if (formData.cug_mobile && cleanCug.length !== 10) {
       errors.cug_mobile = 'CUG Mobile Number must be 10 digits.';
     }
 
-    // 13. Mobile Number (WhatsApp) * (Required 10 digits)
     const cleanWa = formData.whatsapp_mobile.replace(/\D/g, '');
     if (!formData.whatsapp_mobile || cleanWa.length !== 10) {
       errors.whatsapp_mobile = 'Valid 10-digit WhatsApp Mobile Number is required.';
     }
 
-    // 14. Year of Membership *
     if (!formData.membership_year) errors.membership_year = 'Year of Membership is required.';
-
-    // 15. Name (By reference) *
     if (!formData.reference_name || !formData.reference_name.trim()) {
       errors.reference_name = 'Name (By reference) of official/member is required.';
     }
 
-    // Terms check
     if (!formData.terms_accepted) {
       errors.terms_accepted = 'You must accept the Union Declaration to proceed.';
     }
@@ -172,7 +227,6 @@ export default function JoinNow() {
     window.scrollTo({ top: 100, behavior: 'smooth' });
   };
 
-  // Step 2 Final Submission
   const handleFinalSubmit = async (e) => {
     e.preventDefault();
     if (!formData.transaction_id || !formData.transaction_id.trim()) {
@@ -186,6 +240,7 @@ export default function JoinNow() {
     try {
       const payload = {
         ...formData,
+        registration_fee: regFee,
         full_name: formData.full_name.trim(),
         father_name: formData.father_name.trim(),
         whatsapp_mobile: formData.whatsapp_mobile.trim(),
@@ -206,7 +261,7 @@ export default function JoinNow() {
   };
 
   const cleanPhone = whatsappNo.replace(/[^0-9]/g, '');
-  const waMsg = encodeURIComponent(`*MPWZ UNION MEMBERSHIP REGISTRATION*\nName: ${formData.full_name}\nDistrict: ${formData.district_name}\nUTR: ${formData.transaction_id || 'N/A'}\nPlease verify my membership application. Thank you!`);
+  const waMsg = encodeURIComponent(`*MPWZ UNION MEMBERSHIP REGISTRATION*\nName: ${formData.full_name}\nDistrict: ${formData.district_name}\nClass: ${formData.employee_class} (Fee: ₹${regFee})\nUTR: ${formData.transaction_id || 'N/A'}\nPlease verify my membership application. Thank you!`);
   const waLink = `https://wa.me/${cleanPhone.startsWith('91') ? cleanPhone : '91' + cleanPhone}?text=${waMsg}`;
 
   return (
@@ -215,32 +270,32 @@ export default function JoinNow() {
         
         {/* Header */}
         <div className="text-center space-y-3">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-100 border border-amber-300 text-amber-900 text-xs font-bold uppercase tracking-wider shadow-sm">
-            <UserPlus className="w-3.5 h-3.5 text-amber-700" />
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-sky-100 border border-sky-300 text-sky-900 text-xs font-bold uppercase tracking-wider shadow-sm">
+            <UserPlus className="w-3.5 h-3.5 text-sky-700" />
             <span>Union Membership Form • सदस्यता फॉर्म</span>
           </div>
           <h1 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
             Apply to Join MP West Zone Electricity Union
           </h1>
           <p className="text-xs sm:text-sm text-slate-600 font-medium max-w-2xl mx-auto">
-            Please fill out all required fields marked with <span className="text-red-500 font-bold">*</span> accurately. Applications are verified by Union Admin.
+            Please fill out all required fields marked with <span className="text-red-500 font-bold">*</span> accurately. Select your Employee Class to determine your registration fee (Class 1 & 2: ₹1000 | Class 3 & 4: ₹500).
           </p>
         </div>
 
         {/* Progress Tracker Bar */}
         <div className="flex items-center justify-center gap-3 sm:gap-6 text-xs font-bold border-b border-slate-200 pb-5">
-          <div className={`flex items-center gap-2 ${step >= 1 ? 'text-amber-700' : 'text-slate-400'}`}>
-            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${step >= 1 ? 'bg-amber-500 text-slate-950 font-extrabold' : 'bg-slate-200 text-slate-500'}`}>1</span>
+          <div className={`flex items-center gap-2 ${step >= 1 ? 'text-sky-700' : 'text-slate-400'}`}>
+            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${step >= 1 ? 'bg-sky-600 text-white font-extrabold' : 'bg-slate-200 text-slate-500'}`}>1</span>
             <span>Member Details</span>
           </div>
           <span className="text-slate-300">• • •</span>
-          <div className={`flex items-center gap-2 ${step >= 2 ? 'text-amber-700' : 'text-slate-400'}`}>
-            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${step >= 2 ? 'bg-amber-500 text-slate-950 font-extrabold' : 'bg-slate-200 text-slate-500'}`}>2</span>
-            <span>Payment & UTR</span>
+          <div className={`flex items-center gap-2 ${step >= 2 ? 'text-sky-700' : 'text-slate-400'}`}>
+            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${step >= 2 ? 'bg-sky-600 text-white font-extrabold' : 'bg-slate-200 text-slate-500'}`}>2</span>
+            <span>Payment (₹{regFee}) & UTR</span>
           </div>
           <span className="text-slate-300">• • •</span>
-          <div className={`flex items-center gap-2 ${step >= 3 ? 'text-emerald-700' : 'text-slate-400'}`}>
-            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${step >= 3 ? 'bg-emerald-500 text-white font-extrabold' : 'bg-slate-200 text-slate-500'}`}>3</span>
+          <div className={`flex items-center gap-2 ${step >= 3 ? 'text-sky-700' : 'text-slate-400'}`}>
+            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${step >= 3 ? 'bg-sky-600 text-white font-extrabold' : 'bg-slate-200 text-slate-500'}`}>3</span>
             <span>Confirmation</span>
           </div>
         </div>
@@ -259,7 +314,7 @@ export default function JoinNow() {
             
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h2 className="text-lg font-extrabold text-slate-900 flex items-center gap-2">
-                <FileText className="w-5 h-5 text-amber-600" />
+                <FileText className="w-5 h-5 text-sky-600" />
                 <span>Membership Form</span>
               </h2>
               <span className="text-xs font-semibold text-slate-500">* Required Fields</span>
@@ -276,7 +331,7 @@ export default function JoinNow() {
                 <select
                   value={formData.company_name}
                   onChange={(e) => handleChange('company_name', e.target.value)}
-                  className={`w-full bg-slate-50 border ${fieldErrors.company_name ? 'border-red-500 bg-red-50/50' : 'border-slate-300'} rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-amber-500 font-medium`}
+                  className={`w-full bg-slate-50 border ${fieldErrors.company_name ? 'border-red-500 bg-red-50/50' : 'border-slate-300'} rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-sky-500 font-medium`}
                 >
                   {COMPANIES.map((comp, idx) => (
                     <option key={idx} value={comp}>{comp}</option>
@@ -285,75 +340,190 @@ export default function JoinNow() {
                 {fieldErrors.company_name && <p className="text-[11px] text-red-600 mt-1 font-semibold">{fieldErrors.company_name}</p>}
               </div>
 
-              {/* 2. Name of District * — dropdown */}
-              <div className="md:col-span-1">
+              {/* 2. Name of District * — dropdown opening downside with all 55 MP districts */}
+              <div className="md:col-span-1 relative" ref={districtDropdownRef}>
                 <label className="block text-xs font-bold text-slate-800 mb-1">
                   2. Name of District <span className="text-red-500">*</span>
                 </label>
-                <select
-                  value={formData.district_name}
-                  onChange={(e) => handleChange('district_name', e.target.value)}
-                  className={`w-full bg-slate-50 border ${fieldErrors.district_name ? 'border-red-500 bg-red-50/50' : 'border-slate-300'} rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-amber-500 font-medium`}
+                <button
+                  type="button"
+                  onClick={() => setDistrictOpen(!districtOpen)}
+                  className={`w-full bg-slate-50 border ${fieldErrors.district_name ? 'border-red-500 bg-red-50/50' : 'border-slate-300'} rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-sky-500 font-medium flex items-center justify-between text-left shadow-sm`}
                 >
-                  {DISTRICTS.map((dist, idx) => (
-                    <option key={idx} value={dist}>{dist}</option>
-                  ))}
-                </select>
+                  <span className="truncate">{formData.district_name || '-- Select District --'}</span>
+                  <ChevronDown className={`w-4 h-4 text-slate-500 shrink-0 transition-transform ${districtOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {districtOpen && (
+                  <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-white border border-slate-200 rounded-2xl shadow-xl p-2 space-y-1.5 animate-in fade-in slide-in-from-top-1 duration-150">
+                    <div className="relative">
+                      <Search className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-slate-400" />
+                      <input
+                        type="text"
+                        placeholder="Search district..."
+                        value={districtSearch}
+                        onChange={(e) => setDistrictSearch(e.target.value)}
+                        className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-none focus:border-sky-500 font-medium"
+                        autoFocus
+                      />
+                    </div>
+                    <div className="max-h-56 overflow-y-auto space-y-0.5 pt-1">
+                      {DISTRICTS.filter(dist => dist.toLowerCase().includes(districtSearch.toLowerCase())).map((dist, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => {
+                            handleChange('district_name', dist);
+                            setDistrictOpen(false);
+                            setDistrictSearch('');
+                          }}
+                          className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                            formData.district_name === dist 
+                              ? 'bg-sky-600 text-white font-bold' 
+                              : 'text-slate-800 hover:bg-sky-50 hover:text-sky-700'
+                          }`}
+                        >
+                          {dist}
+                        </button>
+                      ))}
+                      {DISTRICTS.filter(dist => dist.toLowerCase().includes(districtSearch.toLowerCase())).length === 0 && (
+                        <div className="px-3 py-2 text-xs text-slate-400 text-center font-medium">No matching district found</div>
+                      )}
+                    </div>
+                  </div>
+                )}
                 {fieldErrors.district_name && <p className="text-[11px] text-red-600 mt-1 font-semibold">{fieldErrors.district_name}</p>}
               </div>
 
-              {/* 3. Circle Name — text input */}
+              {/* NEW FIELD 1: Employee Type * */}
               <div className="md:col-span-1">
                 <label className="block text-xs font-bold text-slate-800 mb-1">
-                  3. Circle Name
+                  3. Employee Type (कर्मचारी का प्रकार) <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={formData.employee_type}
+                  onChange={(e) => handleChange('employee_type', e.target.value)}
+                  className={`w-full bg-slate-50 border ${fieldErrors.employee_type ? 'border-red-500 bg-red-50/50' : 'border-slate-300'} rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-sky-500 font-medium`}
+                >
+                  {EMPLOYEE_TYPES.map((type, idx) => (
+                    <option key={idx} value={type}>{type}</option>
+                  ))}
+                </select>
+                {fieldErrors.employee_type && <p className="text-[11px] text-red-600 mt-1 font-semibold">{fieldErrors.employee_type}</p>}
+              </div>
+
+              {/* NEW FIELD 2: Category * */}
+              <div className="md:col-span-1">
+                <label className="block text-xs font-bold text-slate-800 mb-1">
+                  4. Category (वर्ग / श्रेणी) <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={formData.category}
+                  onChange={(e) => handleChange('category', e.target.value)}
+                  className={`w-full bg-slate-50 border ${fieldErrors.category ? 'border-red-500 bg-red-50/50' : 'border-slate-300'} rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-sky-500 font-medium`}
+                >
+                  {CATEGORIES.map((cat, idx) => (
+                    <option key={idx} value={cat}>{cat}</option>
+                  ))}
+                </select>
+                {fieldErrors.category && <p className="text-[11px] text-red-600 mt-1 font-semibold">{fieldErrors.category}</p>}
+              </div>
+
+              {/* NEW FIELD 3: Employee Class * (Dynamic Fee Rule: Class 1/2 = 1000rs | Class 3/4 = 500rs) */}
+              <div className="md:col-span-2 p-4 rounded-2xl bg-sky-50/70 border border-sky-200 space-y-2">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <label className="block text-xs font-bold text-slate-900">
+                    5. Employee Class (कर्मचारी श्रेणी) <span className="text-red-500">*</span>
+                  </label>
+                  <span className="px-2.5 py-1 rounded-full bg-sky-600 text-white font-extrabold text-[11px] shadow-sm">
+                    Applicable Registration Fee: ₹{regFee}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
+                  {EMPLOYEE_CLASSES.map((cls) => {
+                    const isSelected = formData.employee_class === cls;
+                    const feeForCls = (cls === 'Class 1' || cls === 'Class 2') ? 1000 : 500;
+                    return (
+                      <label 
+                        key={cls} 
+                        className={`p-3 rounded-xl border cursor-pointer transition-all text-center flex flex-col items-center justify-center gap-1 ${
+                          isSelected 
+                            ? 'bg-sky-600 text-white border-sky-600 shadow-md font-bold' 
+                            : 'bg-white border-slate-300 hover:border-sky-400 text-slate-800'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="employee_class"
+                          value={cls}
+                          checked={isSelected}
+                          onChange={(e) => handleChange('employee_class', e.target.value)}
+                          className="sr-only"
+                        />
+                        <span className="text-xs font-extrabold">{cls}</span>
+                        <span className={`text-[10px] font-mono ${isSelected ? 'text-sky-100 font-bold' : 'text-sky-700 font-semibold'}`}>
+                          Fee: ₹{feeForCls}
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+                {fieldErrors.employee_class && <p className="text-[11px] text-red-600 mt-1 font-semibold">{fieldErrors.employee_class}</p>}
+              </div>
+
+              {/* 6. Circle Name — text input */}
+              <div className="md:col-span-1">
+                <label className="block text-xs font-bold text-slate-800 mb-1">
+                  6. Circle Name
                 </label>
                 <input
                   type="text"
                   placeholder="e.g. Indore Circle / Ujjain Circle"
                   value={formData.circle_name}
                   onChange={(e) => handleChange('circle_name', e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-amber-500 font-medium"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-sky-500 font-medium"
                 />
               </div>
 
-              {/* 4. Division Name — text input */}
+              {/* 7. Division Name — text input */}
               <div className="md:col-span-1">
                 <label className="block text-xs font-bold text-slate-800 mb-1">
-                  4. Division Name
+                  7. Division Name
                 </label>
                 <input
                   type="text"
                   placeholder="e.g. West Division / North Division"
                   value={formData.division_name}
                   onChange={(e) => handleChange('division_name', e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-amber-500 font-medium"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-sky-500 font-medium"
                 />
               </div>
 
-              {/* 5. Office Name (DC/Zone/etc.) * — text input */}
+              {/* 8. Office Name (DC/Zone/etc.) * — text input */}
               <div className="md:col-span-1">
                 <label className="block text-xs font-bold text-slate-800 mb-1">
-                  5. Office Name (DC/Zone/etc.) <span className="text-red-500">*</span>
+                  8. Office Name (DC/Zone/etc.) <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   placeholder="e.g. DC Annapurna / Zone 1 Office"
                   value={formData.office_name}
                   onChange={(e) => handleChange('office_name', e.target.value)}
-                  className={`w-full bg-slate-50 border ${fieldErrors.office_name ? 'border-red-500 bg-red-50/50' : 'border-slate-300'} rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-amber-500 font-medium`}
+                  className={`w-full bg-slate-50 border ${fieldErrors.office_name ? 'border-red-500 bg-red-50/50' : 'border-slate-300'} rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-sky-500 font-medium`}
                 />
                 {fieldErrors.office_name && <p className="text-[11px] text-red-600 mt-1 font-semibold">{fieldErrors.office_name}</p>}
               </div>
 
-              {/* 6. Joining Year (किस वर्ष में नौकरी ज्वाइन की) — dropdown */}
+              {/* 9. Joining Year (किस वर्ष में नौकरी ज्वाइन की) — dropdown */}
               <div className="md:col-span-1">
                 <label className="block text-xs font-bold text-slate-800 mb-1">
-                  6. Joining Year (किस वर्ष में नौकरी ज्वाइन की)
+                  9. Joining Year (किस वर्ष में नौकरी ज्वाइन की)
                 </label>
                 <select
                   value={formData.joining_year}
                   onChange={(e) => handleChange('joining_year', e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-amber-500 font-medium"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-sky-500 font-medium"
                 >
                   <option value="">-- Select Joining Year --</option>
                   {JOINING_YEARS.map((yr) => (
@@ -362,45 +532,45 @@ export default function JoinNow() {
                 </select>
               </div>
 
-              {/* 7. Your Name * — text input */}
+              {/* 10. Your Name * — text input */}
               <div className="md:col-span-1">
                 <label className="block text-xs font-bold text-slate-800 mb-1">
-                  7. Your Name <span className="text-red-500">*</span>
+                  10. Your Name <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   placeholder="e.g. Rajesh Kumar Sharma"
                   value={formData.full_name}
                   onChange={(e) => handleChange('full_name', e.target.value)}
-                  className={`w-full bg-slate-50 border ${fieldErrors.full_name ? 'border-red-500 bg-red-50/50' : 'border-slate-300'} rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-amber-500 font-medium`}
+                  className={`w-full bg-slate-50 border ${fieldErrors.full_name ? 'border-red-500 bg-red-50/50' : 'border-slate-300'} rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-sky-500 font-medium`}
                 />
                 {fieldErrors.full_name && <p className="text-[11px] text-red-600 mt-1 font-semibold">{fieldErrors.full_name}</p>}
               </div>
 
-              {/* 8. Father’s Name * — text input */}
+              {/* 11. Father’s Name * — text input */}
               <div className="md:col-span-1">
                 <label className="block text-xs font-bold text-slate-800 mb-1">
-                  8. Father’s Name <span className="text-red-500">*</span>
+                  11. Father’s Name <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   placeholder="e.g. Shri O. P. Sharma"
                   value={formData.father_name}
                   onChange={(e) => handleChange('father_name', e.target.value)}
-                  className={`w-full bg-slate-50 border ${fieldErrors.father_name ? 'border-red-500 bg-red-50/50' : 'border-slate-300'} rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-amber-500 font-medium`}
+                  className={`w-full bg-slate-50 border ${fieldErrors.father_name ? 'border-red-500 bg-red-50/50' : 'border-slate-300'} rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-sky-500 font-medium`}
                 />
                 {fieldErrors.father_name && <p className="text-[11px] text-red-600 mt-1 font-semibold">{fieldErrors.father_name}</p>}
               </div>
 
-              {/* 9. Name of Post * — dropdown */}
+              {/* 12. Name of Post * — dropdown */}
               <div className="md:col-span-1">
                 <label className="block text-xs font-bold text-slate-800 mb-1">
-                  9. Name of Post <span className="text-red-500">*</span>
+                  12. Name of Post <span className="text-red-500">*</span>
                 </label>
                 <select
                   value={formData.post_name}
                   onChange={(e) => handleChange('post_name', e.target.value)}
-                  className={`w-full bg-slate-50 border ${fieldErrors.post_name ? 'border-red-500 bg-red-50/50' : 'border-slate-300'} rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-amber-500 font-medium`}
+                  className={`w-full bg-slate-50 border ${fieldErrors.post_name ? 'border-red-500 bg-red-50/50' : 'border-slate-300'} rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-sky-500 font-medium`}
                 >
                   {POSTS.map((pst, idx) => (
                     <option key={idx} value={pst}>{pst}</option>
@@ -409,38 +579,38 @@ export default function JoinNow() {
                 {fieldErrors.post_name && <p className="text-[11px] text-red-600 mt-1 font-semibold">{fieldErrors.post_name}</p>}
               </div>
 
-              {/* 10. Post in Department (विभाग में पद) — text input */}
+              {/* 13. Post in Department (विभाग में पद) — text input */}
               <div className="md:col-span-1">
                 <label className="block text-xs font-bold text-slate-800 mb-1">
-                  10. Post in Department (विभाग में पद)
+                  13. Post in Department (विभाग में पद)
                 </label>
                 <input
                   type="text"
                   placeholder="e.g. Senior Lineman / Shift In-Charge"
                   value={formData.dept_post}
                   onChange={(e) => handleChange('dept_post', e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-amber-500 font-medium"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-sky-500 font-medium"
                 />
               </div>
 
-              {/* 11. Post in Union (Member, etc.) (संगठन में पद) — text input */}
+              {/* 14. Post in Union (Member, etc.) (संगठन में पद) — text input */}
               <div className="md:col-span-1">
                 <label className="block text-xs font-bold text-slate-800 mb-1">
-                  11. Post in Union (Member, etc.) (संगठन में पद)
+                  14. Post in Union (Member, etc.) (संगठन में पद)
                 </label>
                 <input
                   type="text"
                   placeholder="e.g. Member / District Vice President"
                   value={formData.union_post}
                   onChange={(e) => handleChange('union_post', e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-amber-500 font-medium"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-sky-500 font-medium"
                 />
               </div>
 
-              {/* 12. Mobile Number (CUG) (Official) — phone input */}
+              {/* 15. Mobile Number (CUG) (Official) — phone input */}
               <div className="md:col-span-1">
                 <label className="block text-xs font-bold text-slate-800 mb-1">
-                  12. Mobile Number (CUG) (Official)
+                  15. Mobile Number (CUG) (Official)
                 </label>
                 <input
                   type="tel"
@@ -448,15 +618,15 @@ export default function JoinNow() {
                   placeholder="e.g. 9425000000"
                   value={formData.cug_mobile}
                   onChange={(e) => handleChange('cug_mobile', e.target.value)}
-                  className={`w-full bg-slate-50 border ${fieldErrors.cug_mobile ? 'border-red-500 bg-red-50/50' : 'border-slate-300'} rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-amber-500 font-mono`}
+                  className={`w-full bg-slate-50 border ${fieldErrors.cug_mobile ? 'border-red-500 bg-red-50/50' : 'border-slate-300'} rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-sky-500 font-mono`}
                 />
                 {fieldErrors.cug_mobile && <p className="text-[11px] text-red-600 mt-1 font-semibold">{fieldErrors.cug_mobile}</p>}
               </div>
 
-              {/* 13. Mobile Number (WhatsApp) (Personal) * — phone input */}
+              {/* 16. Mobile Number (WhatsApp) (Personal) * — phone input */}
               <div className="md:col-span-1">
                 <label className="block text-xs font-bold text-slate-800 mb-1">
-                  13. Mobile Number (WhatsApp) (Personal) <span className="text-red-500">*</span>
+                  16. Mobile Number (WhatsApp) (Personal) <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="tel"
@@ -464,26 +634,26 @@ export default function JoinNow() {
                   placeholder="e.g. 9826011223"
                   value={formData.whatsapp_mobile}
                   onChange={(e) => handleChange('whatsapp_mobile', e.target.value)}
-                  className={`w-full bg-slate-50 border ${fieldErrors.whatsapp_mobile ? 'border-red-500 bg-red-50/50' : 'border-slate-300'} rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-amber-500 font-mono`}
+                  className={`w-full bg-slate-50 border ${fieldErrors.whatsapp_mobile ? 'border-red-500 bg-red-50/50' : 'border-slate-300'} rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-sky-500 font-mono`}
                 />
                 {fieldErrors.whatsapp_mobile && <p className="text-[11px] text-red-600 mt-1 font-semibold">{fieldErrors.whatsapp_mobile}</p>}
               </div>
 
-              {/* 14. Year of Membership * — radio/select */}
+              {/* 17. Year of Membership * — radio/select */}
               <div className="md:col-span-1">
                 <label className="block text-xs font-bold text-slate-800 mb-1">
-                  14. Year of Membership <span className="text-red-500">*</span>
+                  17. Year of Membership <span className="text-red-500">*</span>
                 </label>
                 <div className="flex flex-wrap items-center gap-3 pt-1">
                   {MEMBERSHIP_YEARS.map((yr) => (
-                    <label key={yr} className="inline-flex items-center gap-1.5 text-xs text-slate-800 cursor-pointer font-medium bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg hover:border-amber-400">
+                    <label key={yr} className="inline-flex items-center gap-1.5 text-xs text-slate-800 cursor-pointer font-medium bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg hover:border-sky-400">
                       <input
                         type="radio"
                         name="membership_year"
                         value={yr}
                         checked={formData.membership_year === yr}
                         onChange={(e) => handleChange('membership_year', e.target.value)}
-                        className="accent-amber-600 w-3.5 h-3.5"
+                        className="accent-sky-600 w-3.5 h-3.5"
                       />
                       <span>{yr}</span>
                     </label>
@@ -492,17 +662,17 @@ export default function JoinNow() {
                 {fieldErrors.membership_year && <p className="text-[11px] text-red-600 mt-1 font-semibold">{fieldErrors.membership_year}</p>}
               </div>
 
-              {/* 15. Name (By reference) (रेफरेंस कराने वाले पदाधिकारी/सदस्य का नाम) * — text input */}
+              {/* 18. Name (By reference) (रेफरेंस कराने वाले पदाधिकारी/सदस्य का नाम) * — text input */}
               <div className="md:col-span-2">
                 <label className="block text-xs font-bold text-slate-800 mb-1">
-                  15. Name (By reference) (रेफरेंस कराने वाले पदाधिकारी/सदस्य का नाम) <span className="text-red-500">*</span>
+                  18. Name (By reference) (रेफरेंस कराने वाले पदाधिकारी/सदस्य का नाम) <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   placeholder="e.g. Er. Suresh Sharma (District President / Delegate)"
                   value={formData.reference_name}
                   onChange={(e) => handleChange('reference_name', e.target.value)}
-                  className={`w-full bg-slate-50 border ${fieldErrors.reference_name ? 'border-red-500 bg-red-50/50' : 'border-slate-300'} rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-amber-500 font-medium`}
+                  className={`w-full bg-slate-50 border ${fieldErrors.reference_name ? 'border-red-500 bg-red-50/50' : 'border-slate-300'} rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-sky-500 font-medium`}
                 />
                 {fieldErrors.reference_name && <p className="text-[11px] text-red-600 mt-1 font-semibold">{fieldErrors.reference_name}</p>}
               </div>
@@ -510,15 +680,15 @@ export default function JoinNow() {
             </div>
 
             {/* Terms Declaration */}
-            <div className="p-4 rounded-2xl bg-amber-50/60 border border-amber-200 flex items-start gap-3">
+            <div className="p-4 rounded-2xl bg-sky-50/80 border border-sky-200 flex items-start gap-3">
               <input
                 type="checkbox"
                 id="terms"
                 checked={formData.terms_accepted}
                 onChange={(e) => handleChange('terms_accepted', e.target.checked)}
-                className="mt-1 accent-amber-600 w-4 h-4 rounded cursor-pointer"
+                className="mt-1 accent-sky-600 w-4 h-4 rounded cursor-pointer"
               />
-              <label htmlFor="terms" className="text-xs text-amber-950 leading-relaxed cursor-pointer font-medium">
+              <label htmlFor="terms" className="text-xs text-sky-950 leading-relaxed cursor-pointer font-medium">
                 I hereby declare that all provided details are correct and genuine. I agree to abide by the Constitution, Rules, and Agitation Guidelines of the MP West Zone Electricity Discom Employees Union.
               </label>
             </div>
@@ -529,9 +699,9 @@ export default function JoinNow() {
             {/* Submit Step 1 Button */}
             <button
               type="submit"
-              className="w-full py-4 rounded-2xl font-bold text-xs sm:text-sm bg-amber-500 hover:bg-amber-400 text-slate-950 transition-all flex items-center justify-center gap-2 shadow-sm"
+              className="w-full py-4 rounded-2xl font-bold text-xs sm:text-sm bg-sky-600 hover:bg-sky-500 text-white transition-all flex items-center justify-center gap-2 shadow-md"
             >
-              <span>Proceed to Registration QR Payment & UTR Entry</span>
+              <span>Proceed to Registration QR Payment (₹{regFee}) & UTR Entry</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </form>
@@ -542,10 +712,10 @@ export default function JoinNow() {
           <form onSubmit={handleFinalSubmit} className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-10 space-y-8 shadow-sm">
             
             <div className="text-center space-y-2">
-              <span className="text-xs font-bold text-amber-700 uppercase tracking-widest">Step 2: Registration Verification</span>
+              <span className="text-xs font-bold text-sky-700 uppercase tracking-widest">Step 2: Registration Verification</span>
               <h2 className="text-2xl font-bold text-slate-900">Scan Union QR Code & Enter UTR Reference</h2>
               <p className="text-xs text-slate-600 max-w-lg mx-auto font-medium">
-                Pay the annual union registration fee of <span className="text-slate-900 font-extrabold">₹{regFee}</span> via UPI (GPay, PhonePe, Paytm, BHIM) and enter your transaction UTR number.
+                Pay the annual union registration fee of <span className="text-sky-700 font-extrabold text-sm">₹{regFee}</span> ({formData.employee_class}) via UPI (GPay, PhonePe, Paytm, BHIM) and enter your transaction UTR number.
               </p>
             </div>
 
@@ -554,11 +724,12 @@ export default function JoinNow() {
               <div className="flex flex-wrap justify-between gap-2 border-b border-slate-200 pb-2">
                 <div><span className="text-slate-500">Applicant:</span> <strong className="text-slate-900">{formData.full_name}</strong></div>
                 <div><span className="text-slate-500">Father:</span> <strong className="text-slate-900">{formData.father_name}</strong></div>
-                <div><span className="text-slate-500">District:</span> <strong className="text-amber-800">{formData.district_name}</strong></div>
+                <div><span className="text-slate-500">District:</span> <strong className="text-sky-800">{formData.district_name}</strong></div>
               </div>
               <div className="flex flex-wrap justify-between gap-2 text-[11px] text-slate-600">
-                <div><span>Referred By:</span> <strong>{formData.reference_name}</strong></div>
-                <div><span>Year of Membership:</span> <strong>{formData.membership_year}</strong></div>
+                <div><span>Employee Type:</span> <strong className="text-slate-900">{formData.employee_type}</strong></div>
+                <div><span>Category:</span> <strong className="text-slate-900">{formData.category}</strong></div>
+                <div><span>Class & Fee:</span> <strong className="text-sky-700">{formData.employee_class} (₹{regFee})</strong></div>
               </div>
             </div>
 
@@ -577,16 +748,16 @@ export default function JoinNow() {
                     <span className="text-slate-900 font-bold">{formData.full_name}</span>
                   </div>
                   <div className="flex justify-between text-slate-600">
-                    <span>Registration Fee:</span>
-                    <span className="text-amber-700 font-bold text-sm">₹{regFee}</span>
+                    <span>Selected Cadre Class:</span>
+                    <span className="text-slate-900 font-bold">{formData.employee_class}</span>
+                  </div>
+                  <div className="flex justify-between text-slate-600">
+                    <span>Required Fee:</span>
+                    <span className="text-sky-700 font-extrabold text-base">₹{regFee}</span>
                   </div>
                   <div className="flex justify-between text-slate-600">
                     <span>UPI ID:</span>
                     <span className="text-sky-700 font-bold">{settings?.upi_id || 'mpvidyut@sbi'}</span>
-                  </div>
-                  <div className="flex justify-between text-slate-600">
-                    <span>Account Name:</span>
-                    <span className="text-slate-800 font-bold">{settings?.account_name || 'MP VIDYUT MANDAL ARAKSHIT VAR'}</span>
                   </div>
                 </div>
 
@@ -607,7 +778,7 @@ export default function JoinNow() {
             <div className="space-y-4 pt-4 border-t border-slate-100">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Transaction ID / UTR Number <span className="text-amber-600">*</span>
+                  Transaction ID / UTR Number <span className="text-sky-600">*</span>
                 </label>
                 <input
                   type="text"
@@ -615,7 +786,7 @@ export default function JoinNow() {
                   placeholder="e.g. UTR98765432101"
                   value={formData.transaction_id}
                   onChange={(e) => handleChange('transaction_id', e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-xs text-slate-900 focus:outline-none focus:border-amber-500 font-mono"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-xs text-slate-900 focus:outline-none focus:border-sky-500 font-mono"
                 />
               </div>
 
@@ -626,7 +797,7 @@ export default function JoinNow() {
                     type="date"
                     value={formData.payment_date}
                     onChange={(e) => handleChange('payment_date', e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-amber-500"
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-sky-500"
                   />
                 </div>
 
@@ -637,7 +808,7 @@ export default function JoinNow() {
                     placeholder="https://..."
                     value={formData.payment_proof_url}
                     onChange={(e) => handleChange('payment_proof_url', e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-amber-500"
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-sky-500"
                   />
                 </div>
               </div>
@@ -655,7 +826,7 @@ export default function JoinNow() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-2/3 py-3.5 rounded-xl font-bold text-xs bg-amber-500 hover:bg-amber-400 text-slate-950 transition-colors flex items-center justify-center gap-2 shadow-sm"
+                className="w-2/3 py-3.5 rounded-xl font-bold text-xs bg-sky-600 hover:bg-sky-500 text-white transition-colors flex items-center justify-center gap-2 shadow-md"
               >
                 <span>{submitting ? 'Submitting Application...' : 'Submit Final Membership Application'}</span>
               </button>
@@ -674,7 +845,7 @@ export default function JoinNow() {
             <div className="space-y-2">
               <h2 className="text-2xl font-extrabold text-slate-900">Membership Application Submitted!</h2>
               <p className="text-xs text-slate-600 max-w-md mx-auto font-medium">
-                Your application <span className="font-mono text-amber-700 font-bold">{submittedApplication.application_no}</span> has been received by the MPWZ Union Admin.
+                Your application <span className="font-mono text-sky-700 font-bold">{submittedApplication.application_no}</span> has been received by the MPWZ Union Admin.
               </p>
             </div>
 
@@ -684,16 +855,20 @@ export default function JoinNow() {
                 <span className="text-slate-900 font-bold">{submittedApplication.full_name}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Company / District:</span>
+                <span className="text-slate-500">District:</span>
                 <span className="text-slate-800">{submittedApplication.district_name}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Referred By:</span>
-                <span className="text-slate-900 font-bold">{submittedApplication.reference_name}</span>
+                <span className="text-slate-500">Cadre Class & Fee:</span>
+                <span className="text-sky-700 font-bold">{formData.employee_class} (₹{regFee})</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Employee Type / Cat:</span>
+                <span className="text-slate-800">{formData.employee_type} | {formData.category}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-500">Application No:</span>
-                <span className="text-amber-700 font-bold">{submittedApplication.application_no}</span>
+                <span className="text-sky-700 font-bold">{submittedApplication.application_no}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-500">Transaction UTR:</span>
@@ -701,12 +876,12 @@ export default function JoinNow() {
               </div>
             </div>
 
-            <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 max-w-lg mx-auto text-xs text-amber-950 font-medium space-y-1.5 leading-relaxed text-left">
-              <div className="font-extrabold text-amber-900 flex items-center gap-1.5 text-xs">
+            <div className="p-4 rounded-2xl bg-sky-50 border border-sky-200 max-w-lg mx-auto text-xs text-sky-950 font-medium space-y-1.5 leading-relaxed text-left">
+              <div className="font-extrabold text-sky-900 flex items-center gap-1.5 text-xs">
                 <span>🔐 Payment & Onboarding Access Policy</span>
               </div>
               <p>
-                Your registration is currently stored as <strong className="text-amber-900">PENDING</strong>. Once Union Admin verifies your payment UTR (<span className="font-mono font-bold text-amber-900">{submittedApplication.transaction_id || 'N/A'}</span>), your unique <strong>Union Member Login ID</strong> and <strong>Temporary Password</strong> will be automatically generated and dispatched to <strong className="text-slate-900">{submittedApplication.email}</strong>.
+                Your registration is currently stored as <strong className="text-sky-900">PENDING</strong>. Once Union Admin verifies your payment UTR (<span className="font-mono font-bold text-sky-900">{submittedApplication.transaction_id || 'N/A'}</span>), your unique <strong>Union Member Login ID</strong> and <strong>Temporary Password</strong> will be automatically generated and dispatched to <strong className="text-slate-900">{submittedApplication.email || 'your registered contact'}</strong>.
               </p>
             </div>
 
@@ -719,7 +894,7 @@ export default function JoinNow() {
               </button>
               <button
                 onClick={() => navigate('/login')}
-                className="px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition-colors shadow-sm"
+                className="px-6 py-3 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs transition-colors shadow-md"
               >
                 Go to Member Login
               </button>

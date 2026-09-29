@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
+import { LanguageProvider } from './context/LanguageContext';
 
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -11,7 +12,10 @@ import AnnouncementPopup from './components/AnnouncementPopup';
 // Public Pages
 import Home from './pages/Home';
 import About from './pages/About';
+import BoardOfUnion from './pages/BoardOfUnion';
+import Orders from './pages/Orders';
 import Events from './pages/Events';
+import Notices from './pages/Notices';
 import Contact from './pages/Contact';
 import JoinNow from './pages/JoinNow';
 import Login from './pages/Login';
@@ -38,7 +42,7 @@ const ProtectedMemberRoute = ({ children }) => {
 
 function AppContent() {
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50 text-slate-900 selection:bg-amber-500 selection:text-slate-950 font-sans">
+    <div className="flex flex-col min-h-screen bg-slate-50 text-slate-900 selection:bg-sky-500 selection:text-white font-sans">
       <Navbar />
       
       {/* Top Announcement Popup Banner */}
@@ -46,10 +50,13 @@ function AppContent() {
 
       <main className="flex-grow">
         <Routes>
-          {/* Public Union Routes */}
+          {/* Public Union Routes with Unique Webpages */}
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
+          <Route path="/board-of-union" element={<BoardOfUnion />} />
+          <Route path="/orders" element={<Orders />} />
           <Route path="/events" element={<Events />} />
+          <Route path="/notices" element={<Notices />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/join" element={<JoinNow />} />
           <Route path="/login" element={<Login />} />
@@ -74,11 +81,13 @@ export default function App() {
   return (
     <Router>
       <ScrollToTop />
-      <AuthProvider>
-        <NotificationProvider>
-          <AppContent />
-        </NotificationProvider>
-      </AuthProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          <NotificationProvider>
+            <AppContent />
+          </NotificationProvider>
+        </AuthProvider>
+      </LanguageProvider>
     </Router>
   );
 }

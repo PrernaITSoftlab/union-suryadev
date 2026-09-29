@@ -156,8 +156,8 @@ export default function HomePhotoGallery() {
         {/* Header Title */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
           <div className="space-y-3 max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-100 border border-amber-300 text-amber-800 text-xs font-bold uppercase tracking-wider">
-              <Camera className="w-3.5 h-3.5 text-amber-600" />
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-sky-100 border border-sky-300 text-sky-900 text-xs font-bold uppercase tracking-wider">
+              <Camera className="w-3.5 h-3.5 text-sky-600" />
               <span>Official Photo Highlights</span>
             </div>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
@@ -175,7 +175,7 @@ export default function HomePhotoGallery() {
                 key={cat.key}
                 onClick={() => setActiveTab(cat.key)}
                 className={`px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm ${activeTab === cat.key
-                  ? 'bg-slate-900 text-amber-400 border border-slate-800 shadow-md'
+                  ? 'bg-sky-600 text-white border border-sky-600 shadow-md'
                   : 'bg-white text-slate-700 hover:bg-slate-200 border border-slate-200'
                   }`}
               >
@@ -200,7 +200,7 @@ export default function HomePhotoGallery() {
                 className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500 ease-out"
               />
               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                <div className="p-3.5 rounded-full bg-amber-500 text-slate-950 shadow-2xl transform scale-90 group-hover:scale-100 transition-transform">
+                <div className="p-3.5 rounded-full bg-sky-500 text-white shadow-2xl transform scale-90 group-hover:scale-100 transition-transform">
                   <Eye className="w-6 h-6" />
                 </div>
               </div>
@@ -239,14 +239,14 @@ export default function HomePhotoGallery() {
             {/* Prev / Next Controls */}
             <button
               onClick={prevSlide}
-              className="absolute left-4 top-1/2 -translate-y-1/2 z-30 p-3.5 rounded-full bg-slate-900/80 hover:bg-amber-500 hover:text-slate-950 text-white border border-slate-700 transition-all shadow-2xl backdrop-blur-md"
+              className="absolute left-4 top-1/2 -translate-y-1/2 z-30 p-3.5 rounded-full bg-slate-900/80 hover:bg-sky-500 hover:text-white text-white border border-slate-700 transition-all shadow-2xl backdrop-blur-md"
               aria-label="Previous photo"
             >
               <ChevronLeft className="w-7 h-7" />
             </button>
             <button
               onClick={nextSlide}
-              className="absolute right-4 top-1/2 -translate-y-1/2 z-30 p-3.5 rounded-full bg-slate-900/80 hover:bg-amber-500 hover:text-slate-950 text-white border border-slate-700 transition-all shadow-2xl backdrop-blur-md"
+              className="absolute right-4 top-1/2 -translate-y-1/2 z-30 p-3.5 rounded-full bg-slate-900/80 hover:bg-sky-500 hover:text-white text-white border border-slate-700 transition-all shadow-2xl backdrop-blur-md"
               aria-label="Next photo"
             >
               <ChevronRight className="w-7 h-7" />

@@ -39,8 +39,8 @@ export default function Contact() {
         
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto space-y-3">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-100 border border-amber-300 text-amber-900 text-xs font-bold uppercase tracking-wider shadow-sm">
-            <Phone className="w-3.5 h-3.5 text-amber-700" />
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-sky-100 border border-sky-300 text-sky-900 text-xs font-bold uppercase tracking-wider shadow-sm">
+            <Phone className="w-3.5 h-3.5 text-sky-700" />
             <span>Contact Union HQ</span>
           </div>
           <h1 className="text-3xl sm:text-5xl font-extrabold text-slate-900 tracking-tight">
@@ -62,7 +62,7 @@ export default function Contact() {
 
               <div className="space-y-5 text-xs">
                 <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center text-amber-700 shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-sky-100 flex items-center justify-center text-sky-700 shrink-0">
                     <MapPin className="w-5 h-5" />
                   </div>
                   <div>
@@ -74,7 +74,7 @@ export default function Contact() {
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center text-amber-700 shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-sky-100 flex items-center justify-center text-sky-700 shrink-0">
                     <Phone className="w-5 h-5" />
                   </div>
                   <div>
@@ -86,7 +86,7 @@ export default function Contact() {
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center text-amber-700 shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-sky-100 flex items-center justify-center text-sky-700 shrink-0">
                     <Mail className="w-5 h-5" />
                   </div>
                   <div>
@@ -98,7 +98,7 @@ export default function Contact() {
                 </div>
 
                 <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center text-amber-700 shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-sky-100 flex items-center justify-center text-sky-700 shrink-0">
                     <Clock className="w-5 h-5" />
                   </div>
                   <div>
@@ -113,7 +113,7 @@ export default function Contact() {
 
             {/* Map Placeholder Widget */}
             <div className="bg-white border border-slate-200 rounded-3xl p-6 text-center space-y-3 shadow-sm">
-              <Shield className="w-8 h-8 text-amber-600 mx-auto" />
+              <Shield className="w-8 h-8 text-sky-600 mx-auto" />
               <h4 className="font-bold text-slate-900 text-sm">Indore HQ Campus Map</h4>
               <p className="text-xs text-slate-500 font-medium">Polo Ground MP West Zone Discom Executive HQ</p>
               <div className="h-32 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-center text-xs font-mono text-slate-500">
@@ -154,7 +154,7 @@ export default function Contact() {
                       placeholder="Er. Ramesh Sharma"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-xs text-slate-900 focus:outline-none focus:border-amber-500"
+                      className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-xs text-slate-900 focus:outline-none focus:border-sky-500"
                     />
                   </div>
 
@@ -166,7 +166,7 @@ export default function Contact() {
                       placeholder="ramesh@example.com"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-xs text-slate-900 focus:outline-none focus:border-amber-500"
+                      className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-xs text-slate-900 focus:outline-none focus:border-sky-500"
                     />
                   </div>
                 </div>
@@ -179,7 +179,7 @@ export default function Contact() {
                       placeholder="+91 98260 00000"
                       value={formData.phone}
                       onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-xs text-slate-900 focus:outline-none focus:border-amber-500 font-mono"
+                      className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-xs text-slate-900 focus:outline-none focus:border-sky-500 font-mono"
                     />
                   </div>
 
@@ -190,7 +190,7 @@ export default function Contact() {
                       placeholder="e.g. Membership guidance"
                       value={formData.subject}
                       onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                      className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-xs text-slate-900 focus:outline-none focus:border-amber-500"
+                      className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-xs text-slate-900 focus:outline-none focus:border-sky-500"
                     />
                   </div>
                 </div>
@@ -203,14 +203,14 @@ export default function Contact() {
                     placeholder="Write your message or grievance detail here..."
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                    className="w-full bg-slate-50 border border-slate-300 rounded-xl p-4 text-xs text-slate-900 focus:outline-none focus:border-amber-500"
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl p-4 text-xs text-slate-900 focus:outline-none focus:border-sky-500"
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full py-3.5 rounded-xl font-bold text-xs bg-amber-500 hover:bg-amber-400 text-slate-950 transition-colors flex items-center justify-center gap-2 shadow-sm"
+                  className="w-full py-3.5 rounded-xl font-bold text-xs bg-sky-600 hover:bg-sky-500 text-white transition-colors flex items-center justify-center gap-2 shadow-md"
                 >
                   <Send className="w-4 h-4" />
                   <span>{submitting ? 'Submitting Message...' : 'Submit Contact Message'}</span>

@@ -138,9 +138,9 @@ const TestimonialsSlider = () => {
                   <span className="px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-extrabold flex items-center gap-1">
                     ✨ {item.result_badge}
                   </span>
-                  <div className="flex items-center gap-0.5 text-amber-500">
+                  <div className="flex items-center gap-0.5 text-sky-500">
                     {[...Array(item.rating)].map((_, i) => (
-                      <Star key={i} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                      <Star key={i} className="w-3.5 h-3.5 fill-sky-400 text-sky-400" />
                     ))}
                   </div>
                 </div>

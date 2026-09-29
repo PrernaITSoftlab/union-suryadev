@@ -34,7 +34,7 @@
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #2563EB;
+  background: #0284C7;
 }
 
 /* Hide scrollbar for clean horizontal tab scrolling on mobile */
@@ -62,8 +62,8 @@
 
 .glass-panel-hover:hover {
   background: #FFFFFF;
-  border-color: rgba(37, 99, 235, 0.4);
-  box-shadow: 0 12px 28px -8px rgba(37, 99, 235, 0.12);
+  border-color: rgba(2, 132, 199, 0.4);
+  box-shadow: 0 12px 28px -8px rgba(2, 132, 199, 0.12);
   transform: translateY(-2px);
 }
 
@@ -75,13 +75,13 @@
 }
 
 .gradient-text {
-  background: linear-gradient(135deg, #0F172A 0%, #1E40AF 50%, #0284C7 100%);
+  background: linear-gradient(135deg, #0F172A 0%, #0369A1 50%, #0284C7 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
-.gradient-text-amber {
-  background: linear-gradient(135deg, #92400E 0%, #D97706 50%, #F59E0B 100%);
+.gradient-text-sky {
+  background: linear-gradient(135deg, #0369A1 0%, #0284C7 50%, #38BDF8 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }

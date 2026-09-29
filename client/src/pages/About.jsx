@@ -36,8 +36,8 @@ export default function About() {
         
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto space-y-4">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-100 border border-amber-300 text-amber-900 text-xs font-bold uppercase tracking-wider shadow-sm">
-            <Shield className="w-3.5 h-3.5 text-amber-700" />
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-sky-100 border border-sky-300 text-sky-900 text-xs font-bold uppercase tracking-wider shadow-sm">
+            <Shield className="w-3.5 h-3.5 text-sky-700" />
             <span>About MPWZ Union</span>
           </div>
           <h1 className="text-3xl sm:text-5xl font-extrabold text-slate-900 tracking-tight">
@@ -51,7 +51,7 @@ export default function About() {
         {/* History, Mission & Vision Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="p-8 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-4">
-            <div className="w-12 h-12 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-700">
+            <div className="w-12 h-12 rounded-2xl bg-sky-100 flex items-center justify-center text-sky-700">
               <Building className="w-6 h-6" />
             </div>
             <h3 className="text-xl font-bold text-slate-900">Our History</h3>
@@ -61,7 +61,7 @@ export default function About() {
           </div>
 
           <div className="p-8 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-4">
-            <div className="w-12 h-12 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-700">
+            <div className="w-12 h-12 rounded-2xl bg-sky-100 flex items-center justify-center text-sky-700">
               <Target className="w-6 h-6" />
             </div>
             <h3 className="text-xl font-bold text-slate-900">Our Mission</h3>
@@ -71,7 +71,7 @@ export default function About() {
           </div>
 
           <div className="p-8 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-4">
-            <div className="w-12 h-12 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-700">
+            <div className="w-12 h-12 rounded-2xl bg-sky-100 flex items-center justify-center text-sky-700">
               <Eye className="w-6 h-6" />
             </div>
             <h3 className="text-xl font-bold text-slate-900">Our Vision</h3>
@@ -98,7 +98,7 @@ export default function About() {
               "Democratized access to Union Executive body & Grievance assistance."
             ].map((obj, idx) => (
               <div key={idx} className="flex items-start gap-3 p-4 rounded-2xl bg-slate-50 border border-slate-200">
-                <CheckCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                <CheckCircle className="w-5 h-5 text-sky-600 shrink-0 mt-0.5" />
                 <span className="text-xs text-slate-800 font-medium leading-relaxed">{obj}</span>
               </div>
             ))}
@@ -114,15 +114,15 @@ export default function About() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {leadership.map((l, idx) => (
-              <div key={idx} className="bg-white border border-slate-200 rounded-3xl p-6 space-y-4 text-center shadow-sm hover:border-amber-300 transition-colors">
+              <div key={idx} className="bg-white border border-slate-200 rounded-3xl p-6 space-y-4 text-center shadow-sm hover:border-sky-300 transition-colors">
                 <img 
                   src={l.image} 
                   alt={l.name} 
-                  className="w-24 h-24 rounded-full mx-auto object-cover border-2 border-amber-500 shadow-md"
+                  className="w-24 h-24 rounded-full mx-auto object-cover border-2 border-sky-500 shadow-md"
                 />
                 <div>
                   <h3 className="text-base font-bold text-slate-900">{l.name}</h3>
-                  <p className="text-xs text-amber-700 font-extrabold mt-0.5">{l.title}</p>
+                  <p className="text-xs text-sky-700 font-extrabold mt-0.5">{l.title}</p>
                   <p className="text-[11px] text-slate-500 font-mono mt-0.5">{l.circle}</p>
                 </div>
                 <p className="text-xs text-slate-600 leading-relaxed pt-2 border-t border-slate-100">
@@ -134,13 +134,13 @@ export default function About() {
         </div>
 
         {/* CTA */}
-        <div className="p-8 rounded-3xl bg-gradient-to-r from-amber-50 via-white to-amber-50 border border-amber-200 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
+        <div className="p-8 rounded-3xl bg-gradient-to-r from-sky-50 via-white to-sky-50 border border-sky-200 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
           <div className="space-y-1 text-center md:text-left">
             <h3 className="text-xl font-bold text-slate-900">Have questions or grievance issues?</h3>
             <p className="text-xs text-slate-600 font-medium">Contact Union Central Office or submit an online membership request.</p>
           </div>
           <div className="flex items-center gap-4 shrink-0">
-            <Link to="/join" className="px-6 py-3 rounded-xl bg-amber-500 text-slate-950 font-bold text-xs hover:bg-amber-400 transition-colors shadow-sm">
+            <Link to="/join" className="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 text-white font-bold text-xs hover:from-sky-600 hover:to-blue-700 transition-colors shadow-sm">
               Apply to Join
             </Link>
             <Link to="/contact" className="px-6 py-3 rounded-xl bg-white text-slate-900 font-bold text-xs border border-slate-300 hover:bg-slate-50 transition-colors">
