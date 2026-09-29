@@ -42,7 +42,7 @@ const ProtectedMemberRoute = ({ children }) => {
 
 function AppContent() {
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50 text-slate-900 selection:bg-sky-500 selection:text-white font-sans">
+    <div className="flex flex-col min-h-screen bg-slate-50 text-slate-900 selection:bg-sky-500 selection:text-white font-sans overflow-x-hidden w-full max-w-full">
       <Navbar />
       
       {/* Top Announcement Popup Banner */}

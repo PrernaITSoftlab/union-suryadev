@@ -22,62 +22,62 @@ export default function Navbar() {
   const isActive = (path) => location.pathname === path;
 
   return (
-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 text-slate-900 shadow-sm">
-      <div className="max-w-[1440px] mx-auto px-3 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20 gap-2">
+    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 text-slate-900 shadow-sm w-full">
+      <div className="max-w-[1440px] mx-auto px-2.5 sm:px-4 lg:px-6 xl:px-8">
+        <div className="flex items-center justify-between h-20 gap-1.5 sm:gap-3">
           
           {/* Logo & Union Title */}
-          <Link to="/" className="flex items-center gap-2.5 shrink-0 group">
-            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-tr from-sky-500 via-sky-600 to-blue-600 p-0.5 shadow-md shadow-sky-500/20 group-hover:scale-105 transition-transform shrink-0">
+          <Link to="/" className="flex items-center gap-2 shrink-0 group">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-sky-500 via-sky-600 to-blue-600 p-0.5 shadow-md shadow-sky-500/20 group-hover:scale-105 transition-transform shrink-0">
               <div className="w-full h-full bg-white rounded-[10px] flex items-center justify-center">
-                <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-sky-600" />
+                <Shield className="w-5 h-5 text-sky-600" />
               </div>
             </div>
             <div className="whitespace-nowrap">
-              <span className="font-extrabold text-base sm:text-lg lg:text-xl tracking-tight text-slate-900 block group-hover:text-sky-600 transition-colors">
+              <span className="font-extrabold text-sm sm:text-base lg:text-lg xl:text-xl tracking-tight text-slate-900 block group-hover:text-sky-600 transition-colors">
                 {settings?.union_short_name || 'MPWZ UNION'}
               </span>
-              <span className="text-[10px] sm:text-[11px] text-slate-500 font-medium tracking-wide hidden sm:block">
+              <span className="text-[10px] sm:text-[11px] text-slate-500 font-medium tracking-wide hidden xl:block">
                 {t('Western Zone Electricity Discom')}
               </span>
             </div>
           </Link>
 
           {/* Desktop Navigation Links */}
-          <nav className="hidden lg:flex items-center gap-1 xl:gap-1.5 flex-nowrap shrink-0">
+          <nav className="hidden lg:flex items-center gap-0.5 xl:gap-1 2xl:gap-1.5 flex-nowrap shrink-0">
             <Link 
               to="/" 
-              className={`px-2 xl:px-2.5 py-1.5 rounded-xl text-xs xl:text-sm font-semibold transition-colors whitespace-nowrap shrink-0 ${isActive('/') ? 'bg-sky-50 text-sky-700 border border-sky-200' : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'}`}
+              className={`px-1.5 xl:px-2.5 py-1.5 rounded-xl text-[11px] xl:text-xs 2xl:text-sm font-semibold transition-colors whitespace-nowrap shrink-0 ${isActive('/') ? 'bg-sky-50 text-sky-700 border border-sky-200' : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'}`}
             >
               {t('Home')}
             </Link>
             <Link 
               to="/about" 
-              className={`px-2 xl:px-2.5 py-1.5 rounded-xl text-xs xl:text-sm font-semibold transition-colors whitespace-nowrap shrink-0 ${isActive('/about') ? 'bg-sky-50 text-sky-700 border border-sky-200' : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'}`}
+              className={`px-1.5 xl:px-2.5 py-1.5 rounded-xl text-[11px] xl:text-xs 2xl:text-sm font-semibold transition-colors whitespace-nowrap shrink-0 ${isActive('/about') ? 'bg-sky-50 text-sky-700 border border-sky-200' : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'}`}
             >
               {t('About Us')}
             </Link>
             <Link 
               to="/board-of-union" 
-              className={`px-2 xl:px-2.5 py-1.5 rounded-xl text-xs xl:text-sm font-semibold transition-colors whitespace-nowrap shrink-0 ${isActive('/board-of-union') ? 'bg-sky-50 text-sky-700 border border-sky-200' : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'}`}
+              className={`px-1.5 xl:px-2.5 py-1.5 rounded-xl text-[11px] xl:text-xs 2xl:text-sm font-semibold transition-colors whitespace-nowrap shrink-0 ${isActive('/board-of-union') ? 'bg-sky-50 text-sky-700 border border-sky-200' : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'}`}
             >
               {t('Board of Union')}
             </Link>
             <Link 
               to="/orders" 
-              className={`px-2 xl:px-2.5 py-1.5 rounded-xl text-xs xl:text-sm font-semibold transition-colors whitespace-nowrap shrink-0 ${isActive('/orders') ? 'bg-sky-50 text-sky-700 border border-sky-200' : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'}`}
+              className={`px-1.5 xl:px-2.5 py-1.5 rounded-xl text-[11px] xl:text-xs 2xl:text-sm font-semibold transition-colors whitespace-nowrap shrink-0 ${isActive('/orders') ? 'bg-sky-50 text-sky-700 border border-sky-200' : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'}`}
             >
               {t('Order')}
             </Link>
             <Link 
               to="/events" 
-              className={`px-2 xl:px-2.5 py-1.5 rounded-xl text-xs xl:text-sm font-semibold transition-colors whitespace-nowrap shrink-0 ${isActive('/events') ? 'bg-sky-50 text-sky-700 border border-sky-200' : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'}`}
+              className={`px-1.5 xl:px-2.5 py-1.5 rounded-xl text-[11px] xl:text-xs 2xl:text-sm font-semibold transition-colors whitespace-nowrap shrink-0 ${isActive('/events') ? 'bg-sky-50 text-sky-700 border border-sky-200' : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'}`}
             >
               {t('Events')}
             </Link>
             <Link 
               to="/notices" 
-              className={`px-2 xl:px-2.5 py-1.5 rounded-xl text-xs xl:text-sm font-semibold transition-colors whitespace-nowrap shrink-0 ${isActive('/notices') ? 'bg-sky-50 text-sky-700 border border-sky-200' : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'}`}
+              className={`px-1.5 xl:px-2.5 py-1.5 rounded-xl text-[11px] xl:text-xs 2xl:text-sm font-semibold transition-colors whitespace-nowrap shrink-0 ${isActive('/notices') ? 'bg-sky-50 text-sky-700 border border-sky-200' : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'}`}
             >
               {t('Notices')}
             </Link>
@@ -85,13 +85,13 @@ export default function Navbar() {
               href="https://energy.mp.gov.in"
               target="_blank"
               rel="noopener noreferrer"
-              className="px-2 xl:px-2.5 py-1.5 rounded-xl text-xs xl:text-sm font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-colors whitespace-nowrap shrink-0"
+              className="px-1.5 xl:px-2.5 py-1.5 rounded-xl text-[11px] xl:text-xs 2xl:text-sm font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-colors whitespace-nowrap shrink-0"
             >
               {t('Energy Department')}
             </a>
             <Link 
               to="/contact" 
-              className={`px-2 xl:px-2.5 py-1.5 rounded-xl text-xs xl:text-sm font-semibold transition-colors whitespace-nowrap shrink-0 ${isActive('/contact') ? 'bg-sky-50 text-sky-700 border border-sky-200' : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'}`}
+              className={`px-1.5 xl:px-2.5 py-1.5 rounded-xl text-[11px] xl:text-xs 2xl:text-sm font-semibold transition-colors whitespace-nowrap shrink-0 ${isActive('/contact') ? 'bg-sky-50 text-sky-700 border border-sky-200' : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'}`}
             >
               {t('Contact Us')}
             </Link>
@@ -99,7 +99,7 @@ export default function Navbar() {
             {user ? (
               <Link 
                 to={isAdmin ? '/admin/dashboard' : '/dashboard'} 
-                className={`px-3 py-1.5 rounded-xl text-xs xl:text-sm font-bold transition-colors flex items-center gap-1.5 whitespace-nowrap shrink-0 ${location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/admin') ? 'bg-sky-600 text-white shadow-md shadow-sky-600/20' : 'text-sky-700 bg-sky-50 border border-sky-200 hover:bg-sky-100'}`}
+                className={`px-2.5 xl:px-3 py-1.5 rounded-xl text-[11px] xl:text-xs 2xl:text-sm font-bold transition-colors flex items-center gap-1.5 whitespace-nowrap shrink-0 ${location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/admin') ? 'bg-sky-600 text-white shadow-md shadow-sky-600/20' : 'text-sky-700 bg-sky-50 border border-sky-200 hover:bg-sky-100'}`}
               >
                 <LayoutDashboard className="w-3.5 h-3.5 shrink-0" />
                 <span>{isAdmin ? t('Admin Portal') : t('Member Dashboard')}</span>
@@ -107,7 +107,7 @@ export default function Navbar() {
             ) : (
               <Link 
                 to="/join" 
-                className={`px-3 xl:px-3.5 py-1.5 rounded-xl text-xs xl:text-sm font-bold transition-all shadow-md flex items-center gap-1.5 whitespace-nowrap shrink-0 ${isActive('/join') ? 'bg-sky-600 text-white' : 'bg-gradient-to-r from-sky-500 via-sky-600 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white shadow-sky-500/20'}`}
+                className={`px-2.5 xl:px-3.5 py-1.5 rounded-xl text-[11px] xl:text-xs 2xl:text-sm font-bold transition-all shadow-md flex items-center gap-1.5 whitespace-nowrap shrink-0 ${isActive('/join') ? 'bg-sky-600 text-white' : 'bg-gradient-to-r from-sky-500 via-sky-600 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white shadow-sky-500/20'}`}
               >
                 <UserPlus className="w-3.5 h-3.5 shrink-0" />
                 <span>{t('Join Now')}</span>
@@ -116,14 +116,14 @@ export default function Navbar() {
           </nav>
 
           {/* User Right Section */}
-          <div className="hidden lg:flex items-center gap-2 xl:gap-3 whitespace-nowrap shrink-0">
+          <div className="hidden lg:flex items-center gap-1.5 xl:gap-2.5 whitespace-nowrap shrink-0">
             {/* Language Switcher Toggle */}
             <button
               onClick={toggleLanguage}
-              className="inline-flex items-center gap-1.5 px-2.5 xl:px-3 py-1.5 rounded-xl bg-sky-50 hover:bg-sky-100 border border-sky-200 text-sky-900 text-xs font-bold transition-all shadow-sm whitespace-nowrap shrink-0"
+              className="inline-flex items-center gap-1 px-2 xl:px-2.5 py-1.5 rounded-xl bg-sky-50 hover:bg-sky-100 border border-sky-200 text-sky-900 text-[11px] xl:text-xs font-bold transition-all shadow-sm whitespace-nowrap shrink-0"
               title={language === 'en' ? 'हिंदी में बदलें (Switch to Hindi)' : 'Switch to English (अंग्रेजी)'}
             >
-              <Languages className="w-4 h-4 text-sky-600 shrink-0" />
+              <Languages className="w-3.5 h-3.5 text-sky-600 shrink-0" />
               <span>{language === 'en' ? 'हिंदी' : 'English'}</span>
             </button>
 
@@ -136,12 +136,12 @@ export default function Navbar() {
                       setNotifDropdownOpen(!notifDropdownOpen);
                       setUserDropdownOpen(false);
                     }}
-                    className="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 relative transition-colors border border-slate-200"
+                    className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 relative transition-colors border border-slate-200"
                     title={t('Notifications')}
                   >
-                    <Bell className="w-5 h-5" />
+                    <Bell className="w-4 h-4" />
                     {unreadCount > 0 && (
-                      <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-600 text-white text-[11px] font-bold rounded-full flex items-center justify-center shadow-md shadow-red-500/30 animate-bounce">
+                      <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-md shadow-red-500/30 animate-bounce">
                         {unreadCount}
                       </span>
                     )}
@@ -200,18 +200,18 @@ export default function Navbar() {
                       setUserDropdownOpen(!userDropdownOpen);
                       setNotifDropdownOpen(false);
                     }}
-                    className="flex items-center gap-2.5 p-1.5 pr-3 rounded-xl bg-slate-100 border border-slate-200 hover:border-slate-300 transition-all"
+                    className="flex items-center gap-2 p-1.5 pr-2.5 rounded-xl bg-slate-100 border border-slate-200 hover:border-slate-300 transition-all"
                   >
                     <img
                       src={user.profile?.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=400&q=80'}
                       alt="Avatar"
-                      className="w-8 h-8 rounded-lg object-cover border border-sky-500/50 shadow-sm"
+                      className="w-7 h-7 rounded-lg object-cover border border-sky-500/50 shadow-sm"
                     />
                     <div className="text-left">
-                      <span className="text-xs font-extrabold text-slate-900 block leading-tight">
+                      <span className="text-[11px] font-extrabold text-slate-900 block leading-tight">
                         {user.profile?.full_name?.split(' ')[0] || 'Member'}
                       </span>
-                      <span className="text-[10px] text-sky-700 font-bold block">
+                      <span className="text-[9px] text-sky-700 font-bold block">
                         {isAdmin ? 'ADMIN' : (user.member_id || 'MEMBER')}
                       </span>
                     </div>
@@ -276,9 +276,9 @@ export default function Navbar() {
             ) : (
               <Link
                 to="/login"
-                className="px-3 xl:px-4 py-2 rounded-xl text-xs xl:text-sm font-semibold bg-slate-100 border border-slate-200 hover:bg-slate-200 text-slate-900 transition-all flex items-center gap-2 whitespace-nowrap shrink-0"
+                className="px-2.5 xl:px-3.5 py-1.5 rounded-xl text-[11px] xl:text-xs 2xl:text-sm font-semibold bg-slate-100 border border-slate-200 hover:bg-slate-200 text-slate-900 transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0"
               >
-                <LogIn className="w-4 h-4 text-sky-600 shrink-0" />
+                <LogIn className="w-3.5 h-3.5 text-sky-600 shrink-0" />
                 <span>{t('Login')}</span>
               </Link>
             )}
