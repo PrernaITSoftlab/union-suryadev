@@ -66,7 +66,7 @@ export default function Home() {
               </h1>
 
               <p className="text-xs sm:text-sm text-slate-600 max-w-2xl mx-auto lg:mx-0 font-normal leading-relaxed">
-                {t('Empowering over 15,000+ electricity personnel across Indore, Ujjain, Dewas, Ratlam, Dhar, Khargone, Khandwa, Mandsaur, and Neemch discom circles with legal guidance, wage protection, OPS agitation, and hazard insurance.')}
+                {t('Empowering over 5000+ electricity personnel across 53 districts in Madhya Pradesh with legal guidance, wage protection, OPS agitation, and hazard insurance.')}
               </p>
 
               {/* Key Features Badges */}
@@ -107,12 +107,12 @@ export default function Home() {
               {/* Highlights badge */}
               <div className="pt-4 grid grid-cols-3 gap-3 border-t border-slate-200 text-xs">
                 <div>
-                  <div className="text-lg sm:text-xl font-extrabold text-slate-900">15,000+</div>
-                  <div className="text-slate-500 font-semibold text-[11px] mt-0.5">{t('Union Member')}</div>
+                  <div className="text-lg sm:text-xl font-extrabold text-slate-900">5000+</div>
+                  <div className="text-slate-500 font-semibold text-[11px] mt-0.5">{t('Members')}</div>
                 </div>
                 <div>
-                  <div className="text-lg sm:text-xl font-extrabold text-sky-700">9 Circles</div>
-                  <div className="text-slate-500 font-semibold text-[11px] mt-0.5">{t('MP West Zone')}</div>
+                  <div className="text-lg sm:text-xl font-extrabold text-sky-700">53 Districts</div>
+                  <div className="text-slate-500 font-semibold text-[11px] mt-0.5">{t('Madhya Pradesh')}</div>
                 </div>
                 <div>
                   <div className="text-lg sm:text-xl font-extrabold text-blue-700">100%</div>

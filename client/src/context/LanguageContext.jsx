@@ -43,10 +43,12 @@ export const translations = {
     en: "Safety, Dignity & Rights",
     hi: "सुरक्षा, सम्मान और अधिकार"
   },
-  "Empowering over 15,000+ electricity personnel across Indore, Ujjain, Dewas, Ratlam, Dhar, Khargone, Khandwa, Mandsaur, and Neemch discom circles with legal guidance, wage protection, OPS agitation, and hazard insurance.": {
-    en: "Empowering over 15,000+ electricity personnel across Indore, Ujjain, Dewas, Ratlam, Dhar, Khargone, Khandwa, Mandsaur, and Neemch discom circles with legal guidance, wage protection, OPS agitation, and hazard insurance.",
-    hi: "इंदौर, उज्जैन, देवास, रतलाम, धार, खरगोन, खंडवा, मंदसौर और नीमच डिस्कॉम सर्किलों के 15,000+ विद्युत कर्मियों को कानूनी मार्गदर्शन, वेतन सुरक्षा, ओपीएस आंदोलन और जोखिम बीमा से सशक्त बनाना।"
+  "Empowering over 5000+ electricity personnel across 53 districts in Madhya Pradesh with legal guidance, wage protection, OPS agitation, and hazard insurance.": {
+    en: "Empowering over 5000+ electricity personnel across 53 districts in Madhya Pradesh with legal guidance, wage protection, OPS agitation, and hazard insurance.",
+    hi: "मध्य प्रदेश के 53 जिलों में 5000+ विद्युत कर्मियों को कानूनी मार्गदर्शन, वेतन सुरक्षा, ओपीएस आंदोलन और जोखिम बीमा से सशक्त बनाना।"
   },
+  "Members": { en: "Members", hi: "सदस्य" },
+  "Madhya Pradesh": { en: "Madhya Pradesh", hi: "मध्य प्रदेश" },
   "Legal & OPS Rights": { en: "Legal & OPS Rights", hi: "कानूनी व ओपीएस अधिकार" },
   "₹20L Hazard Relief": { en: "₹20L Hazard Relief", hi: "₹20 लाख जोखिम राहत" },
   "Digital Member ID": { en: "Digital Member ID", hi: "डिजिटल सदस्य आईडी" },
@@ -135,9 +137,9 @@ export const translations = {
 
   // About Page
   "About MPVMAVAKS Discom Employees Union": { en: "About MPVMAVAKS Discom Employees Union", hi: "म.प्र. पश्चिम क्षेत्र डिस्कॉम कर्मचारी संघ के बारे में" },
-  "Empowering 15,000+ power sector personnel across 9 discom circles in Madhya Pradesh.": {
-    en: "Empowering 15,000+ power sector personnel across 9 discom circles in Madhya Pradesh.",
-    hi: "मध्य प्रदेश के 9 डिस्कॉम सर्किलों में 15,000+ विद्युत क्षेत्र के कर्मियों को सशक्त बनाना।"
+  "Empowering 5000+ power sector personnel across 53 districts in Madhya Pradesh.": {
+    en: "Empowering 5000+ power sector personnel across 53 districts in Madhya Pradesh.",
+    hi: "मध्य प्रदेश के 53 जिलों में 5000+ विद्युत क्षेत्र के कर्मियों को सशक्त बनाना।"
   },
   "Our Core Mission": { en: "Our Core Mission", hi: "हमारा मुख्य उद्देश्य" },
   "To protect line staff and power engineers from hazardous working conditions, secure fair wages, agitate for Old Pension Scheme (OPS), and deliver instant emergency relief to families of martyrs of electricity grid maintenance.": {
@@ -182,9 +184,9 @@ export const translations = {
 
   // Join Now Page
   "Apply for Union Membership": { en: "Apply for Union Membership", hi: "संघ की सदस्यता के लिए आवेदन करें" },
-  "Join over 15,000+ power engineers and field line staff. Get official digital QR Member ID, legal defense, and hazard relief coverage.": {
-    en: "Join over 15,000+ power engineers and field line staff. Get official digital QR Member ID, legal defense, and hazard relief coverage.",
-    hi: "15,000+ से अधिक पावर इंजीनियरों और फ़ील्ड लाइन स्टाफ से जुड़ें। आधिकारिक डिजिटल क्यूआर सदस्य आईडी, कानूनी रक्षा और जोखिम राहत कवरेज प्राप्त करें।"
+  "Join over 5000+ power engineers and field line staff. Get official digital QR Member ID, legal defense, and hazard relief coverage.": {
+    en: "Join over 5000+ power engineers and field line staff. Get official digital QR Member ID, legal defense, and hazard relief coverage.",
+    hi: "5000+ से अधिक पावर इंजीनियरों और फ़ील्ड लाइन स्टाफ से जुड़ें। आधिकारिक डिजिटल क्यूआर सदस्य आईडी, कानूनी रक्षा और जोखिम राहत कवरेज प्राप्त करें।"
   },
   "Step 1: Personal & Service Details": { en: "Step 1: Personal & Service Details", hi: "चरण 1: व्यक्तिगत और सेवा विवरण" },
   "Step 2: Discom Posting & Circle": { en: "Step 2: Discom Posting & Circle", hi: "चरण 2: डिस्कॉम पोस्टिंग और सर्कल" },
