@@ -302,7 +302,7 @@ export default function Home() {
               to="/contact"
               className="w-full sm:w-auto px-8 py-4 rounded-xl text-base font-bold bg-sky-800 text-white border-2 border-white/20 hover:bg-sky-900 transition-all"
             >
-              Contact Union HQ Indore
+              Contact Central Office Bhopal
             </Link>
           </div>
         </div>

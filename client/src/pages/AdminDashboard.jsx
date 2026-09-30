@@ -821,7 +821,7 @@ export default function AdminDashboard() {
                   <input
                     type="text"
                     required
-                    placeholder="Polo Ground HQ Indore"
+                    placeholder="Central Office Bhopal"
                     value={eventForm.venue}
                     onChange={(e) => setEventForm({ ...eventForm, venue: e.target.value })}
                     className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2 text-slate-900"

@@ -10,8 +10,8 @@ const COMPANIES = [
   "MP Central Zone Electricity Discom (म.प्र. मध्य क्षेत्र विद्युत वितरण कं. लि.)",
   "MP Power Generating Co. Ltd. (MPPGCL)",
   "MP Power Transmission Co. Ltd. (MPPTCL)",
-  "MPSEB (म.प्र. राज्य विद्युत मंडल)",
-  "Other Discom / Company"
+  "MP Power Management (म.प्र. पावर मैनेजमेंट कंपनी लि.)",
+  "Other Department"
 ];
 
 // All 55 Districts of Madhya Pradesh
@@ -91,7 +91,7 @@ const CATEGORIES = [
 const EMPLOYEE_CLASSES = [
   "Class 1",
   "Class 2",
-  "Class 3",
+  "Class 3 (J.E.)",
   "Class 4"
 ];
 
@@ -110,7 +110,7 @@ const POSTS = [
 ];
 
 const JOINING_YEARS = Array.from({ length: 47 }, (_, i) => String(2026 - i));
-const MEMBERSHIP_YEARS = ["2026-2027", "2025-2026", "2024-2025", "2023-2024"];
+const MEMBERSHIP_YEARS = ["2026", "2027"];
 
 export default function JoinNow() {
   const { settings } = useAuth();
@@ -129,7 +129,7 @@ export default function JoinNow() {
     post_name: POSTS[0],
     dept_post: '',
     union_post: 'Member',
-    
+
     // New requested fields
     employee_type: EMPLOYEE_TYPES[0], // Regular
     category: CATEGORIES[2], // OBC
@@ -137,7 +137,7 @@ export default function JoinNow() {
 
     cug_mobile: '',
     whatsapp_mobile: '',
-    membership_year: '2026-2027',
+    membership_year: '2026',
     reference_name: '',
 
     // Terms & Payment details
@@ -153,26 +153,38 @@ export default function JoinNow() {
   const [feedback, setFeedback] = useState(null);
   const [submittedApplication, setSubmittedApplication] = useState(null);
 
-  // Custom District Dropdown state
+  // Custom Dropdowns state
   const [districtOpen, setDistrictOpen] = useState(false);
   const [districtSearch, setDistrictSearch] = useState('');
   const districtDropdownRef = useRef(null);
+
+  const [companyOpen, setCompanyOpen] = useState(false);
+  const companyDropdownRef = useRef(null);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (districtDropdownRef.current && !districtDropdownRef.current.contains(event.target)) {
         setDistrictOpen(false);
       }
+      if (companyDropdownRef.current && !companyDropdownRef.current.contains(event.target)) {
+        setCompanyOpen(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Fee calculation: Class 1 or Class 2 -> ₹1000; Class 3 or Class 4 -> ₹500
-  const regFee = (formData.employee_class === 'Class 1' || formData.employee_class === 'Class 2') ? 1000 : 500;
-  
+  // Fee calculation: Class 1 -> ₹2000; Class 2 -> ₹1500; Class 3 (J.E.) -> ₹1000; Class 4 -> ₹500
+  const getFeeForClass = (cls) => {
+    if (cls === 'Class 1') return 2000;
+    if (cls === 'Class 2') return 1500;
+    if (cls === 'Class 3 (J.E.)' || cls === 'Class 3') return 1000;
+    return 500;
+  };
+  const regFee = getFeeForClass(formData.employee_class);
+
   const qrUrl = settings?.registration_qr_url || '/images/payment-qr.png';
-  const whatsappNo = settings?.payment_whatsapp_number || '+91 98260 11223';
+  const whatsappNo = settings?.payment_whatsapp_number || '+91 94249 44041';
 
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -194,7 +206,7 @@ export default function JoinNow() {
     if (!formData.employee_type) errors.employee_type = 'Employee Type is required.';
     if (!formData.category) errors.category = 'Category is required.';
     if (!formData.employee_class) errors.employee_class = 'Employee Class is required.';
-    
+
     const cleanCug = formData.cug_mobile.replace(/\D/g, '');
     if (formData.cug_mobile && cleanCug.length !== 10) {
       errors.cug_mobile = 'CUG Mobile Number must be 10 digits.';
@@ -229,10 +241,6 @@ export default function JoinNow() {
 
   const handleFinalSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.transaction_id || !formData.transaction_id.trim()) {
-      setFeedback({ error: 'Transaction ID / UTR Number is required for verification.' });
-      return;
-    }
 
     setSubmitting(true);
     setFeedback(null);
@@ -267,7 +275,7 @@ export default function JoinNow() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 py-8 sm:py-12">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-        
+
         {/* Header */}
         <div className="text-center space-y-3">
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-sky-100 border border-sky-300 text-sky-900 text-xs font-bold uppercase tracking-wider shadow-sm">
@@ -278,7 +286,7 @@ export default function JoinNow() {
             Apply to Join MP West Zone Electricity Union
           </h1>
           <p className="text-xs sm:text-sm text-slate-600 font-medium max-w-2xl mx-auto">
-            Please fill out all required fields marked with <span className="text-red-500 font-bold">*</span> accurately. Select your Employee Class to determine your registration fee (Class 1 & 2: ₹1000 | Class 3 & 4: ₹500).
+            Please fill out all required fields marked with <span className="text-red-500 font-bold">*</span> accurately. Select your Employee Class to determine your registration fee (Class 1: ₹2000 | Class 2: ₹1500 | Class 3 (J.E.): ₹1000 | Class 4: ₹500).
           </p>
         </div>
 
@@ -311,7 +319,7 @@ export default function JoinNow() {
         {/* STEP 1: Application Form */}
         {step === 1 && (
           <form onSubmit={handleStep1Submit} className="bg-white border border-slate-200 rounded-3xl p-5 sm:p-8 space-y-6 shadow-sm">
-            
+
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h2 className="text-lg font-extrabold text-slate-900 flex items-center gap-2">
                 <FileText className="w-5 h-5 text-sky-600" />
@@ -322,21 +330,41 @@ export default function JoinNow() {
 
             {/* Grid for Form Fields */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              
-              {/* 1. Name of Company * — dropdown */}
-              <div className="md:col-span-1">
+
+              {/* 1. Name of Company * — dropdown displaying downwards */}
+              <div className="md:col-span-1 relative" ref={companyDropdownRef}>
                 <label className="block text-xs font-bold text-slate-800 mb-1">
                   1. Name of Company <span className="text-red-500">*</span>
                 </label>
-                <select
-                  value={formData.company_name}
-                  onChange={(e) => handleChange('company_name', e.target.value)}
-                  className={`w-full bg-slate-50 border ${fieldErrors.company_name ? 'border-red-500 bg-red-50/50' : 'border-slate-300'} rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-sky-500 font-medium`}
+                <button
+                  type="button"
+                  onClick={() => setCompanyOpen(!companyOpen)}
+                  className={`w-full bg-slate-50 border ${fieldErrors.company_name ? 'border-red-500 bg-red-50/50' : 'border-slate-300'} rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-sky-500 font-medium flex items-center justify-between text-left shadow-sm`}
                 >
-                  {COMPANIES.map((comp, idx) => (
-                    <option key={idx} value={comp}>{comp}</option>
-                  ))}
-                </select>
+                  <span className="truncate">{formData.company_name || '-- Select Company --'}</span>
+                  <ChevronDown className={`w-4 h-4 text-slate-500 shrink-0 transition-transform ${companyOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {companyOpen && (
+                  <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-white border border-slate-200 rounded-2xl shadow-xl p-2 max-h-60 overflow-y-auto space-y-0.5 animate-in fade-in slide-in-from-top-1 duration-150">
+                    {COMPANIES.map((comp, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => {
+                          handleChange('company_name', comp);
+                          setCompanyOpen(false);
+                        }}
+                        className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors ${formData.company_name === comp
+                            ? 'bg-sky-600 text-white font-bold'
+                            : 'text-slate-800 hover:bg-sky-50 hover:text-sky-700'
+                          }`}
+                      >
+                        {comp}
+                      </button>
+                    ))}
+                  </div>
+                )}
                 {fieldErrors.company_name && <p className="text-[11px] text-red-600 mt-1 font-semibold">{fieldErrors.company_name}</p>}
               </div>
 
@@ -377,11 +405,10 @@ export default function JoinNow() {
                             setDistrictOpen(false);
                             setDistrictSearch('');
                           }}
-                          className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
-                            formData.district_name === dist 
-                              ? 'bg-sky-600 text-white font-bold' 
+                          className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors ${formData.district_name === dist
+                              ? 'bg-sky-600 text-white font-bold'
                               : 'text-slate-800 hover:bg-sky-50 hover:text-sky-700'
-                          }`}
+                            }`}
                         >
                           {dist}
                         </button>
@@ -429,7 +456,7 @@ export default function JoinNow() {
                 {fieldErrors.category && <p className="text-[11px] text-red-600 mt-1 font-semibold">{fieldErrors.category}</p>}
               </div>
 
-              {/* NEW FIELD 3: Employee Class * (Dynamic Fee Rule: Class 1/2 = 1000rs | Class 3/4 = 500rs) */}
+              {/* NEW FIELD 3: Employee Class * (Dynamic Fee Rule: Class 1 = 2000rs | Class 2 = 1500rs | Class 3 (J.E.) = 1000rs | Class 4 = 500rs) */}
               <div className="md:col-span-2 p-4 rounded-2xl bg-sky-50/70 border border-sky-200 space-y-2">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <label className="block text-xs font-bold text-slate-900">
@@ -443,15 +470,14 @@ export default function JoinNow() {
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
                   {EMPLOYEE_CLASSES.map((cls) => {
                     const isSelected = formData.employee_class === cls;
-                    const feeForCls = (cls === 'Class 1' || cls === 'Class 2') ? 1000 : 500;
+                    const feeForCls = getFeeForClass(cls);
                     return (
-                      <label 
-                        key={cls} 
-                        className={`p-3 rounded-xl border cursor-pointer transition-all text-center flex flex-col items-center justify-center gap-1 ${
-                          isSelected 
-                            ? 'bg-sky-600 text-white border-sky-600 shadow-md font-bold' 
+                      <label
+                        key={cls}
+                        className={`p-3 rounded-xl border cursor-pointer transition-all text-center flex flex-col items-center justify-center gap-1 ${isSelected
+                            ? 'bg-sky-600 text-white border-sky-600 shadow-md font-bold'
                             : 'bg-white border-slate-300 hover:border-sky-400 text-slate-800'
-                        }`}
+                          }`}
                       >
                         <input
                           type="radio"
@@ -669,7 +695,7 @@ export default function JoinNow() {
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. Er. Suresh Sharma (District President / Delegate)"
+                  placeholder="e.g. Er. Suryadev Jaysingh (District President / Delegate)"
                   value={formData.reference_name}
                   onChange={(e) => handleChange('reference_name', e.target.value)}
                   className={`w-full bg-slate-50 border ${fieldErrors.reference_name ? 'border-red-500 bg-red-50/50' : 'border-slate-300'} rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-sky-500 font-medium`}
@@ -710,7 +736,7 @@ export default function JoinNow() {
         {/* STEP 2: QR Payment & UTR Submission */}
         {step === 2 && (
           <form onSubmit={handleFinalSubmit} className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-10 space-y-8 shadow-sm">
-            
+
             <div className="text-center space-y-2">
               <span className="text-xs font-bold text-sky-700 uppercase tracking-widest">Step 2: Registration Verification</span>
               <h2 className="text-2xl font-bold text-slate-900">Scan Union QR Code & Enter UTR Reference</h2>
@@ -735,7 +761,7 @@ export default function JoinNow() {
 
             {/* QR Card */}
             <div className="p-6 rounded-3xl bg-slate-50 border border-slate-200 grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-              
+
               <div className="flex flex-col items-center justify-center p-4 bg-white rounded-2xl border border-slate-200 shadow-sm">
                 <img src={qrUrl} alt="Union Registration Payment QR" className="w-56 h-56 object-contain" />
                 <span className="text-xs text-slate-900 font-extrabold font-mono mt-2">UPI ID: {settings?.upi_id || 'mpvidyut@sbi'}</span>
@@ -778,12 +804,11 @@ export default function JoinNow() {
             <div className="space-y-4 pt-4 border-t border-slate-100">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Transaction ID / UTR Number <span className="text-sky-600">*</span>
+                  Transaction ID / UTR Number <span className="text-slate-400 font-normal">(Optional)</span>
                 </label>
                 <input
                   type="text"
-                  required
-                  placeholder="e.g. UTR98765432101"
+                  placeholder="e.g. UTR98765432101 (Optional)"
                   value={formData.transaction_id}
                   onChange={(e) => handleChange('transaction_id', e.target.value)}
                   className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-xs text-slate-900 focus:outline-none focus:border-sky-500 font-mono"

@@ -68,7 +68,7 @@ export default function Contact() {
                   <div>
                     <span className="font-bold text-slate-900 block text-sm">Office Address</span>
                     <span className="text-slate-600 leading-relaxed block mt-0.5">
-                      {settings?.office_address || 'MPVMAVAKS Union HQ, Discom HQ Campus, Polo Ground, Indore, MP - 452003'}
+                      {settings?.office_address || '138, Private Bijli Nagar Colony, Govindpura, Bhopal, MP - 462023'}
                     </span>
                   </div>
                 </div>
@@ -79,8 +79,8 @@ export default function Contact() {
                   </div>
                   <div>
                     <span className="font-bold text-slate-900 block text-sm">Phone Helpline</span>
-                    <span className="text-slate-700 font-mono font-bold block mt-0.5">
-                      {settings?.contact_phone || '+91 98260 11223'}
+                    <span className="text-slate-700 font-mono font-bold block mt-0.5 leading-relaxed">
+                      {settings?.contact_phone || '+91 94249 44041 / +91 83198 64691 / +91 94793 65273'}
                     </span>
                   </div>
                 </div>
@@ -92,7 +92,7 @@ export default function Contact() {
                   <div>
                     <span className="font-bold text-slate-900 block text-sm">Official Email</span>
                     <span className="text-slate-600 block mt-0.5">
-                      {settings?.contact_email || 'contact@mpvmavaksunion.org'}
+                      {settings?.contact_email || 'mpmavaks@gmail.com'}
                     </span>
                   </div>
                 </div>
@@ -114,8 +114,8 @@ export default function Contact() {
             {/* Map Placeholder Widget */}
             <div className="bg-white border border-slate-200 rounded-3xl p-6 text-center space-y-3 shadow-sm">
               <Shield className="w-8 h-8 text-sky-600 mx-auto" />
-              <h4 className="font-bold text-slate-900 text-sm">Indore HQ Campus Map</h4>
-              <p className="text-xs text-slate-500 font-medium">Polo Ground MP West Zone Discom Executive HQ</p>
+              <h4 className="font-bold text-slate-900 text-sm">Central Office Bhopal Map</h4>
+              <p className="text-xs text-slate-500 font-medium">138, Private Bijli Nagar Colony, Govindpura, Bhopal</p>
               <div className="h-32 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-center text-xs font-mono text-slate-500">
                 [ Interactive Campus Map Placeholder ]
               </div>

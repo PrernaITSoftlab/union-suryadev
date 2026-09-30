@@ -15,6 +15,8 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
+  const [energyDropdownOpen, setEnergyDropdownOpen] = useState(false);
+  const [boardDropdownOpen, setBoardDropdownOpen] = useState(false);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -57,12 +59,104 @@ export default function Navbar() {
             >
               {t('About Us')}
             </Link>
-            <Link 
-              to="/board-of-union" 
-              className={`px-1.5 xl:px-2.5 py-1.5 rounded-xl text-[11px] xl:text-xs 2xl:text-sm font-semibold transition-colors whitespace-nowrap shrink-0 ${isActive('/board-of-union') ? 'bg-sky-50 text-sky-700 border border-sky-200' : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'}`}
+            <div 
+              className="relative"
+              onMouseEnter={() => setBoardDropdownOpen(true)}
+              onMouseLeave={() => setBoardDropdownOpen(false)}
             >
-              {t('Board of Union')}
-            </Link>
+              <Link 
+                to="/board-of-union" 
+                className={`px-1.5 xl:px-2.5 py-1.5 rounded-xl text-[11px] xl:text-xs 2xl:text-sm font-semibold transition-colors whitespace-nowrap shrink-0 flex items-center gap-1 ${isActive('/board-of-union') ? 'bg-sky-50 text-sky-700 border border-sky-200' : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'}`}
+                onClick={() => setBoardDropdownOpen(false)}
+              >
+                <span>{t('Board of Union')}</span>
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${boardDropdownOpen ? 'rotate-180 text-sky-600' : 'text-slate-400'}`} />
+              </Link>
+
+              {boardDropdownOpen && (
+                <div className="absolute left-0 mt-1 w-80 bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden z-50 p-2 space-y-1">
+                  <div className="px-3 py-2 bg-slate-50 rounded-xl border border-slate-100 mb-1">
+                    <span className="font-extrabold text-xs text-slate-900 block">{t('Board of Union')}</span>
+                    <span className="text-[10px] text-slate-500 block">Executive Leaders & Directory (18 Heads)</span>
+                  </div>
+
+                  <Link
+                    to="/board-of-union"
+                    onClick={() => setBoardDropdownOpen(false)}
+                    className="block px-3 py-2 rounded-xl text-xs font-bold text-sky-700 hover:bg-sky-50 transition-colors flex items-center justify-between"
+                  >
+                    <span>View All 18 Executive Officers</span>
+                    <span className="text-[10px] bg-sky-100 text-sky-800 px-2 py-0.5 rounded-full font-bold">18 Heads</span>
+                  </Link>
+
+                  <div className="h-px bg-slate-100 my-1"></div>
+
+                  <Link
+                    to="/board-of-union"
+                    onClick={() => setBoardDropdownOpen(false)}
+                    className="flex items-center gap-2.5 p-2 rounded-xl hover:bg-slate-100 transition-colors group"
+                  >
+                    <img src="/images/board/v-s-mehto.jpg" alt="V. S. Mehto" className="w-8 h-8 rounded-lg object-cover border border-sky-400 shrink-0" />
+                    <div>
+                      <span className="font-bold text-xs text-slate-900 group-hover:text-sky-700 block">
+                        {isHindi ? '1. मा व्ही एस महतो' : '1. Shri V. S. Mehto'}
+                      </span>
+                      <span className="text-[10px] text-slate-500 block">
+                        {isHindi ? 'प्रांतीय वरिष्ठ उपाध्यक्ष' : 'Senior Vice President'}
+                      </span>
+                    </div>
+                  </Link>
+
+                  <Link
+                    to="/board-of-union"
+                    onClick={() => setBoardDropdownOpen(false)}
+                    className="flex items-center gap-2.5 p-2 rounded-xl hover:bg-slate-100 transition-colors group"
+                  >
+                    <img src="/images/board/suryadev-jaysingh.jpg" alt="Suryadev Jaysingh" className="w-8 h-8 rounded-lg object-cover border border-sky-400 shrink-0" />
+                    <div>
+                      <span className="font-bold text-xs text-slate-900 group-hover:text-sky-700 block">
+                        {isHindi ? '2. इंजी सूर्यदेव जयसिंह' : '2. Er. Suryadev Jaysingh'}
+                      </span>
+                      <span className="text-[10px] text-slate-500 block">
+                        {isHindi ? 'प्रांतीय अध्यक्ष' : 'State President'}
+                      </span>
+                    </div>
+                  </Link>
+
+                  <Link
+                    to="/board-of-union"
+                    onClick={() => setBoardDropdownOpen(false)}
+                    className="flex items-center gap-2.5 p-2 rounded-xl hover:bg-slate-100 transition-colors group"
+                  >
+                    <img src="/images/board/m-l-shakya.jpg" alt="M. L. Shakya" className="w-8 h-8 rounded-lg object-cover border border-sky-400 shrink-0" />
+                    <div>
+                      <span className="font-bold text-xs text-slate-900 group-hover:text-sky-700 block">
+                        {isHindi ? '3. मा एम एल शाक्य' : '3. Shri M. L. Shakya'}
+                      </span>
+                      <span className="text-[10px] text-slate-500 block">
+                        {isHindi ? 'संस्थापक / मुख्य संरक्षक' : 'Founder & Patron'}
+                      </span>
+                    </div>
+                  </Link>
+
+                  <Link
+                    to="/board-of-union"
+                    onClick={() => setBoardDropdownOpen(false)}
+                    className="flex items-center gap-2.5 p-2 rounded-xl hover:bg-slate-100 transition-colors group"
+                  >
+                    <img src="/images/board/d-d-ramteke.jpg" alt="D. D. Ramteke" className="w-8 h-8 rounded-lg object-cover border border-sky-400 shrink-0" />
+                    <div>
+                      <span className="font-bold text-xs text-slate-900 group-hover:text-sky-700 block">
+                        {isHindi ? '4. इंजी डी डी रामटेके' : '4. Er. D. D. Ramteke'}
+                      </span>
+                      <span className="text-[10px] text-slate-500 block">
+                        {isHindi ? 'प्रांतीय महासचिव' : 'General Secretary'}
+                      </span>
+                    </div>
+                  </Link>
+                </div>
+              )}
+            </div>
             <Link 
               to="/orders" 
               className={`px-1.5 xl:px-2.5 py-1.5 rounded-xl text-[11px] xl:text-xs 2xl:text-sm font-semibold transition-colors whitespace-nowrap shrink-0 ${isActive('/orders') ? 'bg-sky-50 text-sky-700 border border-sky-200' : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'}`}
@@ -81,14 +175,85 @@ export default function Navbar() {
             >
               {t('Notices')}
             </Link>
-            <a 
-              href="https://energy.mp.gov.in"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-1.5 xl:px-2.5 py-1.5 rounded-xl text-[11px] xl:text-xs 2xl:text-sm font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-colors whitespace-nowrap shrink-0"
+            <div 
+              className="relative"
+              onMouseEnter={() => setEnergyDropdownOpen(true)}
+              onMouseLeave={() => setEnergyDropdownOpen(false)}
             >
-              {t('Energy Department')}
-            </a>
+              <Link 
+                to="/energy-department" 
+                className={`px-1.5 xl:px-2.5 py-1.5 rounded-xl text-[11px] xl:text-xs 2xl:text-sm font-semibold transition-colors whitespace-nowrap shrink-0 flex items-center gap-1 ${isActive('/energy-department') ? 'bg-sky-50 text-sky-700 border border-sky-200' : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'}`}
+                onClick={() => setEnergyDropdownOpen(false)}
+              >
+                <span>{t('Energy Department')}</span>
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${energyDropdownOpen ? 'rotate-180 text-sky-600' : 'text-slate-400'}`} />
+              </Link>
+
+              {energyDropdownOpen && (
+                <div className="absolute left-0 mt-1 w-80 bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden z-50 p-2 space-y-1">
+                  <div className="px-3 py-2 bg-slate-50 rounded-xl border border-slate-100 mb-1">
+                    <span className="font-extrabold text-xs text-slate-900 block">{t('Energy Department')}</span>
+                    <span className="text-[10px] text-slate-500 block">{t('Madhya Pradesh Power Utilities & Organizations')}</span>
+                  </div>
+
+                  <Link
+                    to="/energy-department"
+                    onClick={() => setEnergyDropdownOpen(false)}
+                    className="block px-3 py-2 rounded-xl text-xs font-bold text-sky-700 hover:bg-sky-50 transition-colors flex items-center justify-between"
+                  >
+                    <span>{t('All Energy Department Organizations')}</span>
+                    <span className="text-[10px] bg-sky-100 text-sky-800 px-2 py-0.5 rounded-full font-bold">5 Entities</span>
+                  </Link>
+
+                  <div className="h-px bg-slate-100 my-1"></div>
+
+                  <Link
+                    to="/energy-department#mp-power-management"
+                    onClick={() => setEnergyDropdownOpen(false)}
+                    className="block px-3 py-2 rounded-xl text-xs hover:bg-slate-100 text-slate-800 transition-colors group"
+                  >
+                    <span className="font-bold block text-slate-900 group-hover:text-sky-700">1. M.P. Power Management Co. Ltd.</span>
+                    <span className="text-[10px] text-slate-500 block">MPPMCL Apex Power Trading & Procurement</span>
+                  </Link>
+
+                  <Link
+                    to="/energy-department#mp-power-transmission"
+                    onClick={() => setEnergyDropdownOpen(false)}
+                    className="block px-3 py-2 rounded-xl text-xs hover:bg-slate-100 text-slate-800 transition-colors group"
+                  >
+                    <span className="font-bold block text-slate-900 group-hover:text-sky-700">2. M.P. Power Transmission</span>
+                    <span className="text-[10px] text-slate-500 block">MPPTCL Extra High Voltage EHV Grid</span>
+                  </Link>
+
+                  <Link
+                    to="/energy-department#mp-west-zone"
+                    onClick={() => setEnergyDropdownOpen(false)}
+                    className="block px-3 py-2 rounded-xl text-xs hover:bg-slate-100 text-slate-800 transition-colors group"
+                  >
+                    <span className="font-bold block text-slate-900 group-hover:text-sky-700">3. M.P. West Zone (MPPKVVCL)</span>
+                    <span className="text-[10px] text-slate-500 block">Indore Discom (15 Malwa & Nimar Districts)</span>
+                  </Link>
+
+                  <Link
+                    to="/energy-department#mp-central-zone"
+                    onClick={() => setEnergyDropdownOpen(false)}
+                    className="block px-3 py-2 rounded-xl text-xs hover:bg-slate-100 text-slate-800 transition-colors group"
+                  >
+                    <span className="font-bold block text-slate-900 group-hover:text-sky-700">4. M.P. Central (MPMKVVCL)</span>
+                    <span className="text-[10px] text-slate-500 block">Bhopal Discom (16 Central Districts)</span>
+                  </Link>
+
+                  <Link
+                    to="/energy-department#mp-east-zone"
+                    onClick={() => setEnergyDropdownOpen(false)}
+                    className="block px-3 py-2 rounded-xl text-xs hover:bg-slate-100 text-slate-800 transition-colors group"
+                  >
+                    <span className="font-bold block text-slate-900 group-hover:text-sky-700">5. M.P. East (MPPKVVCL)</span>
+                    <span className="text-[10px] text-slate-500 block">Jabalpur Discom (20 Eastern Districts)</span>
+                  </Link>
+                </div>
+              )}
+            </div>
             <Link 
               to="/contact" 
               className={`px-1.5 xl:px-2.5 py-1.5 rounded-xl text-[11px] xl:text-xs 2xl:text-sm font-semibold transition-colors whitespace-nowrap shrink-0 ${isActive('/contact') ? 'bg-sky-50 text-sky-700 border border-sky-200' : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'}`}
@@ -355,15 +520,23 @@ export default function Navbar() {
           >
             {t('Notices')}
           </Link>
-          <a
-            href="https://energy.mp.gov.in"
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => setMobileMenuOpen(false)}
-            className="block px-3 py-2 rounded-lg text-base font-semibold text-slate-800 hover:bg-slate-100"
-          >
-            {t('Energy Department')}
-          </a>
+          <div className="space-y-1">
+            <Link
+              to="/energy-department"
+              onClick={() => setMobileMenuOpen(false)}
+              className="block px-3 py-2 rounded-lg text-base font-semibold text-slate-800 hover:bg-slate-100 flex items-center justify-between"
+            >
+              <span>{t('Energy Department')}</span>
+              <span className="text-[10px] bg-sky-100 text-sky-800 px-2 py-0.5 rounded-full font-bold">5 Sub-Sections</span>
+            </Link>
+            <div className="pl-4 space-y-1 border-l-2 border-sky-200 ml-3">
+              <Link to="/energy-department#mp-power-management" onClick={() => setMobileMenuOpen(false)} className="block px-2 py-1 text-xs font-semibold text-slate-600 hover:text-sky-700">1. M.P. Power Management Co. Ltd</Link>
+              <Link to="/energy-department#mp-power-transmission" onClick={() => setMobileMenuOpen(false)} className="block px-2 py-1 text-xs font-semibold text-slate-600 hover:text-sky-700">2. M.P. Power Transmission</Link>
+              <Link to="/energy-department#mp-west-zone" onClick={() => setMobileMenuOpen(false)} className="block px-2 py-1 text-xs font-semibold text-slate-600 hover:text-sky-700">3. M.P. West Zone (Indore)</Link>
+              <Link to="/energy-department#mp-central-zone" onClick={() => setMobileMenuOpen(false)} className="block px-2 py-1 text-xs font-semibold text-slate-600 hover:text-sky-700">4. M.P. Central (Bhopal)</Link>
+              <Link to="/energy-department#mp-east-zone" onClick={() => setMobileMenuOpen(false)} className="block px-2 py-1 text-xs font-semibold text-slate-600 hover:text-sky-700">5. M.P. East (Jabalpur)</Link>
+            </div>
+          </div>
           <Link
             to="/contact"
             onClick={() => setMobileMenuOpen(false)}

@@ -29,7 +29,7 @@ export default function Footer() {
               {settings?.tagline || t('Madhya Pradesh West Zone Electricity Distribution Company Official Union Platform.')}
             </p>
             <div className="text-xs text-slate-500 font-medium">
-              Registration & Safety Officer: General Secretary Office HQ Indore
+              Registration & Safety Officer: Central Office Bhopal
             </div>
           </div>
 
@@ -45,6 +45,9 @@ export default function Footer() {
               </li>
               <li>
                 <Link to="/events" className="hover:text-sky-600 transition-colors">{t('Upcoming Events & Agitations')}</Link>
+              </li>
+              <li>
+                <Link to="/energy-department" className="hover:text-sky-600 transition-colors font-bold text-sky-700">{t('Energy Department Organizations')}</Link>
               </li>
               <li>
                 <Link to="/join" className="hover:text-sky-600 transition-colors">{t('Apply for Membership (Join Now)')}</Link>
@@ -64,15 +67,15 @@ export default function Footer() {
             <ul className="space-y-2 text-xs">
               <li className="flex items-start gap-2">
                 <MapPin className="w-4 h-4 text-sky-600 shrink-0 mt-0.5" />
-                <span className="text-slate-700">{settings?.office_address || 'Polo Ground HQ Campus, Indore, Madhya Pradesh - 452003'}</span>
+                <span className="text-slate-700">{settings?.office_address || '138, Private Bijli Nagar Colony, Govindpura, Bhopal, MP - 462023'}</span>
               </li>
               <li className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-sky-600 shrink-0" />
-                <span className="font-mono text-slate-800">{settings?.contact_phone || '+91 98260 11223'}</span>
+                <span className="font-mono text-slate-800">{settings?.contact_phone || '+91 94249 44041 / +91 83198 64691'}</span>
               </li>
               <li className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-sky-600 shrink-0" />
-                <span className="text-slate-700">{settings?.contact_email || 'contact@mpvmavaksunion.org'}</span>
+                <span className="text-slate-700">{settings?.contact_email || 'mpmavaks@gmail.com'}</span>
               </li>
             </ul>
           </div>
@@ -86,7 +89,7 @@ export default function Footer() {
             <div className="p-3 bg-sky-50/70 border border-sky-200 rounded-xl text-xs space-y-1 font-mono text-sky-900 font-bold">
               <div>UPI: {settings?.upi_id || 'mpvidyut@sbi'}</div>
               <div>Fee: ₹{settings?.registration_fee || 500} Registration</div>
-              <div>WhatsApp: {settings?.payment_whatsapp_number || '+91 98260 11223'}</div>
+              <div>WhatsApp: {settings?.payment_whatsapp_number || '+91 94249 44041'}</div>
             </div>
           </div>
 

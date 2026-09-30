@@ -105,7 +105,7 @@ router.post('/admin/create', authenticateToken, requireAdmin, (req, res) => {
     event_fee: is_paid ? Number(event_fee) : 0,
     payment_qr_url: payment_qr_url || defaultQr,
     payment_instructions: payment_instructions || 'Pay fee using QR code and submit UTR number.',
-    whatsapp_contact: whatsapp_contact || inMemoryStore.systemSettings.payment_whatsapp_number || '+91 98260 11223',
+    whatsapp_contact: whatsapp_contact || inMemoryStore.systemSettings.payment_whatsapp_number || '+91 94249 44041',
     visibility: visibility || 'PUBLIC',
     status: status || 'REGISTRATION_OPEN',
     created_by: req.user.id,

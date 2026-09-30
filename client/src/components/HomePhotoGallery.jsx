@@ -1,7 +1,65 @@
 import React, { useState } from 'react';
 import { Camera, Eye, X, ChevronLeft, ChevronRight, Award, FileText, Users, Calendar, Sparkles } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 export const GALLERY_PHOTOS = [
+  {
+    id: 105,
+    url: '/images/gallery/constitution-presentation-cgm-hr-bhopal.png',
+    titleEn: 'Presenting a Copy of the Constitution of India to Chief General Manager (HR), Bhopal',
+    titleHi: 'मुख्य महाप्रबंधक (HR) भोपाल को संविधान की प्रति भेंट करते हुए',
+    category: 'Constitution',
+    categoryLabel: 'Samvidhan Presentation',
+    descriptionEn: 'Union delegation led by State President Er. Suryadev Jaysingh presenting a bound ceremonial copy of the Constitution of India (Bharat Ka Samvidhan) to the Chief General Manager (HR), MPMKVVCL Bhopal.',
+    descriptionHi: 'संघ के प्रांतीय अध्यक्ष इंजी सूर्यदेव जयसिंह एवं प्रतिनिधिमंडल द्वारा मध्य क्षेत्र विद्युत वितरण कंपनी के मुख्य महाप्रबंधक (HR) भोपाल को भारत का संविधान ग्रंथ भेंट किया गया।',
+    alt: 'Union leadership presenting Constitution of India book to Chief General Manager HR Bhopal',
+    date: 'Sep 2026',
+    tag: 'Samvidhan Presentation'
+  },
+  {
+    id: 101,
+    url: '/images/gallery/discom-talks-news-clipping.png',
+    title: 'Discom & Union Historic Talks Agreement (Singaji Samachar)',
+    category: 'Delegation',
+    categoryLabel: 'News & Press Releases',
+    description: 'Singaji Samachar news publication highlighting the successful historic negotiation between MP West Discom management and Union delegation led by Er. Suryadev Jaysingh, D.D. Ramteke, V.S. Mehto & M.L. Shakya resolving 49 employee demands.',
+    alt: 'Newspaper clipping of MP West Discom and Union 49-point historic agreement',
+    date: 'Sep 2026',
+    tag: 'Historic Agreement'
+  },
+  {
+    id: 102,
+    url: '/images/gallery/discom-management-meeting.jpg',
+    title: 'High-Level Discom Management Meeting',
+    category: 'Delegation',
+    categoryLabel: 'Discom Delegations',
+    description: 'Union President Er. Suryadev Jaysingh & executive delegates holding high-level demand charter discussions with MP West Discom management in HQ Conference Room.',
+    alt: 'Er. Suryadev Jaysingh and union leadership seated at Discom conference meeting',
+    date: 'Sep 2026',
+    tag: 'Conference Room'
+  },
+  {
+    id: 103,
+    url: '/images/gallery/union-discom-felicitation.png',
+    title: 'Management Reception & Floral Welcome',
+    category: 'Felicitation',
+    categoryLabel: 'Felicitations & Honors',
+    description: 'Union leaders felicitating Discom Executive with floral bouquet following successful 49-point agreement on employee cadre regularization & safety rights.',
+    alt: 'Union leaders felicitating discom official with a flower bouquet in boardroom',
+    date: 'Sep 2026',
+    tag: 'Felicitation'
+  },
+  {
+    id: 104,
+    url: '/images/gallery/union-historic-negotiation.png',
+    title: 'Union Delegate Council Bilateral Talks',
+    category: 'Delegation',
+    categoryLabel: 'Discom Delegations',
+    description: 'Full executive delegate council seated at Discom Conference Table during historic September 2026 employee welfare negotiation.',
+    alt: 'Union delegates and circle leaders seated around long conference table during talks',
+    date: 'Sep 2026',
+    tag: 'Bilateral Talks'
+  },
   {
     id: 1,
     url: '/images/gallery/constitution-presentation-office.jpg',
@@ -123,6 +181,7 @@ const CATEGORIES = [
 ];
 
 export default function HomePhotoGallery() {
+  const { isHindi } = useLanguage();
   const [activeTab, setActiveTab] = useState('ALL');
   const [lightboxIndex, setLightboxIndex] = useState(null);
 
@@ -158,13 +217,15 @@ export default function HomePhotoGallery() {
           <div className="space-y-3 max-w-2xl">
             <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-sky-100 border border-sky-300 text-sky-900 text-xs font-bold uppercase tracking-wider">
               <Camera className="w-3.5 h-3.5 text-sky-600" />
-              <span>Official Photo Highlights</span>
+              <span>{isHindi ? 'आधिकारिक फोटो की झलकियां' : 'Official Photo Highlights'}</span>
             </div>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-              Union Photo Gallery
+              {isHindi ? 'यूनियन फोटो गैलरी' : 'Union Photo Gallery'}
             </h2>
             <p className="text-sm text-slate-600 leading-relaxed font-normal">
-              Empirical moments of MPVMAVAKS Union leadership engaging discom management, celebrating employee honors, and advocating for power engineers & linemen.
+              {isHindi 
+                ? 'एमपीडब्ल्यूजेड संघ के नेतृत्व द्वारा डिस्कॉम प्रबंधन के साथ जुड़ाव, संविधान भेंट, कर्मचारी सम्मान एवं विद्युत कर्मियों के अधिकारों की प्रमुख झलकियां।'
+                : 'Empirical moments of MPVMAVAKS Union leadership engaging discom management, presenting the Constitution, celebrating employee honors, and advocating for power engineers & linemen.'}
             </p>
           </div>
 
@@ -210,46 +271,66 @@ export default function HomePhotoGallery() {
 
       </div>
 
-      {/* Lightbox Modal - Full Size Photo View */}
+      {/* Lightbox Modal - Full Size Photo View with Caption Bar */}
       {currentPhoto && (
         <div
           className="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 transition-opacity animate-in fade-in duration-200"
           onClick={closeLightbox}
         >
           <div
-            className="relative max-w-6xl w-full h-full max-h-[92vh] flex items-center justify-center overflow-hidden"
+            className="relative max-w-5xl w-full h-full max-h-[92vh] flex flex-col items-center justify-center overflow-hidden bg-slate-900 rounded-3xl border border-slate-800 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Floating Close Button */}
             <button
               onClick={closeLightbox}
-              className="absolute top-4 right-4 z-30 p-3 rounded-full bg-slate-900/80 hover:bg-red-500 hover:text-white text-white border border-slate-700 transition-all shadow-2xl backdrop-blur-md"
+              className="absolute top-4 right-4 z-30 p-2.5 rounded-full bg-slate-900/80 hover:bg-red-500 hover:text-white text-white border border-slate-700 transition-all shadow-2xl backdrop-blur-md"
               aria-label="Close photo"
             >
-              <X className="w-6 h-6" />
+              <X className="w-5 h-5" />
             </button>
 
             {/* Full Size Image */}
-            <img
-              src={currentPhoto.url}
-              alt={currentPhoto.alt}
-              className="max-h-[88vh] max-w-[92vw] w-auto h-auto object-contain rounded-2xl shadow-2xl"
-            />
+            <div className="w-full flex-grow flex items-center justify-center bg-black p-2 overflow-hidden">
+              <img
+                src={currentPhoto.url}
+                alt={currentPhoto.alt}
+                className="max-h-[70vh] max-w-[88vw] w-auto h-auto object-contain rounded-xl shadow-2xl"
+              />
+            </div>
+
+            {/* Bottom Caption Info Box */}
+            <div className="w-full p-4 sm:p-6 bg-slate-900 border-t border-slate-800 text-white space-y-1.5 shrink-0">
+              <div className="flex items-center justify-between gap-4">
+                <span className="px-2.5 py-0.5 rounded bg-sky-600 text-white text-[10px] font-extrabold uppercase tracking-wider">
+                  {currentPhoto.tag || currentPhoto.category}
+                </span>
+                <span className="text-xs font-mono text-slate-400 font-bold">{currentPhoto.date}</span>
+              </div>
+
+              <h3 className="text-base sm:text-lg font-black text-white leading-tight">
+                {isHindi ? (currentPhoto.titleHi || currentPhoto.title) : (currentPhoto.titleEn || currentPhoto.title)}
+              </h3>
+
+              <p className="text-xs text-slate-300 leading-relaxed max-w-4xl">
+                {isHindi ? (currentPhoto.descriptionHi || currentPhoto.description) : (currentPhoto.descriptionEn || currentPhoto.description)}
+              </p>
+            </div>
 
             {/* Prev / Next Controls */}
             <button
               onClick={prevSlide}
-              className="absolute left-4 top-1/2 -translate-y-1/2 z-30 p-3.5 rounded-full bg-slate-900/80 hover:bg-sky-500 hover:text-white text-white border border-slate-700 transition-all shadow-2xl backdrop-blur-md"
+              className="absolute left-4 top-1/2 -translate-y-1/2 z-30 p-3 rounded-full bg-slate-900/80 hover:bg-sky-500 hover:text-white text-white border border-slate-700 transition-all shadow-2xl backdrop-blur-md"
               aria-label="Previous photo"
             >
-              <ChevronLeft className="w-7 h-7" />
+              <ChevronLeft className="w-6 h-6" />
             </button>
             <button
               onClick={nextSlide}
-              className="absolute right-4 top-1/2 -translate-y-1/2 z-30 p-3.5 rounded-full bg-slate-900/80 hover:bg-sky-500 hover:text-white text-white border border-slate-700 transition-all shadow-2xl backdrop-blur-md"
+              className="absolute right-4 top-1/2 -translate-y-1/2 z-30 p-3 rounded-full bg-slate-900/80 hover:bg-sky-500 hover:text-white text-white border border-slate-700 transition-all shadow-2xl backdrop-blur-md"
               aria-label="Next photo"
             >
-              <ChevronRight className="w-7 h-7" />
+              <ChevronRight className="w-6 h-6" />
             </button>
           </div>
         </div>

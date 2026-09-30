@@ -17,6 +17,7 @@ import Orders from './pages/Orders';
 import Events from './pages/Events';
 import Notices from './pages/Notices';
 import Contact from './pages/Contact';
+import EnergyDepartment from './pages/EnergyDepartment';
 import JoinNow from './pages/JoinNow';
 import Login from './pages/Login';
 
@@ -57,6 +58,7 @@ function AppContent() {
           <Route path="/orders" element={<Orders />} />
           <Route path="/events" element={<Events />} />
           <Route path="/notices" element={<Notices />} />
+          <Route path="/energy-department" element={<EnergyDepartment />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/join" element={<JoinNow />} />
           <Route path="/login" element={<Login />} />

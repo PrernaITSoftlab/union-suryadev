@@ -77,6 +77,53 @@ export default function Notices() {
           </button>
         </div>
 
+        {/* Featured News Clipping & Historic Agreement Section */}
+        <div className="bg-gradient-to-br from-slate-900 via-sky-950 to-blue-950 text-white rounded-3xl p-6 sm:p-8 border border-sky-800 shadow-xl space-y-6 relative overflow-hidden">
+          <div className="flex flex-col lg:flex-row items-center gap-8">
+            {/* News Image Preview */}
+            <div className="w-full lg:w-1/2 rounded-2xl overflow-hidden border-2 border-sky-500/50 shadow-2xl bg-black">
+              <img 
+                src="/images/gallery/discom-talks-news-clipping.png" 
+                alt="Singaji Samachar - Discom & Union Historic Agreement News Clipping" 
+                className="w-full h-auto object-cover hover:scale-105 transition-transform duration-500"
+              />
+              <div className="p-3 bg-slate-900 text-slate-300 text-xs text-center font-mono font-bold border-t border-slate-800">
+                Singaji Samachar Press Release • 28 September 2026
+              </div>
+            </div>
+
+            {/* Content Details */}
+            <div className="w-full lg:w-1/2 space-y-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-xs font-bold uppercase tracking-wider">
+                <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Historic Agreement Reached • ऐतिहासिक वार्ता सफल</span>
+              </div>
+
+              <h2 className="text-2xl sm:text-3xl font-black text-white leading-tight">
+                म.प्र. पश्चिम क्षेत्र विद्युत वितरण कंपनी और आरक्षित वर्ग संगठन के बीच ऐतिहासिक वार्ता सफल, मांगों पर बनी सहमति
+              </h2>
+
+              <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
+                इंदौर डिस्कॉम प्रबंध निदेशक कार्यालय में प्रांतीय अध्यक्ष <strong>इंजी सूर्यदेव जयसिंह</strong>, प्रांतीय महासचिव <strong>डी.डी. रामटेके</strong>, प्रांतीय वरिष्ठ उपाध्यक्ष <strong>वी.एस. महतो</strong> एवं संस्थापक <strong>एम.एल. शाक्य</strong> के नेतृत्व में 49 सूत्रीय मांग पत्र पर सकारात्मक सहमति बनी।
+              </p>
+
+              {/* Photo Strip */}
+              <div className="grid grid-cols-2 gap-3 pt-2">
+                <div className="rounded-xl overflow-hidden border border-white/20 h-28 sm:h-32">
+                  <img src="/images/gallery/discom-management-meeting.jpg" alt="Discom Meeting" className="w-full h-full object-cover" />
+                </div>
+                <div className="rounded-xl overflow-hidden border border-white/20 h-28 sm:h-32">
+                  <img src="/images/gallery/union-discom-felicitation.png" alt="Felicitation" className="w-full h-full object-cover" />
+                </div>
+              </div>
+
+              <div className="pt-2 text-xs font-mono text-sky-300 font-bold">
+                ✓ 28 सितंबर 2026 से प्रस्तावित अनिश्चितकालीन हड़ताल स्थगित
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Notices Cards Grid */}
         <div className="space-y-6">
           {noticesList.map(ntc => (
