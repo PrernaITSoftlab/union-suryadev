@@ -70,7 +70,7 @@ export default function Login() {
               <input
                 type="email"
                 required
-                placeholder="email@mpwzunion.org"
+                placeholder="email@mpvmavaksunion.org"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full bg-slate-50 border border-slate-300 rounded-xl pl-10 pr-4 py-3 text-xs text-slate-900 focus:outline-none focus:border-sky-500"

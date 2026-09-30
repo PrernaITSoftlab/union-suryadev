@@ -149,7 +149,7 @@ router.post('/admin/create', authenticateToken, requireAdmin, async (req, res, n
         designation: designation || 'Staff Member',
         circle: circle || 'Indore Circle',
         union_designation: union_designation || 'Union Member',
-        bio: bio || `Member of MPWZ Union (${circle || 'Indore'}).`,
+        bio: bio || `Member of MPVMAVAKS Union (${circle || 'Indore'}).`,
         emergency_contact: emergency_contact || '',
         identity_doc_url: identity_doc_url || '',
         additional_doc_url: additional_doc_url || '',

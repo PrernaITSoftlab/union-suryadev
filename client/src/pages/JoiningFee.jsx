@@ -57,7 +57,7 @@ const JoiningFee = () => {
       id: 'annual',
       name: 'Annual Membership Fee',
       amount: 500,
-      description: 'Standard 1-year MPWZ Union active membership & legal support.',
+      description: 'Standard 1-year MPVMAVAKS Union active membership & legal support.',
       badge: 'POPULAR'
     },
     {
@@ -140,13 +140,13 @@ const JoiningFee = () => {
         {/* Page Header */}
         <div className="text-center space-y-3">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-bold uppercase tracking-wider shadow-sm">
-            <QrCode className="w-4 h-4 text-blue-600" /> MPWZ Union Official Payment Portal
+            <QrCode className="w-4 h-4 text-blue-600" /> MPVMAVAKS Union Official Payment Portal
           </div>
           <h1 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
-            MPWZ Union Membership Joining Fee
+            MPVMAVAKS Union Membership Joining Fee
           </h1>
           <p className="text-slate-600 text-xs sm:text-sm max-w-2xl mx-auto leading-relaxed">
-            Pay your MPWZ Union annual or lifetime joining fee via UPI QR code. Submit your transaction UTR reference number to receive your digital receipt immediately.
+            Pay your MPVMAVAKS Union annual or lifetime joining fee via UPI QR code. Submit your transaction UTR reference number to receive your digital receipt immediately.
           </p>
         </div>
 
@@ -208,7 +208,7 @@ const JoiningFee = () => {
             <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-md relative group">
               <img
                 src={qrCodeUrl}
-                alt="MPWZ Union Payment UPI QR Code"
+                alt="MPVMAVAKS Union Payment UPI QR Code"
                 className="w-48 h-48 sm:w-52 sm:h-52 object-contain mx-auto"
               />
               <div className="absolute inset-0 flex items-center justify-center bg-slate-900/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity">
@@ -345,7 +345,7 @@ const JoiningFee = () => {
                     <input
                       type="text"
                       required
-                      placeholder="e.g. MPWZ-IND-104"
+                      placeholder="e.g. MPVMAVAKS-IND-104"
                       value={formData.employee_id}
                       onChange={(e) => setFormData({ ...formData, employee_id: e.target.value })}
                       className="w-full px-3 py-2.5 rounded-xl bg-white border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20"

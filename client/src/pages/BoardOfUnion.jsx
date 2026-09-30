@@ -12,7 +12,7 @@ export default function BoardOfUnion() {
       title: "General Secretary & Executive Director",
       circle: "Indore HQ Circle",
       phone: "+91 98260 11223",
-      email: "rajesh.sharma@mpwzunion.org",
+      email: "rajesh.sharma@mpvmavaksunion.org",
       role: "Central Executive Secretariat",
       bio: "22+ years of service in MP West Zone Discom. Leading wage agreements, safety standards, and OPS advocacy across 9 discom circles.",
       image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80"
@@ -22,7 +22,7 @@ export default function BoardOfUnion() {
       title: "Vice President (Women Wing)",
       circle: "Indore Corporate Circle",
       phone: "+91 98260 22334",
-      email: "sunita.chouhan@mpwzunion.org",
+      email: "sunita.chouhan@mpvmavaksunion.org",
       role: "Technical & Women Cadre Safety",
       bio: "Superintending Engineer focused on workplace dignity, substation automation, and technical safety protocols for female engineers & office staff.",
       image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80"
@@ -32,7 +32,7 @@ export default function BoardOfUnion() {
       title: "Zonal Secretary (Ujjain Zone)",
       circle: "Ujjain Circle",
       phone: "+91 98260 33445",
-      email: "vikram.patel@mpwzunion.org",
+      email: "vikram.patel@mpvmavaksunion.org",
       role: "Field Safety & Line Staff Protection",
       bio: "Line Superintendent Grade-I with 18 years field experience managing 33kV line safety, hazard allowance, and PTW compliance.",
       image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80"
@@ -42,9 +42,9 @@ export default function BoardOfUnion() {
       title: "Treasurer & Financial Audit Controller",
       circle: "Dewas Circle",
       phone: "+91 98260 44556",
-      email: "alok.verma@mpwzunion.org",
+      email: "alok.verma@mpvmavaksunion.org",
       role: "Union Fund & Mutual Relief Fund",
-      bio: "Executive Engineer managing the MPWZ Union Mutual Relief Fund and 20L hazard accident relief disbursements.",
+      bio: "Executive Engineer managing the MPVMAVAKS Union Mutual Relief Fund and 20L hazard accident relief disbursements.",
       image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80"
     },
     {
@@ -52,7 +52,7 @@ export default function BoardOfUnion() {
       title: "Joint Secretary (Ratlam & Mandsaur Zone)",
       circle: "Ratlam Circle",
       phone: "+91 98260 55667",
-      email: "mahendra.rathore@mpwzunion.org",
+      email: "mahendra.rathore@mpvmavaksunion.org",
       role: "Agitation & OPS Campaign Director",
       bio: "Active organizer of the Old Pension Scheme (OPS) restoration agitation and contract staff regularization rallies.",
       image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=400&q=80"
@@ -62,7 +62,7 @@ export default function BoardOfUnion() {
       title: "Legal Advisor & Grievance Cell In-Charge",
       circle: "Khargone Circle",
       phone: "+91 98260 66778",
-      email: "meenakshi.s@mpwzunion.org",
+      email: "meenakshi.s@mpvmavaksunion.org",
       role: "Legal Cell & Industrial Dispute Representation",
       bio: "Specialist in Electricity Act 2003 legal defense, 7th Pay Commission arrears disputes, and service tribunal litigation.",
       image: "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=400&q=80"

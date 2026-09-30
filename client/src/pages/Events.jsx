@@ -37,7 +37,7 @@ export default function Events() {
   const pastPrograms = [
     {
       id: "PAST-2025-01",
-      title: "31st Annual MPWZ Union Zonal Delegates Convention 2025",
+      title: "31st Annual MPVMAVAKS Union Zonal Delegates Convention 2025",
       start_date: "14 November 2025",
       start_time: "10:00 AM",
       venue: "Abhay Prashal Auditorium, Race Course Road, Indore",
@@ -57,7 +57,7 @@ export default function Events() {
       banner_url: "https://images.unsplash.com/photo-1577962917302-cd874c4e31d2?auto=format&fit=crop&w=800&q=80",
       attendance: "3,200 Field Staff",
       outcome_badge: "SUCCESSFUL",
-      resolution: "10-point charter submitted to MD MPWZ; high-voltage PTW safety guidelines officially issued."
+      resolution: "10-point charter submitted to MD MPVMAVAKS; high-voltage PTW safety guidelines officially issued."
     },
     {
       id: "PAST-2025-03",

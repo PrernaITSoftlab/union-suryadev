@@ -30,8 +30,8 @@ export const GALLERY_PHOTOS = [
     title: 'Senior Officer Bilateral Discom Meeting',
     category: 'Delegation',
     categoryLabel: 'Discom Delegations',
-    description: 'MPWZ Discom Employees Union delegation presenting official files and employee demand charter to discom chief engineer.',
-    alt: 'MPWZ Discom Union delegation in discussion with senior discom official at executive desk',
+    description: 'MPVMAVAKS Discom Employees Union delegation presenting official files and employee demand charter to discom chief engineer.',
+    alt: 'MPVMAVAKS Discom Union delegation in discussion with senior discom official at executive desk',
     date: 'Sep 2026',
     tag: 'Executive Table'
   },
@@ -164,7 +164,7 @@ export default function HomePhotoGallery() {
               Union Photo Gallery
             </h2>
             <p className="text-sm text-slate-600 leading-relaxed font-normal">
-              Empirical moments of MPWZ Union leadership engaging discom management, celebrating employee honors, and advocating for power engineers & linemen.
+              Empirical moments of MPVMAVAKS Union leadership engaging discom management, celebrating employee honors, and advocating for power engineers & linemen.
             </p>
           </div>
 

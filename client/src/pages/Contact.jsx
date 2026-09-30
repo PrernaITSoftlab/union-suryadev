@@ -68,7 +68,7 @@ export default function Contact() {
                   <div>
                     <span className="font-bold text-slate-900 block text-sm">Office Address</span>
                     <span className="text-slate-600 leading-relaxed block mt-0.5">
-                      {settings?.office_address || 'MPWZ Union HQ, Discom HQ Campus, Polo Ground, Indore, MP - 452003'}
+                      {settings?.office_address || 'MPVMAVAKS Union HQ, Discom HQ Campus, Polo Ground, Indore, MP - 452003'}
                     </span>
                   </div>
                 </div>
@@ -92,7 +92,7 @@ export default function Contact() {
                   <div>
                     <span className="font-bold text-slate-900 block text-sm">Official Email</span>
                     <span className="text-slate-600 block mt-0.5">
-                      {settings?.contact_email || 'contact@mpwzunion.org'}
+                      {settings?.contact_email || 'contact@mpvmavaksunion.org'}
                     </span>
                   </div>
                 </div>

@@ -210,7 +210,7 @@ export default function AdminDashboard() {
             </div>
             <div>
               <div className="flex items-center justify-center sm:justify-start gap-2">
-                <h1 className="text-2xl font-extrabold text-slate-900">MPWZ Union Admin Control Center</h1>
+                <h1 className="text-2xl font-extrabold text-slate-900">MPVMAVAKS Union Admin Control Center</h1>
                 <span className="px-2.5 py-0.5 rounded-full bg-red-100 text-red-800 border border-red-300 text-[10px] font-extrabold uppercase">
                   SUPER ADMIN
                 </span>
@@ -966,7 +966,7 @@ export default function AdminDashboard() {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => {
-                  navigator.clipboard.writeText(`MPWZ Union Credentials:\nLogin ID / Member ID: ${generatedCredentialsModal.member_id}\nEmail: ${generatedCredentialsModal.email}\nTemp Password: ${generatedCredentialsModal.temp_password}`);
+                  navigator.clipboard.writeText(`MPVMAVAKS Union Credentials:\nLogin ID / Member ID: ${generatedCredentialsModal.member_id}\nEmail: ${generatedCredentialsModal.email}\nTemp Password: ${generatedCredentialsModal.temp_password}`);
                   alert('Credentials copied to clipboard!');
                 }}
                 className="flex-1 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs transition-colors"

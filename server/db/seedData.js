@@ -1,13 +1,13 @@
-// Rich MPWZ Union System Initial Seed Data & Settings
+// Rich MPVMAVAKS Union System Initial Seed Data & Settings
 
 export const INITIAL_SYSTEM_SETTINGS = {
-  union_name: "MPWZ Electricity Employees Union",
-  union_short_name: "MPWZ Union",
+  union_name: "MPVMAVAKS Electricity Employees Union",
+  union_short_name: "MPVMAVAKS Union",
   tagline: "Madhya Pradesh West Zone Electricity Distribution Company Official Employees & Engineers Union",
-  logo_url: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=300&q=80",
-  contact_email: "contact@mpwzunion.org",
+  logo_url: "/images/union-logo.png",
+  contact_email: "contact@mpvmavaksunion.org",
   contact_phone: "+91 98260 11223",
-  office_address: "Union Central Office, MPWZ Discom HQ Campus, Polo Ground, Indore, Madhya Pradesh - 452003",
+  office_address: "Union Central Office, MPVMAVAKS Discom HQ Campus, Polo Ground, Indore, Madhya Pradesh - 452003",
   office_hours: "Monday - Saturday: 10:00 AM - 06:00 PM IST",
   registration_fee: 500,
 
@@ -32,7 +32,7 @@ export const INITIAL_SYSTEM_SETTINGS = {
 export const INITIAL_USERS = [
   {
     id: 1,
-    email: "admin@mpwzunion.org",
+    email: "admin@mpvmavaksunion.org",
     role: "admin",
     status: "active",
     member_id: "UNION-ADMIN-001",
@@ -65,7 +65,7 @@ export const INITIAL_USERS = [
   },
   {
     id: 2,
-    email: "sunita.chouhan@mpwzunion.org",
+    email: "sunita.chouhan@mpvmavaksunion.org",
     role: "user",
     status: "active",
     member_id: "UNION-IND-104",
@@ -98,7 +98,7 @@ export const INITIAL_USERS = [
   },
   {
     id: 3,
-    email: "vikram.patel@mpwzunion.org",
+    email: "vikram.patel@mpvmavaksunion.org",
     role: "user",
     status: "active",
     member_id: "UNION-UJJ-209",
@@ -131,7 +131,7 @@ export const INITIAL_USERS = [
   },
   {
     id: 4,
-    email: "amit.joshi@mpwzunion.org",
+    email: "amit.joshi@mpvmavaksunion.org",
     role: "user",
     status: "active",
     member_id: "UNION-DEW-312",
@@ -234,8 +234,8 @@ export const INITIAL_MEMBERSHIP_APPLICATIONS = [
 export const INITIAL_EVENTS = [
   {
     id: 1,
-    title: "MPWZ Union State Delegate Annual Convention 2026 (राज्य प्रांतीय अधिवेशन)",
-    description: "Annual convention of MPWZ Union engineers and workers. Key agendas include OPS agitation roadmap, line safety insurance policy launch, and election of zonal body.",
+    title: "MPVMAVAKS Union State Delegate Annual Convention 2026 (राज्य प्रांतीय अधिवेशन)",
+    description: "Annual convention of MPVMAVAKS Union engineers and workers. Key agendas include OPS agitation roadmap, line safety insurance policy launch, and election of zonal body.",
     banner_url: "https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=1200&q=80",
     event_type: "CONVENTION",
     start_date: "2026-10-20",
@@ -294,7 +294,7 @@ export const INITIAL_EVENTS = [
     end_date: "2026-11-02",
     start_time: "02:00 PM",
     end_time: "05:00 PM",
-    venue: "MPWZ Union Video Conference Portal & YouTube Live",
+    venue: "MPVMAVAKS Union Video Conference Portal & YouTube Live",
     address: "Online Digital Session",
     capacity: 2000,
     registered_count: 1450,
@@ -443,7 +443,7 @@ export const INITIAL_UNION_STORIES = [
     author_name: "Er. Rajesh Sharma",
     author_title: "General Secretary",
     author_avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
-    title: "MPWZ Union Gazette Order 2026 — Revised DA & Grade Pay Notification",
+    title: "MPVMAVAKS Union Gazette Order 2026 — Revised DA & Grade Pay Notification",
     description: "Official Gazette circular detailing 4% Dearness Relief (DR) release and updated hazard compensation for field electrical staff across all 9 MP West Zone circles.",
     category: "Wage & Pension Orders",
     attachment_url: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
@@ -494,7 +494,7 @@ export const INITIAL_CONTACT_SUBMISSIONS = [
     email: "dinesh.yadav@example.com",
     phone: "+91 94255 11002",
     subject: "Inquiry regarding Union Membership Eligibility for Contract Engineers",
-    message: "Respected General Secretary, I am working as contract AE in Dewas division. Am I eligible to apply for full MPWZ Union membership? Kindly confirm.",
+    message: "Respected General Secretary, I am working as contract AE in Dewas division. Am I eligible to apply for full MPVMAVAKS Union membership? Kindly confirm.",
     status: "PENDING",
     created_at: "2026-09-22T11:20:00Z"
   }

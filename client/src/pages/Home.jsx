@@ -182,7 +182,7 @@ export default function Home() {
             {t('Protecting Every Lineman, Engineer & Staff Member')}
           </h2>
           <p className="text-sm text-slate-600">
-            {t('MPWZ Union provides a unified institutional voice to ensure physical safety, wage progression, pension security, and mutual employee relief.')}
+            {t('MPVMAVAKS Union provides a unified institutional voice to ensure physical safety, wage progression, pension security, and mutual employee relief.')}
           </p>
         </div>
 
@@ -286,7 +286,7 @@ export default function Home() {
       <section className="py-20 bg-gradient-to-r from-sky-600 via-blue-600 to-sky-700 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
           <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
-            Ready to Join the Official MPWZ Union Platform?
+            Ready to Join the Official MPVMAVAKS Union Platform?
           </h2>
           <p className="text-base text-sky-100 max-w-2xl mx-auto font-medium">
             Fill out your official membership application online, complete registration fee payment via UPI QR code, and get instant access to member tools.

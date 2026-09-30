@@ -104,7 +104,7 @@ const StrikeAlerts = () => {
             </div>
             <div>
               <h2 className="text-lg font-black text-slate-900">म.प्र. पश्चिम क्षेत्र विद्युत कर्मचारी संघ - मुख्य मांगें (Charter of Demands)</h2>
-              <p className="text-xs text-slate-500">10-Point resolution submitted to MPWZ Management & Govt of Madhya Pradesh</p>
+              <p className="text-xs text-slate-500">10-Point resolution submitted to MPVMAVAKS Management & Govt of Madhya Pradesh</p>
             </div>
           </div>
 
@@ -151,7 +151,7 @@ const StrikeAlerts = () => {
         {/* Notice Download Action */}
         <div className="p-6 rounded-3xl bg-slate-900 text-white shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4">
           <div>
-            <h4 className="font-bold text-white text-sm">Download Official MPWZ Union Strike Order</h4>
+            <h4 className="font-bold text-white text-sm">Download Official MPVMAVAKS Union Strike Order</h4>
             <p className="text-xs text-slate-300">PDF document signed by General Secretary Er. Rajesh Sharma</p>
           </div>
 

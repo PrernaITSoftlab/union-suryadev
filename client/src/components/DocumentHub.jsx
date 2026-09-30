@@ -144,7 +144,7 @@ const DocumentHub = () => {
       <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-bold mb-2">
-            <FileText className="w-4 h-4 text-blue-600" /> MPWZ Union Official Circulars & Resources
+            <FileText className="w-4 h-4 text-blue-600" /> MPVMAVAKS Union Official Circulars & Resources
           </div>
           <h2 className="text-xl sm:text-2xl font-black text-slate-900">
             Upload & Share <span className="text-blue-600 font-black">Union Circulars & Orders</span>

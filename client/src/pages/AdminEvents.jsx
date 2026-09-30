@@ -159,7 +159,7 @@ const AdminEvents = () => {
                 <input
                   type="text"
                   required
-                  placeholder="MPWZ Union Executive Convention"
+                  placeholder="MPVMAVAKS Union Executive Convention"
                   value={newEvent.title}
                   onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
                   className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all"

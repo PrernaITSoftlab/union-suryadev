@@ -38,7 +38,7 @@ export default function About() {
         <div className="text-center max-w-3xl mx-auto space-y-4">
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-sky-100 border border-sky-300 text-sky-900 text-xs font-bold uppercase tracking-wider shadow-sm">
             <Shield className="w-3.5 h-3.5 text-sky-700" />
-            <span>About MPWZ Union</span>
+            <span>About MPVMAVAKS Union</span>
           </div>
           <h1 className="text-3xl sm:text-5xl font-extrabold text-slate-900 tracking-tight">
             Standing Together for Safety, Pay Security & Professional Honor

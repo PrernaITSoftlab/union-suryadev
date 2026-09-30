@@ -16,13 +16,13 @@ export default function Footer() {
           {/* Col 1: Brand Info */}
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-500 to-blue-600 p-0.5 shadow-md shadow-sky-500/20">
-                <div className="w-full h-full bg-white rounded-[10px] flex items-center justify-center">
-                  <Shield className="w-5 h-5 text-sky-600" />
-                </div>
-              </div>
+              <img 
+                src={settings?.logo_url || "/images/union-logo.png"} 
+                alt="MPVMAVAKS Union Logo" 
+                className="w-10 h-10 sm:w-12 sm:h-12 object-contain shrink-0" 
+              />
               <span className="font-extrabold text-lg text-slate-900 tracking-tight">
-                {settings?.union_short_name || 'MPWZ UNION'}
+                {settings?.union_short_name || 'MPVMAVAKS UNION'}
               </span>
             </div>
             <p className="text-xs leading-relaxed text-slate-600">
@@ -72,7 +72,7 @@ export default function Footer() {
               </li>
               <li className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-sky-600 shrink-0" />
-                <span className="text-slate-700">{settings?.contact_email || 'contact@mpwzunion.org'}</span>
+                <span className="text-slate-700">{settings?.contact_email || 'contact@mpvmavaksunion.org'}</span>
               </li>
             </ul>
           </div>
@@ -94,7 +94,7 @@ export default function Footer() {
 
         <div className="mt-12 pt-8 border-t border-slate-200 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-slate-500 font-medium">
           <div>
-            © {new Date().getFullYear()} {settings?.union_name || 'MPWZ Electricity Employees Union'}. {t('All rights reserved.')}
+            © {new Date().getFullYear()} {settings?.union_name || 'MPVMAVAKS Electricity Employees Union'}. {t('All rights reserved.')}
           </div>
           <div className="flex items-center gap-4">
             <span className="hover:text-slate-700">{t('Terms of Service')}</span>

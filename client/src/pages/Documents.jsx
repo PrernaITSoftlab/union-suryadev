@@ -50,7 +50,7 @@ const Documents = () => {
         {/* Header */}
         <div className="space-y-3 text-center sm:text-left">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-bold uppercase tracking-wider shadow-sm">
-            <FileText className="w-4 h-4 text-blue-600" /> MPWZ Union Official Documents & Circulars
+            <FileText className="w-4 h-4 text-blue-600" /> MPVMAVAKS Union Official Documents & Circulars
           </div>
           <h1 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
             Union Circulars, Orders & Forms Hub
@@ -131,7 +131,7 @@ const Documents = () => {
 
                 <div className="space-y-3 pt-3 border-t border-slate-100">
                   <div className="flex items-center justify-between text-[10px] text-slate-500">
-                    <span className="font-mono text-slate-600 font-semibold truncate">{doc.ref_no || 'MPWZ/UNION/2026'}</span>
+                    <span className="font-mono text-slate-600 font-semibold truncate">{doc.ref_no || 'MPVMAVAKS/UNION/2026'}</span>
                     <span>Downloads: {doc.downloads_count || 120}</span>
                   </div>
 
@@ -184,7 +184,7 @@ const Documents = () => {
                 <div className="pt-3 border-t border-slate-200 grid grid-cols-2 sm:grid-cols-3 gap-3 text-[11px] text-slate-500">
                   <div>
                     <span className="block text-slate-500 font-semibold">Published By</span>
-                    <span className="text-slate-900 font-bold">{previewDoc.uploader_name || 'MPWZ Central Committee'}</span>
+                    <span className="text-slate-900 font-bold">{previewDoc.uploader_name || 'MPVMAVAKS Central Committee'}</span>
                   </div>
                   <div>
                     <span className="block text-slate-500 font-semibold">Format & Size</span>
@@ -202,7 +202,7 @@ const Documents = () => {
                 <FileCheck className="w-12 h-12 text-blue-600" />
                 <div>
                   <h4 className="text-sm font-bold text-slate-900">Document Stream Ready</h4>
-                  <p className="text-xs text-slate-500">Official MPWZ West Zone Electricity Discom Document File</p>
+                  <p className="text-xs text-slate-500">Official MPVMAVAKS West Zone Electricity Discom Document File</p>
                 </div>
                 <a
                   href={previewDoc.file_url || "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"}

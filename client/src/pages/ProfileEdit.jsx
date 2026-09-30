@@ -191,7 +191,7 @@ const ProfileEdit = () => {
             <label className="font-bold text-slate-700 block mb-1">Website URL</label>
             <input
               type="url"
-              placeholder="https://mpwzunion.org"
+              placeholder="https://mpvmavaksunion.org"
               value={formData.website}
               onChange={(e) => setFormData({ ...formData, website: e.target.value })}
               className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all"

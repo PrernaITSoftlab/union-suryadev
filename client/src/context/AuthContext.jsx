@@ -70,7 +70,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const switchDemoUser = async (roleType) => {
-    const targetEmail = roleType === 'admin' ? 'admin@mpwzunion.org' : 'sunita.chouhan@mpwzunion.org';
+    const targetEmail = roleType === 'admin' ? 'admin@mpvmavaksunion.org' : 'sunita.chouhan@mpvmavaksunion.org';
     try {
       const res = await login(targetEmail, 'password123');
       return res;

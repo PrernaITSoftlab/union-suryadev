@@ -434,7 +434,7 @@ export default function UserDashboard() {
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
               <div>
                 <h2 className="text-xl font-bold text-slate-900">Union Directory</h2>
-                <p className="text-xs text-slate-500 font-medium">Browse active MPWZ discom engineers and linemen</p>
+                <p className="text-xs text-slate-500 font-medium">Browse active MPVMAVAKS discom engineers and linemen</p>
               </div>
             </div>
 

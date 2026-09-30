@@ -19,9 +19,9 @@ const SLIDER_IMAGES = [
   {
     url: '/images/gallery/union-discom-meeting.jpg',
     title: 'Discom Senior Officers Dialogue',
-    subtitle: 'MPWZ Union delegation presenting key demands and memorandum at Discom HQ.',
+    subtitle: 'MPVMAVAKS Union delegation presenting key demands and memorandum at Discom HQ.',
     badge: 'Discom Dialogue',
-    alt: 'MPWZ Discom Union delegation in discussion with senior discom official at executive desk'
+    alt: 'MPVMAVAKS Discom Union delegation in discussion with senior discom official at executive desk'
   },
   {
     url: '/images/gallery/union-delegation-felicitation.jpg',

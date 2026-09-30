@@ -19,7 +19,7 @@ export default function Orders() {
 
   const circularsList = [
     {
-      id: "ORD/MPWZ/2026/104",
+      id: "ORD/MPVMAVAKS/2026/104",
       title: "MP Government Order: 7th Pay Commission DA 4% Revision & Backlog Arrears Release",
       title_hi: "म.प्र. शासन आदेश: 7वें वेतन आयोग का 4% महंगाई भत्ता (DA) संशोधन एवं बकाया एरियर भुगतान आदेश",
       date: "24 Sept 2026",
@@ -27,12 +27,12 @@ export default function Orders() {
       category: "Govt. Circulars",
       file_size: "2.4 MB",
       doc_url: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
-      applicability: "All Regular Engineers, Line Staff & Office Personnel across 9 MPWZ Circles",
+      applicability: "All Regular Engineers, Line Staff & Office Personnel across 9 MPVMAVAKS Circles",
       rule_ref: "MP Govt Finance Directive No. F-11/4/2026/Rules/IV",
       details: "Official sanction order issued by the Govt of MP Energy Secretariat for granting 4% enhanced Dearness Allowance (DA) to all active Discom power employees and pensioners, along with installment payout schedules for retroactive arrears from January 2026."
     },
     {
-      id: "ORD/MPWZ/2026/089",
+      id: "ORD/MPVMAVAKS/2026/089",
       title: "SC/ST Reservation Roster, Cadre Promotion Seniority & Backlog Vacancy Filling Directive",
       title_hi: "अनुसूचित जाति / जनजाति पदोन्नति रोस्टर, वरिष्ठता सूची एवं बैकलोग पद पूर्ति निर्देश",
       date: "12 Sept 2026",
@@ -45,20 +45,20 @@ export default function Orders() {
       details: "Comprehensive guidelines issued for strict compliance of 100-point reservation rosters in promotions across Junior Engineer (JE), Assistant Engineer (AE), and Line Superintendent cadres, with time-bound resolution of SC/ST backlog posts."
     },
     {
-      id: "ORD/MPWZ/2026/072",
+      id: "ORD/MPVMAVAKS/2026/072",
       title: "Normal Circular: Discom Employee Annual Increment, CUG Mobile Allowance & Leave Rules",
       title_hi: "सामान्य परिपत्र: वार्षिक वेतन वृद्धि, सीयूजी मोबाइल भत्ता एवं अवकाश नियमावली 2026",
       date: "28 Aug 2026",
-      issuing_authority: "Chief General Manager (HR & Admin), MPWZ HQ Indore",
+      issuing_authority: "Chief General Manager (HR & Admin), MPVMAVAKS HQ Indore",
       category: "Normal Circulars",
       file_size: "1.5 MB",
       doc_url: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
       applicability: "All Permanent & Probationary Employees of MP West Zone Discom",
-      rule_ref: "MPWZ Discom Service Rules Clause 44-B",
+      rule_ref: "MPVMAVAKS Discom Service Rules Clause 44-B",
       details: "Revised operational guidelines detailing the annual July increment sanction procedures, updated official CUG mobile monthly reimbursement slabs per designation, and revised earned leave encashment limits."
     },
     {
-      id: "ORD/MPWZ/2026/058",
+      id: "ORD/MPVMAVAKS/2026/058",
       title: "Notice: Annual Zonal Delegate Conference & Union Executive Representation Election Schedule",
       title_hi: "सूचना: वार्षिक ज़ोनल प्रतिनिधि सम्मेलन एवं संघ कार्यकारिणी चुनाव कार्यक्रम",
       date: "15 Aug 2026",
@@ -71,11 +71,11 @@ export default function Orders() {
       details: "Official notification declaring the election schedule for circle delegates, zonal secretaries, and central executive committee members for the term 2026-2028 along with nomination filing procedures."
     },
     {
-      id: "ORD/MPWZ/2026/044",
+      id: "ORD/MPVMAVAKS/2026/044",
       title: "Mandatory 33kV & 11kV Line High-Voltage Field Safety & PTW (Permit-To-Work) Directive",
       title_hi: "33kV एवं 11kV लाइन उच्च-वोल्टेज फ़ील्ड सुरक्षा एवं परमिट-टू-वर्क (PTW) अनिवार्य निर्देश",
       date: "02 July 2026",
-      issuing_authority: "Chief Safety Officer & Union Executive Body, MPWZ HQ",
+      issuing_authority: "Chief Safety Officer & Union Executive Body, MPVMAVAKS HQ",
       category: "Safety Directives",
       file_size: "2.8 MB",
       doc_url: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
@@ -84,7 +84,7 @@ export default function Orders() {
       details: "Strict safety mandate making Class-4 tested 30kV insulated rubber gloves, double earthing discharge rods, and written digital PTW clearance mandatory prior to any maintenance shutdown on 33kV/11kV lines."
     },
     {
-      id: "ORD/MPWZ/2026/030",
+      id: "ORD/MPVMAVAKS/2026/030",
       title: "Govt. Order: Discom Employee Group Cashless Health Insurance & Medical Reimbursement Slabs",
       title_hi: "शासकीय आदेश: डिस्कॉम कर्मचारी कैशलेस स्वास्थ्य बीमा एवं चिकित्सा प्रतिपूर्ति दरें",
       date: "18 June 2026",
@@ -97,11 +97,11 @@ export default function Orders() {
       details: "Official government gazette order launching cashless hospitalization cover up to ₹5 Lakhs per family per annum at all empanelled super-specialty hospitals in MP for electricity grid personnel."
     },
     {
-      id: "ORD/MPWZ/2026/015",
+      id: "ORD/MPVMAVAKS/2026/015",
       title: "SC/ST Welfare Scheme, Children Higher Education Grant & Housing Assistance Circular",
       title_hi: "अजा/अजजा कल्याण योजना, बच्चों की उच्च शिक्षा अनुदान एवं आवास सहायता परिपत्र",
       date: "05 May 2026",
-      issuing_authority: "SC/ST Discom Employees Welfare Association & MPWZ Discom",
+      issuing_authority: "SC/ST Discom Employees Welfare Association & MPVMAVAKS Discom",
       category: "SC/ST Circulars",
       file_size: "1.9 MB",
       doc_url: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
@@ -110,16 +110,16 @@ export default function Orders() {
       details: "Notification announcing special educational grants for meritorious children of SC/ST discom staff pursuing engineering and medical degrees, plus interest-subsidized home loan schemes."
     },
     {
-      id: "ORD/MPWZ/2025/112",
+      id: "ORD/MPVMAVAKS/2025/112",
       title: "Normal Circular: Substation Operation Shift Roster, OT Allowance & Night Duty Standards",
       title_hi: "सामान्य परिपत्र: सबस्टेशन संचालन पाली रोस्टर, ओवरटाइम भत्ता एवं रात्रिकालीन ड्यूटी नियम",
       date: "14 Dec 2025",
-      issuing_authority: "Chief Engineer (O&M Zone), MPWZ Discom Indore",
+      issuing_authority: "Chief Engineer (O&M Zone), MPVMAVAKS Discom Indore",
       category: "Normal Circulars",
       file_size: "1.6 MB",
       doc_url: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
       applicability: "Testing Assistants, Substation Operators & Shift Engineers",
-      rule_ref: "MPWZ O&M Regulations Clause 18",
+      rule_ref: "MPVMAVAKS O&M Regulations Clause 18",
       details: "Circular establishing 8-hour shift rotations for 33/11kV substation operators, revised night-duty allowance rates, and mandatory break-shift rest hours after emergency outage restorations."
     }
   ];

@@ -21,7 +21,7 @@ const { Pool } = pg;
 let pool = null;
 let isPgConnected = false;
 
-// High-Performance Local In-Memory Database Store for MPWZ Union
+// High-Performance Local In-Memory Database Store for MPVMAVAKS Union
 export const inMemoryStore = {
   systemSettings: { ...INITIAL_SYSTEM_SETTINGS },
   users: [...INITIAL_USERS],
@@ -42,7 +42,7 @@ export const inMemoryStore = {
       actor_name: "System",
       entity_type: "SYSTEM",
       entity_id: "0",
-      details: "MPWZ Union platform initialized with default configurations.",
+      details: "MPVMAVAKS Union platform initialized with default configurations.",
       created_at: new Date().toISOString()
     }
   ]

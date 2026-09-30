@@ -22,7 +22,7 @@ export const formatPaymentWhatsAppMessage = ({
   upiId,
   utrNumber
 }) => {
-  return `*MPWZ UNION MEMBERSHIP PAYMENT PROOF*
+  return `*MPVMAVAKS UNION MEMBERSHIP PAYMENT PROOF*
 
 *Applicant Name:* ${applicantName}
 *Application No:* ${applicationNo}

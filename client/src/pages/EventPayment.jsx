@@ -111,13 +111,13 @@ const EventPayment = () => {
         {/* Header */}
         <div className="text-center space-y-3">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-xs font-bold uppercase tracking-wider shadow-sm">
-            <CreditCard className="w-4 h-4 text-amber-600" /> MPWZ Union Event Registration & Payment
+            <CreditCard className="w-4 h-4 text-amber-600" /> MPVMAVAKS Union Event Registration & Payment
           </div>
           <h1 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
             Union Event Fee Payment & Delegate Pass
           </h1>
           <p className="text-slate-600 text-xs sm:text-sm max-w-2xl mx-auto leading-relaxed">
-            Select an upcoming MPWZ Union conference, workshop, or agitation delegate meet. Pay the registration contribution fee via UPI QR code to receive your entry delegate pass code.
+            Select an upcoming MPVMAVAKS Union conference, workshop, or agitation delegate meet. Pay the registration contribution fee via UPI QR code to receive your entry delegate pass code.
           </p>
         </div>
 
@@ -190,7 +190,7 @@ const EventPayment = () => {
               <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-md relative">
                 <img
                   src={qrCodeUrl}
-                  alt="MPWZ Event Fee Payment QR Code"
+                  alt="MPVMAVAKS Event Fee Payment QR Code"
                   className="w-48 h-48 sm:w-52 sm:h-52 object-contain mx-auto"
                 />
               </div>
@@ -316,7 +316,7 @@ const EventPayment = () => {
                         <input
                           type="text"
                           required
-                          placeholder="e.g. MPWZ-IND-104"
+                          placeholder="e.g. MPVMAVAKS-IND-104"
                           value={formData.employee_id}
                           onChange={(e) => setFormData({ ...formData, employee_id: e.target.value })}
                           className="w-full px-3 py-2.5 rounded-xl bg-white border border-slate-300 text-slate-900 placeholder-slate-400 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20"

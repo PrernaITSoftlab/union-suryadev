@@ -27,15 +27,15 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-20 gap-1.5 sm:gap-3">
           
           {/* Logo & Union Title */}
-          <Link to="/" className="flex items-center gap-2 shrink-0 group">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-sky-500 via-sky-600 to-blue-600 p-0.5 shadow-md shadow-sky-500/20 group-hover:scale-105 transition-transform shrink-0">
-              <div className="w-full h-full bg-white rounded-[10px] flex items-center justify-center">
-                <Shield className="w-5 h-5 text-sky-600" />
-              </div>
-            </div>
+          <Link to="/" className="flex items-center gap-2.5 shrink-0 group">
+            <img 
+              src={settings?.logo_url || "/images/union-logo.png"} 
+              alt="MPVMAVAKS Union Logo" 
+              className="w-10 h-10 sm:w-12 sm:h-12 object-contain group-hover:scale-105 transition-transform shrink-0" 
+            />
             <div className="whitespace-nowrap">
               <span className="font-extrabold text-sm sm:text-base lg:text-lg xl:text-xl tracking-tight text-slate-900 block group-hover:text-sky-600 transition-colors">
-                {settings?.union_short_name || 'MPWZ UNION'}
+                {settings?.union_short_name || 'MPVMAVAKS UNION'}
               </span>
               <span className="text-[10px] sm:text-[11px] text-slate-500 font-medium tracking-wide hidden xl:block">
                 {t('Western Zone Electricity Discom')}

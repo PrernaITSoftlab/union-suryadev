@@ -261,7 +261,7 @@ export default function JoinNow() {
   };
 
   const cleanPhone = whatsappNo.replace(/[^0-9]/g, '');
-  const waMsg = encodeURIComponent(`*MPWZ UNION MEMBERSHIP REGISTRATION*\nName: ${formData.full_name}\nDistrict: ${formData.district_name}\nClass: ${formData.employee_class} (Fee: ₹${regFee})\nUTR: ${formData.transaction_id || 'N/A'}\nPlease verify my membership application. Thank you!`);
+  const waMsg = encodeURIComponent(`*MPVMAVAKS UNION MEMBERSHIP REGISTRATION*\nName: ${formData.full_name}\nDistrict: ${formData.district_name}\nClass: ${formData.employee_class} (Fee: ₹${regFee})\nUTR: ${formData.transaction_id || 'N/A'}\nPlease verify my membership application. Thank you!`);
   const waLink = `https://wa.me/${cleanPhone.startsWith('91') ? cleanPhone : '91' + cleanPhone}?text=${waMsg}`;
 
   return (
@@ -845,7 +845,7 @@ export default function JoinNow() {
             <div className="space-y-2">
               <h2 className="text-2xl font-extrabold text-slate-900">Membership Application Submitted!</h2>
               <p className="text-xs text-slate-600 max-w-md mx-auto font-medium">
-                Your application <span className="font-mono text-sky-700 font-bold">{submittedApplication.application_no}</span> has been received by the MPWZ Union Admin.
+                Your application <span className="font-mono text-sky-700 font-bold">{submittedApplication.application_no}</span> has been received by the MPVMAVAKS Union Admin.
               </p>
             </div>
 

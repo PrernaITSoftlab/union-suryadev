@@ -43,7 +43,7 @@ app.use('/api/admin', adminRoutes);
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'online',
-    app: 'MPWZ Union Official API Platform',
+    app: 'MPVMAVAKS Union Official API Platform',
     organization: 'Madhya Pradesh West Zone Electricity Distribution Company Union',
     timestamp: new Date().toISOString()
   });
@@ -53,6 +53,6 @@ app.get('/api/health', (req, res) => {
 app.use(errorHandler);
 
 app.listen(PORT, () => {
-  console.log(`⚡ MPWZ Union API Server running on port ${PORT}`);
+  console.log(`⚡ MPVMAVAKS Union API Server running on port ${PORT}`);
   console.log(`🌐 Health check available at: http://localhost:${PORT}/api/health`);
 });

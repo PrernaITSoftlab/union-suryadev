@@ -70,11 +70,9 @@ const AuthModal = ({ initialTab = 'login', onClose }) => {
 
         {/* Modal Brand Logo Header */}
         <div className="text-center mb-5">
-          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-blue-600 flex items-center justify-center mx-auto mb-2.5 shadow-md">
-            <Zap className="w-6 h-6 text-white fill-white" />
-          </div>
+          <img src="/images/union-logo.png" alt="MPVMAVAKS Union Logo" className="w-12 h-12 object-contain mx-auto mb-2.5" />
           <h2 className="text-lg sm:text-xl font-extrabold text-slate-900">
-            MPWZ <span className="text-blue-600">UNION</span>
+            MPVMAVAKS <span className="text-blue-600">UNION</span>
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
             {tab === 'login' ? 'Welcome back! Sign in to access member services.' : 'Create your employee profile & join the union.'}
@@ -120,7 +118,7 @@ const AuthModal = ({ initialTab = 'login', onClose }) => {
                 <input
                   type="email"
                   required
-                  placeholder="rajesh.sharma@mpwz.in"
+                  placeholder="rajesh.sharma@mpvmavaks.in"
                   value={loginEmail}
                   onChange={(e) => setLoginEmail(e.target.value)}
                   className="w-full pl-9 pr-4 py-2.5 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 font-medium"
@@ -173,7 +171,7 @@ const AuthModal = ({ initialTab = 'login', onClose }) => {
                 <input
                   type="email"
                   required
-                  placeholder="rajesh@mpwz.in"
+                  placeholder="rajesh@mpvmavaks.in"
                   value={regData.email}
                   onChange={(e) => setRegData({ ...regData, email: e.target.value })}
                   className="w-full px-3 py-2 rounded-xl bg-white border border-slate-300 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 font-medium"

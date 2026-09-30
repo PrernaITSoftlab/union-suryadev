@@ -76,7 +76,7 @@ const Members = () => {
         {/* Header */}
         <div className="space-y-3 text-center sm:text-left">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-bold uppercase tracking-wider shadow-sm">
-            <Users className="w-4 h-4 text-blue-600" /> MPWZ Union Verified Employee Directory
+            <Users className="w-4 h-4 text-blue-600" /> MPVMAVAKS Union Verified Employee Directory
           </div>
           <h1 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
             Member & Employee Directory
@@ -166,7 +166,7 @@ const Members = () => {
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <h3 className="text-sm font-bold text-slate-900 truncate">{p.full_name}</h3>
                           <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase bg-blue-50 text-blue-700 border border-blue-200">
-                            {member.employee_id || `MPWZ-${member.id}`}
+                            {member.employee_id || `MPVMAVAKS-${member.id}`}
                           </span>
                         </div>
                         <p className="text-xs font-bold text-blue-700 leading-snug">{p.title || 'Discom Employee'}</p>

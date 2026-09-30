@@ -20,7 +20,7 @@ router.post('/submit', async (req, res, next) => {
 
     const applicantFullName = (full_name || '').trim();
     const applicantMobile = (whatsapp_mobile || cug_mobile || mobile || '').trim();
-    const applicantEmail = (email || `${applicantMobile || Date.now()}@mpwzunion.org`).trim().toLowerCase();
+    const applicantEmail = (email || `${applicantMobile || Date.now()}@mpvmavaksunion.org`).trim().toLowerCase();
 
     if (!applicantFullName || !applicantMobile) {
       return res.status(400).json({ success: false, message: 'Full Name and WhatsApp Mobile Number are required fields.' });
@@ -287,7 +287,7 @@ router.post('/:id/approve-and-generate', authenticateToken, requireAdmin, async 
     const randIdNum = Math.floor(100 + Math.random() * 900);
     const generatedMemberId = `UNION-${cityCode}-${randIdNum}`;
     
-    const tempPassword = `MPWZ@${Math.floor(1000 + Math.random() * 9000)}`;
+    const tempPassword = `MPVMAVAKS@${Math.floor(1000 + Math.random() * 9000)}`;
     const salt = await bcrypt.genSalt(10);
     const password_hash = await bcrypt.hash(tempPassword, salt);
 
@@ -317,7 +317,7 @@ router.post('/:id/approve-and-generate', authenticateToken, requireAdmin, async 
         designation: app.post_name || app.designation || 'Staff Member',
         circle: app.circle_name || `${app.district_name || 'Indore'} Circle`,
         union_designation: app.union_post || 'Union Member',
-        bio: `Member of MPWZ Union (${app.district_name || 'Indore'}).`,
+        bio: `Member of MPVMAVAKS Union (${app.district_name || 'Indore'}).`,
         joining_date: new Date().toISOString().split('T')[0],
         is_public: true,
         contact_privacy: { showPhone: true, showEmail: true, showAddress: false }
@@ -376,7 +376,7 @@ router.post('/:id/approve-and-generate', authenticateToken, requireAdmin, async 
     });
 
     console.log(`✉️ [EMAIL DISPATCH SIMULATION] Sent to ${app.email}:`);
-    console.log(`    Subject: Welcome to MPWZ Union! Your Login ID & Temporary Password`);
+    console.log(`    Subject: Welcome to MPVMAVAKS Union! Your Login ID & Temporary Password`);
     console.log(`    Member ID: ${generatedMemberId} | Password: ${tempPassword}`);
 
     res.json({

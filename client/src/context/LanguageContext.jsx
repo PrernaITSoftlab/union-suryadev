@@ -64,8 +64,8 @@ export const translations = {
     en: "Protecting Every Lineman, Engineer & Staff Member",
     hi: "हर लाइनमैन, इंजीनियर और कर्मचारी की सुरक्षा"
   },
-  "MPWZ Union provides a unified institutional voice to ensure physical safety, wage progression, pension security, and mutual employee relief.": {
-    en: "MPWZ Union provides a unified institutional voice to ensure physical safety, wage progression, pension security, and mutual employee relief.",
+  "MPVMAVAKS Union provides a unified institutional voice to ensure physical safety, wage progression, pension security, and mutual employee relief.": {
+    en: "MPVMAVAKS Union provides a unified institutional voice to ensure physical safety, wage progression, pension security, and mutual employee relief.",
     hi: "एमपीडब्ल्यूजेड संघ शारीरिक सुरक्षा, वेतन वृद्धि, पेंशन सुरक्षा और कर्मचारियों की सहायता सुनिश्चित करने के लिए एक एकीकृत आवाज प्रदान करता है।"
   },
   "Field Safety Protocols": { en: "Field Safety Protocols", hi: "फ़ील्ड सुरक्षा नियम" },
@@ -90,8 +90,8 @@ export const translations = {
   },
   "Official Photo Highlights": { en: "Official Photo Highlights", hi: "आधिकारिक फोटो की झलकियां" },
   "Union Activities & Delegation Gallery": { en: "Union Activities & Delegation Gallery", hi: "यूनियन गतिविधियां और प्रतिनिधिमंडल गैलरी" },
-  "Empirical moments of MPWZ Union leadership engaging discom management, celebrating employee honors, and advocating for power engineers & linemen.": {
-    en: "Empirical moments of MPWZ Union leadership engaging discom management, celebrating employee honors, and advocating for power engineers & linemen.",
+  "Empirical moments of MPVMAVAKS Union leadership engaging discom management, celebrating employee honors, and advocating for power engineers & linemen.": {
+    en: "Empirical moments of MPVMAVAKS Union leadership engaging discom management, celebrating employee honors, and advocating for power engineers & linemen.",
     hi: "एमपीडब्ल्यूजेड संघ के नेतृत्व द्वारा डिस्कॉम प्रबंधन के साथ जुड़ाव, कर्मचारी सम्मान उत्सव और विद्युत इंजीनियरों व लाइनमैनों के अधिकारों की वकालत के पल।"
   },
   "Upcoming Union Events & Conventions": { en: "Upcoming Union Events & Conventions", hi: "आगामी यूनियन कार्यक्रम और सम्मेलन" },
@@ -131,7 +131,7 @@ export const translations = {
   "Lineman Safety Manual": { en: "Lineman Safety Manual", hi: "लाइनमैन सुरक्षा मैनुअल" },
 
   // About Page
-  "About MPWZ Discom Employees Union": { en: "About MPWZ Discom Employees Union", hi: "म.प्र. पश्चिम क्षेत्र डिस्कॉम कर्मचारी संघ के बारे में" },
+  "About MPVMAVAKS Discom Employees Union": { en: "About MPVMAVAKS Discom Employees Union", hi: "म.प्र. पश्चिम क्षेत्र डिस्कॉम कर्मचारी संघ के बारे में" },
   "Empowering 15,000+ power sector personnel across 9 discom circles in Madhya Pradesh.": {
     en: "Empowering 15,000+ power sector personnel across 9 discom circles in Madhya Pradesh.",
     hi: "मध्य प्रदेश के 9 डिस्कॉम सर्किलों में 15,000+ विद्युत क्षेत्र के कर्मियों को सशक्त बनाना।"

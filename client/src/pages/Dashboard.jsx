@@ -132,7 +132,7 @@ const Dashboard = () => {
                 {isAdmin ? 'Admin' : 'User'}
               </span>
             </div>
-            <p className="text-xs text-slate-600 mt-0.5">{profile.title || 'Discom Employee'} — {profile.company || 'MPWZ'}</p>
+            <p className="text-xs text-slate-600 mt-0.5">{profile.title || 'Discom Employee'} — {profile.company || 'MPVMAVAKS'}</p>
           </div>
         </div>
 
@@ -307,7 +307,7 @@ const Dashboard = () => {
               {/* Quick Platform Announcements */}
               <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-3">
                 <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
-                  <Zap className="w-4 h-4 text-blue-600" /> MPWZ Union Announcements
+                  <Zap className="w-4 h-4 text-blue-600" /> MPVMAVAKS Union Announcements
                 </h3>
                 <div className="p-4 rounded-2xl bg-blue-50 border border-blue-200 text-xs text-blue-900 leading-relaxed">
                   🎉 <strong>Annual Delegate Convention 2026 Registration Open!</strong> Reserve your delegate pass now for the upcoming convention in Indore.
