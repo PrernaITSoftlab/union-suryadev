@@ -32,8 +32,8 @@ export const translations = {
 
   // Hero Section & Home Page
   "Madhya Pradesh West Zone Discom Employees Union": {
-    en: "Madhya Pradesh West Zone Discom Employees Union",
-    hi: "मध्य प्रदेश पश्चिम क्षेत्र डिस्कॉम कर्मचारी संघ"
+    en: "Madhya Pradesh Employees Union",
+    hi: "मध्य प्रदेश कर्मचारी संघ"
   },
   "Uniting Power Engineers & Field Staff for": {
     en: "Uniting Power Engineers & Field Staff for",

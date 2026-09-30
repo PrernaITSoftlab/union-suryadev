@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { UserPlus, QrCode, CheckCircle, AlertCircle, ArrowRight, FileText, MessageSquare, ExternalLink, ShieldCheck, ChevronDown, Search } from 'lucide-react';
+import { UserPlus, QrCode, CheckCircle, AlertCircle, ArrowRight, FileText, MessageSquare, ExternalLink, ShieldCheck, ChevronDown, Search, UploadCloud, FileCheck, Image as ImageIcon, Trash2, Clock, Calendar } from 'lucide-react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -92,7 +92,7 @@ const EMPLOYEE_CLASSES = [
   "Class 1",
   "Class 2",
   "Class 3 (J.E.)",
-  "Class 4"
+  "Class 3 & 4"
 ];
 
 const POSTS = [
@@ -130,7 +130,7 @@ export default function JoinNow() {
     dept_post: '',
     union_post: 'Member',
 
-    // New requested fields
+    // Employee class & category
     employee_type: EMPLOYEE_TYPES[0], // Regular
     category: CATEGORIES[2], // OBC
     employee_class: EMPLOYEE_CLASSES[2], // Class 3
@@ -144,6 +144,8 @@ export default function JoinNow() {
     terms_accepted: false,
     transaction_id: '',
     payment_proof_url: '',
+    payment_receipt_filename: '',
+    payment_receipt_filesize: '',
     payment_date: new Date().toISOString().split('T')[0],
     payment_note: ''
   });
@@ -161,6 +163,11 @@ export default function JoinNow() {
   const [companyOpen, setCompanyOpen] = useState(false);
   const companyDropdownRef = useRef(null);
 
+  const [postOpen, setPostOpen] = useState(false);
+  const postDropdownRef = useRef(null);
+
+  const fileInputRef = useRef(null);
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (districtDropdownRef.current && !districtDropdownRef.current.contains(event.target)) {
@@ -169,10 +176,61 @@ export default function JoinNow() {
       if (companyDropdownRef.current && !companyDropdownRef.current.contains(event.target)) {
         setCompanyOpen(false);
       }
+      if (postDropdownRef.current && !postDropdownRef.current.contains(event.target)) {
+        setPostOpen(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  const formatDateTime = (dateStr) => {
+    const d = dateStr ? new Date(dateStr) : new Date();
+    return d.toLocaleString('en-IN', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
+    });
+  };
+
+  const handleReceiptUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      setFeedback({ error: 'Payment receipt file size must be less than 5MB.' });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setFormData(prev => ({
+        ...prev,
+        payment_proof_url: reader.result,
+        payment_receipt_filename: file.name,
+        payment_receipt_filesize: (file.size / 1024).toFixed(1) + ' KB'
+      }));
+      setFeedback(null);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const removeReceipt = () => {
+    setFormData(prev => ({
+      ...prev,
+      payment_proof_url: '',
+      payment_receipt_filename: '',
+      payment_receipt_filesize: ''
+    }));
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
 
   // Fee calculation: Class 1 -> ₹2000; Class 2 -> ₹1500; Class 3 (J.E.) -> ₹1000; Class 4 -> ₹500
   const getFeeForClass = (cls) => {
@@ -588,20 +646,40 @@ export default function JoinNow() {
                 {fieldErrors.father_name && <p className="text-[11px] text-red-600 mt-1 font-semibold">{fieldErrors.father_name}</p>}
               </div>
 
-              {/* 12. Name of Post * — dropdown */}
-              <div className="md:col-span-1">
+              {/* 12. Name of Post * — dropdown displaying downwards */}
+              <div className="md:col-span-1 relative" ref={postDropdownRef}>
                 <label className="block text-xs font-bold text-slate-800 mb-1">
                   12. Name of Post <span className="text-red-500">*</span>
                 </label>
-                <select
-                  value={formData.post_name}
-                  onChange={(e) => handleChange('post_name', e.target.value)}
-                  className={`w-full bg-slate-50 border ${fieldErrors.post_name ? 'border-red-500 bg-red-50/50' : 'border-slate-300'} rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-sky-500 font-medium`}
+                <button
+                  type="button"
+                  onClick={() => setPostOpen(!postOpen)}
+                  className={`w-full bg-slate-50 border ${fieldErrors.post_name ? 'border-red-500 bg-red-50/50' : 'border-slate-300'} rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-sky-500 font-medium flex items-center justify-between text-left shadow-sm`}
                 >
-                  {POSTS.map((pst, idx) => (
-                    <option key={idx} value={pst}>{pst}</option>
-                  ))}
-                </select>
+                  <span className="truncate">{formData.post_name || '-- Select Post --'}</span>
+                  <ChevronDown className={`w-4 h-4 text-slate-500 shrink-0 transition-transform ${postOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {postOpen && (
+                  <div className="absolute top-full left-0 right-0 mt-1 z-50 bg-white border border-slate-200 rounded-2xl shadow-xl p-2 max-h-60 overflow-y-auto space-y-0.5 animate-in fade-in slide-in-from-top-1 duration-150">
+                    {POSTS.map((pst, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => {
+                          handleChange('post_name', pst);
+                          setPostOpen(false);
+                        }}
+                        className={`w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors ${formData.post_name === pst
+                            ? 'bg-sky-600 text-white font-bold'
+                            : 'text-slate-800 hover:bg-sky-50 hover:text-sky-700'
+                          }`}
+                      >
+                        {pst}
+                      </button>
+                    ))}
+                  </div>
+                )}
                 {fieldErrors.post_name && <p className="text-[11px] text-red-600 mt-1 font-semibold">{fieldErrors.post_name}</p>}
               </div>
 
@@ -715,7 +793,7 @@ export default function JoinNow() {
                 className="mt-1 accent-sky-600 w-4 h-4 rounded cursor-pointer"
               />
               <label htmlFor="terms" className="text-xs text-sky-950 leading-relaxed cursor-pointer font-medium">
-                I hereby declare that all provided details are correct and genuine. I agree to abide by the Constitution, Rules, and Agitation Guidelines of the MP West Zone Electricity Discom Employees Union.
+                I hereby declare that all provided details are correct and genuine. I agree to abide by the Constitution, Rules, and Agitation Guidelines of the Madhya Pradesh Employees Union.
               </label>
             </div>
             {fieldErrors.terms_accepted && (
@@ -800,22 +878,81 @@ export default function JoinNow() {
               </div>
             </div>
 
-            {/* UTR Input Form */}
-            <div className="space-y-4 pt-4 border-t border-slate-100">
+            {/* UTR Input Form & Receipt Upload */}
+            <div className="space-y-5 pt-4 border-t border-slate-100">
+              
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label className="block text-xs font-bold text-slate-800 mb-1">
                   Transaction ID / UTR Number <span className="text-slate-400 font-normal">(Optional)</span>
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. UTR98765432101 (Optional)"
+                  placeholder="e.g. UTR98765432101"
                   value={formData.transaction_id}
                   onChange={(e) => handleChange('transaction_id', e.target.value)}
                   className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-xs text-slate-900 focus:outline-none focus:border-sky-500 font-mono"
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Upload Payment Receipt Section */}
+              <div className="space-y-2">
+                <label className="block text-xs font-bold text-slate-800">
+                  Upload Payment Receipt / Screenshot (भुगतान रसीद या स्क्रीनशॉट अपलोड करें)
+                </label>
+
+                {!formData.payment_proof_url ? (
+                  <div 
+                    onClick={() => fileInputRef.current && fileInputRef.current.click()}
+                    className="border-2 border-dashed border-sky-300 hover:border-sky-500 bg-sky-50/50 hover:bg-sky-50 rounded-2xl p-6 text-center cursor-pointer transition-all space-y-2 group"
+                  >
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleReceiptUpload}
+                      accept="image/*,.pdf"
+                      className="hidden"
+                    />
+                    <div className="w-12 h-12 rounded-full bg-sky-100 text-sky-600 flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
+                      <UploadCloud className="w-6 h-6 text-sky-700" />
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold text-sky-800 block">Click to Upload Payment Receipt / Screenshot</span>
+                      <span className="text-[11px] text-slate-500">Supports PNG, JPG, JPEG, WEBP or PDF (Max 5MB)</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3 overflow-hidden">
+                      {formData.payment_proof_url.startsWith('data:image') ? (
+                        <img src={formData.payment_proof_url} alt="Receipt Preview" className="w-14 h-14 object-cover rounded-xl border border-emerald-300 shrink-0" />
+                      ) : (
+                        <div className="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                          <FileCheck className="w-6 h-6" />
+                        </div>
+                      )}
+                      <div className="truncate">
+                        <span className="text-xs font-extrabold text-emerald-950 block truncate">
+                          {formData.payment_receipt_filename || 'Payment Receipt Attached'}
+                        </span>
+                        <span className="text-[11px] font-mono text-emerald-700 block">
+                          {formData.payment_receipt_filesize || 'Receipt Ready'} • Uploaded ✓
+                        </span>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={removeReceipt}
+                      className="p-2 rounded-xl bg-red-100 hover:bg-red-200 text-red-700 text-xs font-bold transition-colors shrink-0 flex items-center gap-1"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      <span className="hidden sm:inline">Remove</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">Payment Date</label>
                   <input
@@ -827,12 +964,12 @@ export default function JoinNow() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Screenshot URL (Optional)</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Payment Note / Remarks (Optional)</label>
                   <input
-                    type="url"
-                    placeholder="https://..."
-                    value={formData.payment_proof_url}
-                    onChange={(e) => handleChange('payment_proof_url', e.target.value)}
+                    type="text"
+                    placeholder="e.g. Paid via GPay from 98260XXXXX"
+                    value={formData.payment_note}
+                    onChange={(e) => handleChange('payment_note', e.target.value)}
                     className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-sky-500"
                   />
                 </div>
@@ -874,6 +1011,12 @@ export default function JoinNow() {
               </p>
             </div>
 
+            {/* Submission Date & Time Display Badge */}
+            <div className="p-3 bg-sky-50 border border-sky-200 rounded-2xl max-w-md mx-auto flex items-center justify-center gap-2 text-sky-950 text-xs font-bold shadow-sm">
+              <Clock className="w-4 h-4 text-sky-700 shrink-0" />
+              <span>Submission Date & Time: <strong className="text-sky-900">{formatDateTime(submittedApplication.created_at)}</strong></span>
+            </div>
+
             <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 max-w-md mx-auto text-xs text-left space-y-2 font-mono shadow-sm">
               <div className="flex justify-between">
                 <span className="text-slate-500">Applicant:</span>
@@ -899,6 +1042,10 @@ export default function JoinNow() {
                 <span className="text-slate-500">Transaction UTR:</span>
                 <span className="text-sky-700 font-bold">{submittedApplication.transaction_id || 'N/A'}</span>
               </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Payment Receipt:</span>
+                <span className="text-emerald-700 font-bold">{formData.payment_receipt_filename || (submittedApplication.payment_proof_url ? 'Receipt Uploaded ✓' : 'N/A')}</span>
+              </div>
             </div>
 
             <div className="p-4 rounded-2xl bg-sky-50 border border-sky-200 max-w-lg mx-auto text-xs text-sky-950 font-medium space-y-1.5 leading-relaxed text-left">
@@ -906,7 +1053,7 @@ export default function JoinNow() {
                 <span>🔐 Payment & Onboarding Access Policy</span>
               </div>
               <p>
-                Your registration is currently stored as <strong className="text-sky-900">PENDING</strong>. Once Union Admin verifies your payment UTR (<span className="font-mono font-bold text-sky-900">{submittedApplication.transaction_id || 'N/A'}</span>), your unique <strong>Union Member Login ID</strong> and <strong>Temporary Password</strong> will be automatically generated and dispatched to <strong className="text-slate-900">{submittedApplication.email || 'your registered contact'}</strong>.
+                Your registration is currently stored as <strong className="text-sky-900">PENDING</strong>. Once Union Admin verifies your payment UTR (<span className="font-mono font-bold text-sky-900">{submittedApplication.transaction_id || 'N/A'}</span>) and receipt, your unique <strong>Union Member Login ID</strong> and <strong>Temporary Password</strong> will be automatically generated and dispatched to <strong className="text-slate-900">{submittedApplication.email || 'your registered contact'}</strong>.
               </p>
             </div>
 
