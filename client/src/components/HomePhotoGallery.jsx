@@ -184,10 +184,27 @@ export default function HomePhotoGallery() {
   const { isHindi } = useLanguage();
   const [activeTab, setActiveTab] = useState('ALL');
   const [lightboxIndex, setLightboxIndex] = useState(null);
+  const [photosList, setPhotosList] = useState(GALLERY_PHOTOS);
+
+  React.useEffect(() => {
+    fetchPhotos();
+  }, []);
+
+  const fetchPhotos = async () => {
+    try {
+      const response = await fetch('/api/photos/list');
+      const data = await response.json();
+      if (data.success && data.photos && data.photos.length > 0) {
+        setPhotosList(data.photos);
+      }
+    } catch (err) {
+      console.warn('Using default gallery photos fallback.');
+    }
+  };
 
   const filteredPhotos = activeTab === 'ALL'
-    ? GALLERY_PHOTOS
-    : GALLERY_PHOTOS.filter(p => p.category === activeTab);
+    ? photosList
+    : photosList.filter(p => p.category === activeTab);
 
   const openLightbox = (id) => {
     const idx = filteredPhotos.findIndex(p => p.id === id);

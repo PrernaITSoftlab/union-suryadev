@@ -327,7 +327,7 @@ export default function JoinNow() {
   };
 
   const cleanPhone = whatsappNo.replace(/[^0-9]/g, '');
-  const waMsg = encodeURIComponent(`*MPVMAVAKS UNION MEMBERSHIP REGISTRATION*\nName: ${formData.full_name}\nDistrict: ${formData.district_name}\nClass: ${formData.employee_class} (Fee: ₹${regFee})\nUTR: ${formData.transaction_id || 'N/A'}\nPlease verify my membership application. Thank you!`);
+  const waMsg = encodeURIComponent(`*MPVMAVAKS UNION MEMBERSHIP REGISTRATION*\nName: ${formData.full_name}\nDistrict: ${formData.district_name}\nClass: ${formData.employee_class} (Fee: ₹${regFee})\nPlease verify my membership application. Thank you!`);
   const waLink = `https://wa.me/${cleanPhone.startsWith('91') ? cleanPhone : '91' + cleanPhone}?text=${waMsg}`;
 
   return (
@@ -341,7 +341,7 @@ export default function JoinNow() {
             <span>Union Membership Form • सदस्यता फॉर्म</span>
           </div>
           <h1 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-            Apply to Join MP West Zone Electricity Union
+            Apply to join MPVMAVAKS UNION
           </h1>
           <p className="text-xs sm:text-sm text-slate-600 font-medium max-w-2xl mx-auto">
             Please fill out all required fields marked with <span className="text-red-500 font-bold">*</span> accurately. Select your Employee Class to determine your registration fee (Class 1: ₹2000 | Class 2: ₹1500 | Class 3 (J.E.): ₹1000 | Class 4: ₹500).
@@ -357,7 +357,7 @@ export default function JoinNow() {
           <span className="text-slate-300">• • •</span>
           <div className={`flex items-center gap-2 ${step >= 2 ? 'text-sky-700' : 'text-slate-400'}`}>
             <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${step >= 2 ? 'bg-sky-600 text-white font-extrabold' : 'bg-slate-200 text-slate-500'}`}>2</span>
-            <span>Payment (₹{regFee}) & UTR</span>
+            <span>Payment (₹{regFee}) & Receipt</span>
           </div>
           <span className="text-slate-300">• • •</span>
           <div className={`flex items-center gap-2 ${step >= 3 ? 'text-sky-700' : 'text-slate-400'}`}>
@@ -793,7 +793,7 @@ export default function JoinNow() {
                 className="mt-1 accent-sky-600 w-4 h-4 rounded cursor-pointer"
               />
               <label htmlFor="terms" className="text-xs text-sky-950 leading-relaxed cursor-pointer font-medium">
-                I hereby declare that all provided details are correct and genuine. I agree to abide by the Constitution, Rules, and Agitation Guidelines of the Madhya Pradesh Employees Union.
+                I hereby declare that all provided details are correct and genuine. I agree to abide by the Constitution, Rules, and Agitation Guidelines of the MP State Electricity Board Reserved Category Officers & Employees Union (मध्य प्रदेश विद्युत मंडल आरक्षित वर्ग अधिकारी कर्मचारी संघ).
               </label>
             </div>
             {fieldErrors.terms_accepted && (
@@ -805,7 +805,7 @@ export default function JoinNow() {
               type="submit"
               className="w-full py-4 rounded-2xl font-bold text-xs sm:text-sm bg-sky-600 hover:bg-sky-500 text-white transition-all flex items-center justify-center gap-2 shadow-md"
             >
-              <span>Proceed to Registration QR Payment (₹{regFee}) & UTR Entry</span>
+              <span>Proceed to Registration QR Payment (₹{regFee}) & Receipt Upload</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </form>
@@ -817,9 +817,9 @@ export default function JoinNow() {
 
             <div className="text-center space-y-2">
               <span className="text-xs font-bold text-sky-700 uppercase tracking-widest">Step 2: Registration Verification</span>
-              <h2 className="text-2xl font-bold text-slate-900">Scan Union QR Code & Enter UTR Reference</h2>
+              <h2 className="text-2xl font-bold text-slate-900">Scan Union QR Code & Upload Payment Receipt</h2>
               <p className="text-xs text-slate-600 max-w-lg mx-auto font-medium">
-                Pay the annual union registration fee of <span className="text-sky-700 font-extrabold text-sm">₹{regFee}</span> ({formData.employee_class}) via UPI (GPay, PhonePe, Paytm, BHIM) and enter your transaction UTR number.
+                Pay the annual union registration fee of <span className="text-sky-700 font-extrabold text-sm">₹{regFee}</span> ({formData.employee_class}) via UPI (GPay, PhonePe, Paytm, BHIM) and upload your payment receipt screenshot.
               </p>
             </div>
 
@@ -878,21 +878,8 @@ export default function JoinNow() {
               </div>
             </div>
 
-            {/* UTR Input Form & Receipt Upload */}
+            {/* Upload Payment Receipt Section */}
             <div className="space-y-5 pt-4 border-t border-slate-100">
-              
-              <div>
-                <label className="block text-xs font-bold text-slate-800 mb-1">
-                  Transaction ID / UTR Number <span className="text-slate-400 font-normal">(Optional)</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. UTR98765432101"
-                  value={formData.transaction_id}
-                  onChange={(e) => handleChange('transaction_id', e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-xs text-slate-900 focus:outline-none focus:border-sky-500 font-mono"
-                />
-              </div>
 
               {/* Upload Payment Receipt Section */}
               <div className="space-y-2">
@@ -1039,10 +1026,6 @@ export default function JoinNow() {
                 <span className="text-sky-700 font-bold">{submittedApplication.application_no}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Transaction UTR:</span>
-                <span className="text-sky-700 font-bold">{submittedApplication.transaction_id || 'N/A'}</span>
-              </div>
-              <div className="flex justify-between">
                 <span className="text-slate-500">Payment Receipt:</span>
                 <span className="text-emerald-700 font-bold">{formData.payment_receipt_filename || (submittedApplication.payment_proof_url ? 'Receipt Uploaded ✓' : 'N/A')}</span>
               </div>
@@ -1053,7 +1036,7 @@ export default function JoinNow() {
                 <span>🔐 Payment & Onboarding Access Policy</span>
               </div>
               <p>
-                Your registration is currently stored as <strong className="text-sky-900">PENDING</strong>. Once Union Admin verifies your payment UTR (<span className="font-mono font-bold text-sky-900">{submittedApplication.transaction_id || 'N/A'}</span>) and receipt, your unique <strong>Union Member Login ID</strong> and <strong>Temporary Password</strong> will be automatically generated and dispatched to <strong className="text-slate-900">{submittedApplication.email || 'your registered contact'}</strong>.
+                Your registration is currently stored as <strong className="text-sky-900">PENDING</strong>. Once Union Admin verifies your payment receipt screenshot, your unique <strong>Union Member Login ID</strong> and <strong>Temporary Password</strong> will be automatically generated and dispatched to <strong className="text-slate-900">{submittedApplication.email || 'your registered contact'}</strong>.
               </p>
             </div>
 

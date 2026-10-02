@@ -32,8 +32,8 @@ export const translations = {
 
   // Hero Section & Home Page
   "Madhya Pradesh West Zone Discom Employees Union": {
-    en: "Madhya Pradesh Employees Union",
-    hi: "मध्य प्रदेश कर्मचारी संघ"
+    en: "MP State Electricity Board Reserved Category Officers & Employees Union",
+    hi: "मध्य प्रदेश विद्युत मंडल आरक्षित वर्ग अधिकारी कर्मचारी संघ"
   },
   "Uniting Power Engineers & Field Staff for": {
     en: "Uniting Power Engineers & Field Staff for",

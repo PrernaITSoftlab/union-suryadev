@@ -36,6 +36,7 @@ export const INITIAL_USERS = [
     role: "admin",
     status: "active",
     member_id: "UNION-ADMIN-001",
+    password_hash: "$2a$10$FHB/4wWrRkL4iRxziV6iVeKf5zmVayZCEJ/RBOkQrOEaE3X4ddnP2", // adminpassword123
     profile: {
       id: 1,
       user_id: 1,

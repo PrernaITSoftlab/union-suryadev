@@ -13,6 +13,8 @@ import sharedDocumentRoutes from './routes/sharedDocumentRoutes.js';
 import contactRoutes from './routes/contactRoutes.js';
 import settingsRoutes from './routes/settingsRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
+import orderRoutes from './routes/orderRoutes.js';
+import photoRoutes from './routes/photoRoutes.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 dotenv.config();
@@ -38,6 +40,8 @@ app.use('/api/documents', sharedDocumentRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/photos', photoRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

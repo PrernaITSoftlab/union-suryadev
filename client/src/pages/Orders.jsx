@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FileText, Search, ExternalLink, Download, X, Filter, Calendar } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
+import api from '../services/api';
 
 export default function Orders() {
   const { t, isHindi } = useLanguage();
@@ -8,16 +9,7 @@ export default function Orders() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [pdfModalItem, setPdfModalItem] = useState(null);
 
-  const categories = [
-    { id: 'All', labelEn: 'All Orders & Notices', labelHi: 'सभी आदेश एवं सूचनाएं' },
-    { id: 'Govt. Circulars', labelEn: 'Govt. Circulars', labelHi: 'शासकीय परिपत्र' },
-    { id: 'SC/ST Circulars', labelEn: 'SC/ST Circulars', labelHi: 'अजा/अजजा परिपत्र' },
-    { id: 'Normal Circulars', labelEn: 'Normal Circulars', labelHi: 'सामान्य परिपत्र' },
-    { id: 'Notices', labelEn: 'Notices & Directives', labelHi: 'सूचनाएं व निर्देश' },
-    { id: 'Safety Directives', labelEn: 'Safety & PTW Rules', labelHi: 'सुरक्षा नियमावली' }
-  ];
-
-  const circularsList = [
+  const initialList = [
     {
       id: "ORD/MPVMAVAKS/2026/104",
       titleEn: "MP Government Order: 7th Pay Commission DA 4% Revision & Backlog Arrears Payout Release Order",
@@ -84,15 +76,41 @@ export default function Orders() {
     }
   ];
 
+  const [circularsList, setCircularsList] = useState(initialList);
+
+  useEffect(() => {
+    fetchOrders();
+  }, []);
+
+  const fetchOrders = async () => {
+    try {
+      const res = await api.get('/orders/list');
+      if (res.data.success && res.data.orders) {
+        setCircularsList(res.data.orders);
+      }
+    } catch (err) {
+      console.warn('Using default orders fallback.');
+    }
+  };
+
+  const categories = [
+    { id: 'All', labelEn: 'All Orders & Notices', labelHi: 'सभी आदेश एवं सूचनाएं' },
+    { id: 'Govt. Circulars', labelEn: 'Govt. Circulars', labelHi: 'शासकीय परिपत्र' },
+    { id: 'SC/ST Circulars', labelEn: 'SC/ST Circulars', labelHi: 'अजा/अजजा परिपत्र' },
+    { id: 'Normal Circulars', labelEn: 'Normal Circulars', labelHi: 'सामान्य परिपत्र' },
+    { id: 'Notices', labelEn: 'Notices & Directives', labelHi: 'सूचनाएं व निर्देश' },
+    { id: 'Safety Directives', labelEn: 'Safety & PTW Rules', labelHi: 'सुरक्षा नियमावली' }
+  ];
+
   const filteredCirculars = circularsList.filter(item => {
     if (selectedCategory !== 'All' && item.category !== selectedCategory) return false;
     if (search) {
       const term = search.toLowerCase();
       return (
-        item.titleEn.toLowerCase().includes(term) ||
-        item.titleHi.toLowerCase().includes(term) ||
-        item.id.toLowerCase().includes(term) ||
-        item.date.includes(term)
+        (item.titleEn && item.titleEn.toLowerCase().includes(term)) ||
+        (item.titleHi && item.titleHi.toLowerCase().includes(term)) ||
+        (item.id && item.id.toLowerCase().includes(term)) ||
+        (item.date && item.date.includes(term))
       );
     }
     return true;
