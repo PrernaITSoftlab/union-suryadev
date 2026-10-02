@@ -38,7 +38,9 @@ export default function AdminDashboard() {
   const [createUserModal, setCreateUserModal] = useState(null);
   const [generatedCredentialsModal, setGeneratedCredentialsModal] = useState(null);
   const [createEventModal, setCreateEventModal] = useState(false);
+  const [editEventModal, setEditEventModal] = useState(null);
   const [createAnnounceModal, setCreateAnnounceModal] = useState(false);
+  const [editAnnounceModal, setEditAnnounceModal] = useState(null);
 
   // Orders / Notices Modals & Form
   const [createOrderModal, setCreateOrderModal] = useState(false);
@@ -58,6 +60,8 @@ export default function AdminDashboard() {
 
   const pdfInputRef = useRef(null);
   const photoInputRef = useRef(null);
+  const eventBannerInputRef = useRef(null);
+  const announceAttachmentInputRef = useRef(null);
 
   const [eventForm, setEventForm] = useState({
     title: '', description: '', banner_url: '', event_type: 'GENERAL',
@@ -299,17 +303,74 @@ export default function AdminDashboard() {
     }
   };
 
+  // Event Handlers
+  const handleEventBannerUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setEventForm(prev => ({ ...prev, banner_url: reader.result }));
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleCreateEvent = async (e) => {
     e.preventDefault();
     try {
       const res = await api.post('/events/admin/create', eventForm);
       if (res.data.success) {
+        setFeedback({ success: res.data.message });
         setCreateEventModal(false);
+        setEventForm({
+          title: '', description: '', banner_url: '', event_type: 'GENERAL',
+          start_date: '', end_date: '', start_time: '10:00 AM', venue: '',
+          capacity: 500, is_paid: false, event_fee: 0, payment_qr_url: '',
+          payment_instructions: '', status: 'REGISTRATION_OPEN'
+        });
         fetchModuleData();
       }
     } catch (err) {
-      alert('Failed to create event.');
+      alert(err.response?.data?.message || 'Failed to create event.');
     }
+  };
+
+  const handleUpdateEvent = async (e) => {
+    e.preventDefault();
+    if (!editEventModal) return;
+    try {
+      const res = await api.put(`/events/admin/${editEventModal.id}`, eventForm);
+      if (res.data.success) {
+        setFeedback({ success: res.data.message });
+        setEditEventModal(null);
+        fetchModuleData();
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to update event.');
+    }
+  };
+
+  const handleDeleteEvent = async (eventId) => {
+    if (!window.confirm('Are you sure you want to delete this event?')) return;
+    try {
+      const res = await api.delete(`/events/admin/${eventId}`);
+      if (res.data.success) {
+        setFeedback({ success: res.data.message });
+        fetchModuleData();
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to delete event.');
+    }
+  };
+
+  // Announcement Handlers
+  const handleAnnounceAttachmentUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setAnnounceForm(prev => ({ ...prev, attachment_url: reader.result }));
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleCreateAnnouncement = async (e) => {
@@ -317,11 +378,45 @@ export default function AdminDashboard() {
     try {
       const res = await api.post('/announcements/admin/create', announceForm);
       if (res.data.success) {
+        setFeedback({ success: res.data.message });
         setCreateAnnounceModal(false);
+        setAnnounceForm({
+          title: '', description: '', type: 'GENERAL', priority: 'NORMAL',
+          attachment_url: '', start_date: new Date().toISOString().split('T')[0],
+          expiry_date: '', target_audience: 'ALL_MEMBERS', is_popup: true
+        });
         fetchModuleData();
       }
     } catch (err) {
-      alert('Failed to broadcast announcement.');
+      alert(err.response?.data?.message || 'Failed to broadcast announcement.');
+    }
+  };
+
+  const handleUpdateAnnouncement = async (e) => {
+    e.preventDefault();
+    if (!editAnnounceModal) return;
+    try {
+      const res = await api.put(`/announcements/admin/${editAnnounceModal.id}`, announceForm);
+      if (res.data.success) {
+        setFeedback({ success: res.data.message });
+        setEditAnnounceModal(null);
+        fetchModuleData();
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to update announcement notice.');
+    }
+  };
+
+  const handleDeleteAnnouncement = async (announceId) => {
+    if (!window.confirm('Are you sure you want to delete this notice/announcement?')) return;
+    try {
+      const res = await api.delete(`/announcements/admin/${announceId}`);
+      if (res.data.success) {
+        setFeedback({ success: res.data.message });
+        fetchModuleData();
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to delete announcement notice.');
     }
   };
 
@@ -892,34 +987,209 @@ export default function AdminDashboard() {
         {/* MODULE 4: EVENTS MANAGEMENT */}
         {activeModule === 'events' && (
           <div className="space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
               <div>
-                <h2 className="text-xl font-bold text-slate-900">Event & Agitation Management</h2>
-                <p className="text-xs text-slate-500 font-medium">Create state conventions, workshops, and delegate meetings</p>
+                <h2 className="text-xl font-extrabold text-slate-900 flex items-center gap-2">
+                  <Calendar className="w-5 h-5 text-sky-600" />
+                  <span>Event & Agitation Management</span>
+                </h2>
+                <p className="text-xs text-slate-500 font-medium mt-1">Create, update, and manage state conventions, workshops, and strike rallies.</p>
               </div>
               <button
-                onClick={() => setCreateEventModal(true)}
-                className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center gap-2 shadow-sm"
+                onClick={() => {
+                  setEventForm({
+                    title: '', description: '', banner_url: '', event_type: 'GENERAL',
+                    start_date: new Date().toISOString().split('T')[0], end_date: '', start_time: '10:00 AM', venue: '',
+                    capacity: 500, is_paid: false, event_fee: 0, payment_qr_url: '',
+                    payment_instructions: '', status: 'REGISTRATION_OPEN'
+                  });
+                  setCreateEventModal(true);
+                }}
+                className="px-4 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs flex items-center gap-2 shadow-md shrink-0"
               >
-                <Calendar className="w-4 h-4" />
+                <Plus className="w-4 h-4" />
                 <span>Create New Event</span>
               </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {events.map(e => (
-                <div key={e.id} className="bg-white border border-slate-200 rounded-3xl p-6 space-y-3 shadow-sm">
-                  <div className="flex justify-between text-xs font-bold text-amber-800 uppercase">
-                    <span>{e.event_type}</span>
-                    <span className="text-slate-500 font-mono">{e.status}</span>
-                  </div>
-                  <h3 className="font-bold text-base text-slate-900">{e.title}</h3>
-                  <p className="text-xs text-slate-600">{e.venue} • {e.start_date}</p>
-                  <div className="pt-2 text-xs font-mono text-slate-700 border-t border-slate-100 font-medium">
-                    Fee: {e.is_paid ? `₹${e.event_fee}` : 'FREE'} • Delegates: {e.registered_count}
+                <div key={e.id} className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm flex flex-col justify-between group hover:shadow-md transition-all">
+                  {e.banner_url && (
+                    <div className="h-40 overflow-hidden bg-slate-900 relative">
+                      <img src={e.banner_url} alt={e.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                      <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-slate-900/80 backdrop-blur-md text-white text-[10px] font-bold uppercase">
+                        {e.event_type}
+                      </div>
+                    </div>
+                  )}
+                  <div className="p-5 space-y-3 flex-1 flex flex-col justify-between">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-sky-100 text-sky-800 uppercase">
+                          {e.event_type}
+                        </span>
+                        <span className="text-[11px] font-mono font-bold text-slate-500">{e.status}</span>
+                      </div>
+                      <h3 className="font-bold text-slate-900 text-base line-clamp-2">{e.title}</h3>
+                      <p className="text-xs text-slate-600 line-clamp-2">{e.description}</p>
+                      <div className="text-xs text-slate-500 font-medium">
+                        📍 <strong>{e.venue}</strong> • 📅 <span>{e.start_date}</span>
+                      </div>
+                    </div>
+
+                    <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                      <span className="font-mono font-bold text-sky-700">
+                        {e.is_paid ? `Fee: ₹${e.event_fee}` : 'FREE'} • {e.registered_count || 0} Registered
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => {
+                            setEditEventModal(e);
+                            setEventForm({
+                              title: e.title || '',
+                              description: e.description || '',
+                              banner_url: e.banner_url || '',
+                              event_type: e.event_type || 'GENERAL',
+                              start_date: e.start_date || '',
+                              end_date: e.end_date || '',
+                              start_time: e.start_time || '10:00 AM',
+                              venue: e.venue || '',
+                              capacity: e.capacity || 500,
+                              is_paid: Boolean(e.is_paid),
+                              event_fee: e.event_fee || 0,
+                              payment_qr_url: e.payment_qr_url || '',
+                              payment_instructions: e.payment_instructions || '',
+                              status: e.status || 'REGISTRATION_OPEN'
+                            });
+                          }}
+                          className="p-1.5 rounded-lg bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200 transition-colors"
+                          title="Edit Event"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteEvent(e.id)}
+                          className="p-1.5 rounded-lg bg-red-50 text-red-700 hover:bg-red-100 border border-red-200 transition-colors"
+                          title="Delete Event"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* MODULE: ANNOUNCEMENTS & STRIKE BULLETINS MANAGEMENT */}
+        {activeModule === 'announcements' && (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+              <div>
+                <h2 className="text-xl font-extrabold text-slate-900 flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5 text-red-600" />
+                  <span>Announcements & Strike Bulletins Directory</span>
+                </h2>
+                <p className="text-xs text-slate-500 font-medium mt-1">Publish, broadcast, update, and delete urgent union announcements and top-screen popup notices.</p>
+              </div>
+
+              <button
+                onClick={() => {
+                  setAnnounceForm({
+                    title: '', description: '', type: 'GENERAL', priority: 'NORMAL',
+                    attachment_url: '', start_date: new Date().toISOString().split('T')[0],
+                    expiry_date: '', target_audience: 'ALL_MEMBERS', is_popup: true
+                  });
+                  setCreateAnnounceModal(true);
+                }}
+                className="px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs flex items-center gap-2 shadow-md shrink-0"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Issue New Notice / Strike Bulletin</span>
+              </button>
+            </div>
+
+            <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-4">
+              {announcements.length === 0 ? (
+                <div className="py-12 text-center text-xs text-slate-500 font-medium">No announcements broadcasted yet.</div>
+              ) : (
+                <ul className="space-y-4 divide-y divide-slate-100">
+                  {announcements.map((announce) => (
+                    <li key={announce.id} className="pt-4 first:pt-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="space-y-1.5 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
+                            announce.type === 'STRIKE' ? 'bg-red-100 text-red-900 border border-red-300' :
+                            announce.type === 'URGENT' ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-sky-100 text-sky-800'
+                          }`}>
+                            {announce.type}
+                          </span>
+                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
+                            announce.priority === 'CRITICAL' ? 'bg-purple-100 text-purple-900 border border-purple-300' : 'bg-slate-100 text-slate-700'
+                          }`}>
+                            Priority: {announce.priority}
+                          </span>
+                          {announce.is_popup && (
+                            <span className="px-2 py-0.5 rounded text-[9px] font-extrabold bg-emerald-100 text-emerald-900 uppercase">
+                              ✨ Top Screen Alert
+                            </span>
+                          )}
+                          <span className="text-xs font-mono text-slate-400">Date: {announce.start_date}</span>
+                        </div>
+
+                        <h3 className="font-bold text-slate-900 text-base">{announce.title}</h3>
+                        <p className="text-xs text-slate-600 leading-relaxed max-w-3xl">{announce.description}</p>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        {announce.attachment_url && (
+                          <a
+                            href={announce.attachment_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center gap-1 transition-colors border border-slate-200"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5 text-sky-600" />
+                            <span>Attachment</span>
+                          </a>
+                        )}
+
+                        <button
+                          onClick={() => {
+                            setEditAnnounceModal(announce);
+                            setAnnounceForm({
+                              title: announce.title || '',
+                              description: announce.description || '',
+                              type: announce.type || 'GENERAL',
+                              priority: announce.priority || 'NORMAL',
+                              attachment_url: announce.attachment_url || '',
+                              start_date: announce.start_date || new Date().toISOString().split('T')[0],
+                              expiry_date: announce.expiry_date || '',
+                              target_audience: announce.target_audience || 'ALL_MEMBERS',
+                              is_popup: announce.is_popup !== undefined ? Boolean(announce.is_popup) : true
+                            });
+                          }}
+                          className="px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-xs font-bold flex items-center gap-1 transition-colors"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                          <span>Edit</span>
+                        </button>
+
+                        <button
+                          onClick={() => handleDeleteAnnouncement(announce.id)}
+                          className="p-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 transition-colors"
+                          title="Delete Notice"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           </div>
         )}
@@ -1102,16 +1372,21 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* CREATE EVENT MODAL */}
-      {createEventModal && (
+      {/* CREATE / EDIT EVENT MODAL */}
+      {(createEventModal || editEventModal) && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
+          <div className="bg-white border border-slate-200 rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl animate-in zoom-in-95 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-              <h3 className="text-lg font-bold text-slate-900">Create New Event / Agitation</h3>
-              <button onClick={() => setCreateEventModal(false)} className="text-slate-400 hover:text-slate-700"><X className="w-5 h-5" /></button>
+              <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-sky-600" />
+                <span>{editEventModal ? 'Edit Event Details' : 'Create New Event / Agitation'}</span>
+              </h3>
+              <button onClick={() => { setCreateEventModal(false); setEditEventModal(null); }} className="text-slate-400 hover:text-slate-700">
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
-            <form onSubmit={handleCreateEvent} className="space-y-4 text-xs">
+            <form onSubmit={editEventModal ? handleUpdateEvent : handleCreateEvent} className="space-y-4 text-xs">
               <div>
                 <label className="block font-bold text-slate-700 mb-1">Event Title *</label>
                 <input
@@ -1120,11 +1395,25 @@ export default function AdminDashboard() {
                   placeholder="e.g. Zonal Delegate Convention 2026"
                   value={eventForm.title}
                   onChange={(e) => setEventForm({ ...eventForm, title: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2 text-slate-900"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2 text-slate-900 font-medium"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Event Type *</label>
+                  <select
+                    value={eventForm.event_type}
+                    onChange={(e) => setEventForm({ ...eventForm, event_type: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-900 font-bold"
+                  >
+                    <option value="GENERAL">GENERAL</option>
+                    <option value="STRIKE">STRIKE / AGITATION</option>
+                    <option value="WORKSHOP">WORKSHOP / SAFETY</option>
+                    <option value="CONVENTION">CONVENTION</option>
+                  </select>
+                </div>
+
                 <div>
                   <label className="block font-bold text-slate-700 mb-1">Start Date *</label>
                   <input
@@ -1132,9 +1421,12 @@ export default function AdminDashboard() {
                     required
                     value={eventForm.start_date}
                     onChange={(e) => setEventForm({ ...eventForm, start_date: e.target.value })}
-                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2 text-slate-900"
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-900 font-medium"
                   />
                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block font-bold text-slate-700 mb-1">Venue *</label>
                   <input
@@ -1143,9 +1435,58 @@ export default function AdminDashboard() {
                     placeholder="Central Office Bhopal"
                     value={eventForm.venue}
                     onChange={(e) => setEventForm({ ...eventForm, venue: e.target.value })}
-                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2 text-slate-900"
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2 text-slate-900 font-medium"
                   />
                 </div>
+
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Status</label>
+                  <select
+                    value={eventForm.status}
+                    onChange={(e) => setEventForm({ ...eventForm, status: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-900 font-bold"
+                  >
+                    <option value="REGISTRATION_OPEN">REGISTRATION OPEN</option>
+                    <option value="UPCOMING">UPCOMING</option>
+                    <option value="COMPLETED">COMPLETED</option>
+                    <option value="CANCELLED">CANCELLED</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Event Banner Image Upload */}
+              <div className="space-y-1.5">
+                <label className="block font-bold text-slate-800">Event Banner Image</label>
+                <div className="border-2 border-dashed border-sky-300 bg-sky-50/50 hover:bg-sky-50 rounded-2xl p-4 text-center cursor-pointer transition-all">
+                  <input
+                    type="file"
+                    ref={eventBannerInputRef}
+                    onChange={handleEventBannerUpload}
+                    accept="image/*"
+                    className="hidden"
+                  />
+                  <div 
+                    onClick={() => eventBannerInputRef.current && eventBannerInputRef.current.click()}
+                    className="flex flex-col items-center justify-center gap-1"
+                  >
+                    {eventForm.banner_url ? (
+                      <img src={eventForm.banner_url} alt="Banner Preview" className="w-24 h-16 object-cover rounded-xl border border-sky-300 mb-1" />
+                    ) : (
+                      <UploadCloud className="w-6 h-6 text-sky-600" />
+                    )}
+                    <span className="text-xs font-bold text-sky-900">
+                      {eventForm.banner_url ? 'Banner Image Selected ✓ Click to Change' : 'Click to Upload Event Banner Image'}
+                    </span>
+                  </div>
+                </div>
+
+                <input
+                  type="text"
+                  placeholder="Or enter direct Image URL (e.g. https://...)"
+                  value={eventForm.banner_url}
+                  onChange={(e) => setEventForm({ ...eventForm, banner_url: e.target.value })}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-[11px] text-slate-700 font-mono"
+                />
               </div>
 
               <div>
@@ -1158,27 +1499,38 @@ export default function AdminDashboard() {
                 />
               </div>
 
-              <button type="submit" className="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold">
-                Publish Event
-              </button>
+              <div className="flex items-center gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => { setCreateEventModal(false); setEditEventModal(null); }}
+                  className="flex-1 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold"
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="flex-1 py-3 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold shadow-md">
+                  {editEventModal ? 'Update Event' : 'Publish Event'}
+                </button>
+              </div>
             </form>
           </div>
         </div>
       )}
 
-      {/* CREATE ANNOUNCEMENT / STRIKE MODAL */}
-      {createAnnounceModal && (
+      {/* CREATE / EDIT ANNOUNCEMENT / STRIKE MODAL */}
+      {(createAnnounceModal || editAnnounceModal) && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
+          <div className="bg-white border border-slate-200 rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl animate-in zoom-in-95 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center border-b border-slate-100 pb-3">
               <h3 className="text-lg font-bold text-red-700 flex items-center gap-2">
                 <AlertTriangle className="w-5 h-5 text-red-600" />
-                <span>Issue Notice / Strike Bulletin</span>
+                <span>{editAnnounceModal ? 'Edit Notice / Strike Bulletin' : 'Issue Notice / Strike Bulletin'}</span>
               </h3>
-              <button onClick={() => setCreateAnnounceModal(false)} className="text-slate-400 hover:text-slate-700"><X className="w-5 h-5" /></button>
+              <button onClick={() => { setCreateAnnounceModal(false); setEditAnnounceModal(null); }} className="text-slate-400 hover:text-slate-700">
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
-            <form onSubmit={handleCreateAnnouncement} className="space-y-4 text-xs">
+            <form onSubmit={editAnnounceModal ? handleUpdateAnnouncement : handleCreateAnnouncement} className="space-y-4 text-xs">
               <div>
                 <label className="block font-bold text-slate-700 mb-1">Notice Title *</label>
                 <input
@@ -1187,7 +1539,7 @@ export default function AdminDashboard() {
                   placeholder="e.g. Indefinite Strike & Protest Notice"
                   value={announceForm.title}
                   onChange={(e) => setAnnounceForm({ ...announceForm, title: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2 text-slate-900"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2 text-slate-900 font-medium"
                 />
               </div>
 
@@ -1220,6 +1572,50 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
+              <div className="flex items-center gap-2 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                <input
+                  type="checkbox"
+                  id="is_popup"
+                  checked={announceForm.is_popup}
+                  onChange={(e) => setAnnounceForm({ ...announceForm, is_popup: e.target.checked })}
+                  className="accent-red-600 w-4 h-4 rounded cursor-pointer"
+                />
+                <label htmlFor="is_popup" className="text-xs font-bold text-slate-800 cursor-pointer">
+                  Display as Top-Screen Popup Banner Alert for all visitors
+                </label>
+              </div>
+
+              {/* Notice Attachment Upload */}
+              <div className="space-y-1.5">
+                <label className="block font-bold text-slate-800">Notice Attachment File (PDF / Image)</label>
+                <div className="border-2 border-dashed border-red-300 bg-red-50/40 hover:bg-red-50 rounded-2xl p-4 text-center cursor-pointer transition-all">
+                  <input
+                    type="file"
+                    ref={announceAttachmentInputRef}
+                    onChange={handleAnnounceAttachmentUpload}
+                    accept=".pdf,image/*"
+                    className="hidden"
+                  />
+                  <div 
+                    onClick={() => announceAttachmentInputRef.current && announceAttachmentInputRef.current.click()}
+                    className="flex flex-col items-center justify-center gap-1"
+                  >
+                    <UploadCloud className="w-6 h-6 text-red-600" />
+                    <span className="text-xs font-bold text-red-900">
+                      {announceForm.attachment_url ? 'Attachment Attached ✓ Click to Change' : 'Click to Upload Notice PDF / Image Attachment'}
+                    </span>
+                  </div>
+                </div>
+
+                <input
+                  type="text"
+                  placeholder="Or enter direct Attachment URL (e.g. https://...)"
+                  value={announceForm.attachment_url}
+                  onChange={(e) => setAnnounceForm({ ...announceForm, attachment_url: e.target.value })}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-[11px] text-slate-700 font-mono"
+                />
+              </div>
+
               <div>
                 <label className="block font-semibold text-slate-700 mb-1">Notice Description / Demands *</label>
                 <textarea
@@ -1232,9 +1628,18 @@ export default function AdminDashboard() {
                 />
               </div>
 
-              <button type="submit" className="w-full py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold">
-                Broadcast & Trigger Popup Notice
-              </button>
+              <div className="flex items-center gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => { setCreateAnnounceModal(false); setEditAnnounceModal(null); }}
+                  className="flex-1 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold"
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="flex-1 py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold shadow-md">
+                  {editAnnounceModal ? 'Update Notice' : 'Broadcast Notice'}
+                </button>
+              </div>
             </form>
           </div>
         </div>

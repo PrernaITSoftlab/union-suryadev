@@ -235,4 +235,21 @@ router.get('/admin/registrations/list', authenticateToken, requireAdmin, (req, r
   });
 });
 
+// 7. Delete Event (Admin)
+router.delete('/admin/:id', authenticateToken, requireAdmin, (req, res) => {
+  const targetId = Number(req.params.id);
+  const eventIndex = inMemoryStore.events.findIndex(e => e.id === targetId);
+  if (eventIndex === -1) {
+    return res.status(404).json({ success: false, message: 'Event not found.' });
+  }
+
+  const deleted = inMemoryStore.events.splice(eventIndex, 1)[0];
+
+  res.json({
+    success: true,
+    message: 'Event deleted successfully.',
+    deleted
+  });
+});
+
 export default router;

@@ -97,4 +97,45 @@ router.post('/admin/create', authenticateToken, requireAdmin, (req, res) => {
   });
 });
 
+// 4. Update Announcement / Notice (Admin)
+router.put('/admin/:id', authenticateToken, requireAdmin, (req, res) => {
+  const targetId = Number(req.params.id);
+  const announcementIndex = inMemoryStore.announcements.findIndex(a => a.id === targetId);
+  if (announcementIndex === -1) {
+    return res.status(404).json({ success: false, message: 'Announcement notice not found.' });
+  }
+
+  const existing = inMemoryStore.announcements[announcementIndex];
+  const updated = {
+    ...existing,
+    ...req.body,
+    updated_at: new Date().toISOString()
+  };
+
+  inMemoryStore.announcements[announcementIndex] = updated;
+
+  res.json({
+    success: true,
+    message: 'Announcement notice updated successfully.',
+    announcement: updated
+  });
+});
+
+// 5. Delete Announcement / Notice (Admin)
+router.delete('/admin/:id', authenticateToken, requireAdmin, (req, res) => {
+  const targetId = Number(req.params.id);
+  const announcementIndex = inMemoryStore.announcements.findIndex(a => a.id === targetId);
+  if (announcementIndex === -1) {
+    return res.status(404).json({ success: false, message: 'Announcement notice not found.' });
+  }
+
+  const deleted = inMemoryStore.announcements.splice(announcementIndex, 1)[0];
+
+  res.json({
+    success: true,
+    message: 'Announcement notice deleted successfully.',
+    deleted
+  });
+});
+
 export default router;
