@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "node --watch server.js",
+    "db:init": "node db/initDb.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
