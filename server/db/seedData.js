@@ -36,7 +36,7 @@ export const INITIAL_USERS = [
     role: "admin",
     status: "active",
     member_id: "UNION-ADMIN-001",
-    password_hash: "$2a$10$rJ11HNsRvN8fTvOmp5PWy./FikqvhqRwfqY9S2yGUm5gyVrpHV12e", // admin123
+    password_hash: "$2a$10$mpvTj5bytuuLyawrcS8tlumtwKqXJvLheQX5WxV62B/QUbSK7y4Te", // admin123
 
     profile: {
       id: 1,
@@ -71,7 +71,7 @@ export const INITIAL_USERS = [
     role: "user",
     status: "active",
     member_id: "UNION-IND-104",
-    password_hash: "$2a$10$P8UMzoqvoePIo7PJFlSIe.D68peeXAQmENo57hNDu8Bpc1g7CC2XK", // member123
+    password_hash: "$2a$10$9pA1U2okXF9c3Q7fQGFWaOEpD3bsimA2CZxqtiVu4cVrYoweimY5y", // member123
 
     profile: {
       id: 2,
@@ -106,7 +106,7 @@ export const INITIAL_USERS = [
     role: "user",
     status: "active",
     member_id: "UNION-UJJ-209",
-    password_hash: "$2a$10$P8UMzoqvoePIo7PJFlSIe.D68peeXAQmENo57hNDu8Bpc1g7CC2XK", // member123
+    password_hash: "$2a$10$9pA1U2okXF9c3Q7fQGFWaOEpD3bsimA2CZxqtiVu4cVrYoweimY5y", // member123
 
     profile: {
       id: 3,
@@ -141,7 +141,7 @@ export const INITIAL_USERS = [
     role: "user",
     status: "active",
     member_id: "UNION-DEW-312",
-    password_hash: "$2a$10$P8UMzoqvoePIo7PJFlSIe.D68peeXAQmENo57hNDu8Bpc1g7CC2XK", // member123
+    password_hash: "$2a$10$9pA1U2okXF9c3Q7fQGFWaOEpD3bsimA2CZxqtiVu4cVrYoweimY5y", // member123
 
     profile: {
       id: 4,
