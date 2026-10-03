@@ -100,6 +100,65 @@ export default function Login({ defaultAdmin = false }) {
           </div>
         )}
 
+        {/* Test Credentials Card for Easy Testing */}
+        <div className="bg-amber-50 border border-amber-200 rounded-3xl p-5 shadow-sm space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-amber-900 font-extrabold text-xs">
+              <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
+              <span>{isAdminMode ? 'Test Credentials (Admin Account)' : 'Test Credentials (Member Account)'}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                if (isAdminMode) {
+                  setIdentifier('admin@mpvmavaksunion.org');
+                  setPassword('admin123');
+                } else {
+                  setIdentifier('member@mpvmavaksunion.org');
+                  setPassword('member123');
+                }
+              }}
+              className="px-2.5 py-1 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-bold transition-colors shadow-sm"
+            >
+              Quick Fill
+            </button>
+          </div>
+
+          <div className="bg-white/80 rounded-2xl p-3.5 border border-amber-200/60 text-xs space-y-1.5 font-mono">
+            {isAdminMode ? (
+              <>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Admin Email:</span>
+                  <span className="font-bold text-slate-900 select-all">admin@mpvmavaksunion.org</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Admin ID:</span>
+                  <span className="font-bold text-slate-900 select-all">UNION-ADMIN-001</span>
+                </div>
+                <div className="flex justify-between border-t border-amber-100 pt-1.5">
+                  <span className="text-slate-500">Password:</span>
+                  <span className="font-bold text-amber-800 select-all">admin123</span>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Member Email:</span>
+                  <span className="font-bold text-slate-900 select-all">member@mpvmavaksunion.org</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Member ID:</span>
+                  <span className="font-bold text-slate-900 select-all">UNION-IND-104</span>
+                </div>
+                <div className="flex justify-between border-t border-amber-100 pt-1.5">
+                  <span className="text-slate-500">Password:</span>
+                  <span className="font-bold text-amber-800 select-all">member123</span>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
         {/* Login Form */}
         <form onSubmit={handleLogin} className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 space-y-5 shadow-md">
           <div>
@@ -115,7 +174,7 @@ export default function Login({ defaultAdmin = false }) {
               <input
                 type="text"
                 required
-                placeholder={isAdminMode ? "UNION-ADMIN-001 or admin@mpvmavaksunion.org" : "UNION-IND-104 or email@mpvmavaksunion.org"}
+                placeholder={isAdminMode ? "UNION-ADMIN-001 or admin@mpvmavaksunion.org" : "UNION-IND-104 or member@mpvmavaksunion.org"}
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
                 className="w-full bg-slate-50 border border-slate-300 rounded-xl pl-10 pr-4 py-3 text-xs text-slate-900 focus:outline-none focus:border-sky-500 font-medium"

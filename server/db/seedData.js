@@ -36,7 +36,7 @@ export const INITIAL_USERS = [
     role: "admin",
     status: "active",
     member_id: "UNION-ADMIN-001",
-    password_hash: "$2a$10$U1/Z1xxOfkkXfel62hhEKOURXm7w1.VcGqoJleRgJ4nfODBnf/J9e", // adminpassword123
+    password_hash: "$2a$10$rJ11HNsRvN8fTvOmp5PWy./FikqvhqRwfqY9S2yGUm5gyVrpHV12e", // admin123
 
     profile: {
       id: 1,
@@ -57,7 +57,7 @@ export const INITIAL_USERS = [
       company: "MP West Zone Electricity Discom",
       designation: "Executive Director / SE",
       circle: "Indore City Circle",
-      union_designation: "General Secretary",
+      union_designation: "General Secretary (Admin)",
       bio: "22+ years in MP West Zone Electricity Discom. Spearheading union advocacy, safety standards for field staff, and employee pension rights.",
       emergency_contact: "+91 98260 99999",
       joining_date: "2015-01-15",
@@ -67,10 +67,12 @@ export const INITIAL_USERS = [
   },
   {
     id: 2,
-    email: "sunita.chouhan@mpvmavaksunion.org",
+    email: "member@mpvmavaksunion.org",
     role: "user",
     status: "active",
     member_id: "UNION-IND-104",
+    password_hash: "$2a$10$P8UMzoqvoePIo7PJFlSIe.D68peeXAQmENo57hNDu8Bpc1g7CC2XK", // member123
+
     profile: {
       id: 2,
       user_id: 2,
@@ -104,6 +106,8 @@ export const INITIAL_USERS = [
     role: "user",
     status: "active",
     member_id: "UNION-UJJ-209",
+    password_hash: "$2a$10$P8UMzoqvoePIo7PJFlSIe.D68peeXAQmENo57hNDu8Bpc1g7CC2XK", // member123
+
     profile: {
       id: 3,
       user_id: 3,
@@ -137,6 +141,8 @@ export const INITIAL_USERS = [
     role: "user",
     status: "active",
     member_id: "UNION-DEW-312",
+    password_hash: "$2a$10$P8UMzoqvoePIo7PJFlSIe.D68peeXAQmENo57hNDu8Bpc1g7CC2XK", // member123
+
     profile: {
       id: 4,
       user_id: 4,

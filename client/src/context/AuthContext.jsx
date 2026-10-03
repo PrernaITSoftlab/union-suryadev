@@ -70,9 +70,10 @@ export const AuthProvider = ({ children }) => {
   };
 
   const switchDemoUser = async (roleType) => {
-    const targetEmail = roleType === 'admin' ? 'admin@mpvmavaksunion.org' : 'sunita.chouhan@mpvmavaksunion.org';
+    const targetEmail = roleType === 'admin' ? 'admin@mpvmavaksunion.org' : 'member@mpvmavaksunion.org';
+    const targetPass = roleType === 'admin' ? 'admin123' : 'member123';
     try {
-      const res = await login(targetEmail, 'password123');
+      const res = await login(targetEmail, targetPass);
       return res;
     } catch (err) {
       console.error('Demo switch failed:', err);
