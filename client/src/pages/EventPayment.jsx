@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { CreditCard, QrCode, Calendar, MapPin, CheckCircle2, Copy, Check, Download, AlertCircle, RefreshCw, ShieldCheck } from 'lucide-react';
 import api from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 const EventPayment = () => {
+  const { settings } = useAuth();
   const [events, setEvents] = useState([]);
+
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [copied, setCopied] = useState(false);
   const [formData, setFormData] = useState({

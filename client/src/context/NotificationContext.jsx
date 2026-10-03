@@ -82,3 +82,5 @@ export const NotificationProvider = ({ children }) => {
 };
 
 export const useNotification = () => useContext(NotificationContext);
+export const useNotifications = useNotification;
+

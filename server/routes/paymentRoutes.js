@@ -4,8 +4,39 @@ import { authenticateToken, requireAdmin } from '../middleware/authMiddleware.js
 
 const router = express.Router();
 
+// 0. Get Public Joining Fee Receipts List
+router.get('/joining-fee/list', (req, res) => {
+  const joiningFees = inMemoryStore.payments
+    .filter(p => p.payment_type === 'MEMBERSHIP_FEE' || p.payment_type === 'JOINING_FEE')
+    .map(p => ({
+      id: p.id,
+      member_name: p.user_name || 'Union Member',
+      employee_id: p.transaction_id || `PAY-${p.id}`,
+      amount: p.amount,
+      status: p.status,
+      created_at: p.created_at
+    }));
+  res.json({ success: true, joiningFees });
+});
+
+// 0.1 Get Public Event Payments List
+router.get('/event-payment/list', (req, res) => {
+  const eventPayments = inMemoryStore.payments
+    .filter(p => p.payment_type === 'EVENT_REGISTRATION')
+    .map(p => ({
+      id: p.id,
+      member_name: p.user_name || 'Delegate',
+      event_title: p.remarks || 'Annual Delegate Convention 2026',
+      amount: p.amount,
+      status: p.status,
+      created_at: p.created_at
+    }));
+  res.json({ success: true, eventPayments });
+});
+
 // 1. Get Admin Unified Payments List
 router.get('/admin/list', authenticateToken, requireAdmin, (req, res) => {
+
   const { type, status, search } = req.query;
   let list = [...inMemoryStore.payments];
 

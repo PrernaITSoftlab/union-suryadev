@@ -5,8 +5,44 @@ import { authenticateToken, requireAdmin } from '../middleware/authMiddleware.js
 
 const router = express.Router();
 
+// 0. General Members List (Public/Authenticated Fallback)
+router.get('/', (req, res) => {
+  const activeUsers = inMemoryStore.users.filter(u => u.status === 'active' && u.profile);
+  res.json({
+    success: true,
+    members: activeUsers.map(u => ({
+      id: u.id,
+      employee_id: u.member_id,
+      email: u.email,
+      role: u.role,
+      status: u.status,
+      profile: u.profile
+    }))
+  });
+});
+
+// 0.1 My Profile
+router.get('/my-profile', authenticateToken, (req, res) => {
+  const user = inMemoryStore.users.find(u => u.id === req.user.id);
+  if (!user) {
+    return res.status(404).json({ success: false, message: 'User profile not found' });
+  }
+  res.json({
+    success: true,
+    user: {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      status: user.status,
+      member_id: user.member_id,
+      profile: user.profile
+    }
+  });
+});
+
 // 1. Union Members Directory (Authenticated Members & Admin)
 router.get('/directory', authenticateToken, (req, res) => {
+
   const { search, circle, designation } = req.query;
 
   // Filter only active members for general directory

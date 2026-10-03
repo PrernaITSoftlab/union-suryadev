@@ -4,8 +4,76 @@ import { authenticateToken } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
+// 0. Get All Public Union Circulars & Forms (Base Root Route)
+router.get('/', (req, res) => {
+  const publicDocs = [
+    {
+      id: 1,
+      title: "MP Govt. Order: 7th Pay Commission DA 4% Revision & Arrears Release",
+      category: "Wage & Pension Orders",
+      ref_no: "ORD/MPVMAVAKS/2026/104",
+      description: "Official Gazette notification detailing DA 4% increase and retrospective backlog clearance for all electricity staff.",
+      file_url: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+      file_type: "PDF",
+      file_size: "2.4 MB",
+      downloads_count: 342,
+      uploader_name: "State Executive Secretariat"
+    },
+    {
+      id: 2,
+      title: "Mandatory High-Voltage Field Safety Protocols & PTW (Permit-To-Work) Rules",
+      category: "Safety Protocols",
+      ref_no: "ORD/MPVMAVAKS/2026/044",
+      description: "Standard operating procedure for 33kV & 11kV feeder isolation, discharge earthing, and PTW sign-off.",
+      file_url: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+      file_type: "PDF",
+      file_size: "1.8 MB",
+      downloads_count: 512,
+      uploader_name: "Union Safety Cell"
+    },
+    {
+      id: 3,
+      title: "Union Digital Membership Application & Samvidhan Declaration Form 2026",
+      category: "Membership Forms",
+      ref_no: "FORM/MPVMAVAKS/2026/001",
+      description: "Official printable membership application form for power line staff, engineers, and contract linemen.",
+      file_url: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+      file_type: "PDF",
+      file_size: "850 KB",
+      downloads_count: 890,
+      uploader_name: "Central Office Bhopal"
+    },
+    {
+      id: 4,
+      title: "Emergency Mutual Benefit Fund & Hazard Relief Claim Application Form",
+      category: "Grievance Forms",
+      ref_no: "FORM/MPVMAVAKS/2026/009",
+      description: "Claim form for up to ₹20 Lakh emergency assistance in case of line accident injury or duty martyrdom.",
+      file_url: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+      file_type: "PDF",
+      file_size: "1.1 MB",
+      downloads_count: 275,
+      uploader_name: "Patron Secretariat"
+    },
+    {
+      id: 5,
+      title: "Indefinite Strike Agitation Bulletin & 10-Point Demand Charter",
+      category: "Strike Bulletins",
+      ref_no: "BULLETIN/MPVMAVAKS/2026/STRIKE",
+      description: "Complete charter of demands including Old Pension Scheme (OPS) reinstatement and contract regularization.",
+      file_url: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+      file_type: "PDF",
+      file_size: "3.1 MB",
+      downloads_count: 1240,
+      uploader_name: "General Secretary Er. D. D. Ramteke"
+    }
+  ];
+  res.json({ success: true, documents: publicDocs });
+});
+
 // 1. Send Private Document to Another Member
 router.post('/share', authenticateToken, (req, res) => {
+
   const { recipient_id, title, message, file_url, file_name, file_type, file_size } = req.body;
 
   if (!recipient_id || !title || !file_url) {

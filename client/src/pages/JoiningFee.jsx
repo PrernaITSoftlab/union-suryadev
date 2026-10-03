@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { QrCode, Copy, CheckCircle2, ShieldCheck, CreditCard, Download, ArrowRight, FileText, Check, AlertCircle, RefreshCw } from 'lucide-react';
 import api from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 const JoiningFee = () => {
+  const { settings } = useAuth();
   const [copied, setCopied] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState('annual');
+
   const [formData, setFormData] = useState({
     member_name: '',
     employee_id: '',

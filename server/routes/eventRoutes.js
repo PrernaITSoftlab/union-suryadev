@@ -4,8 +4,18 @@ import { authenticateToken, requireAdmin, optionalAuth } from '../middleware/aut
 
 const router = express.Router();
 
+// 0. Get All Public & Active Events (Base Root Route)
+router.get('/', optionalAuth, (req, res) => {
+  let eventsList = [...inMemoryStore.events];
+  if (!req.user) {
+    eventsList = eventsList.filter(e => e.visibility === 'PUBLIC');
+  }
+  res.json({ success: true, events: eventsList });
+});
+
 // 1. Get All Public & Active Events
 router.get('/list', optionalAuth, (req, res) => {
+
   const { status, search, type } = req.query;
   let eventsList = [...inMemoryStore.events];
 

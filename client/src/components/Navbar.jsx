@@ -11,7 +11,7 @@ import {
 export default function Navbar() {
   const { user, isAdmin, logout, settings } = useAuth();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotification();
-  const { language, toggleLanguage, t } = useLanguage();
+  const { language, toggleLanguage, t, isHindi } = useLanguage();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useConnections } from '../context/ConnectionContext';
-import { useNotifications } from '../context/NotificationContext';
+import { useNotification } from '../context/NotificationContext';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
 import DocumentHub from '../components/DocumentHub';
@@ -36,8 +36,9 @@ import {
 
 const Dashboard = () => {
   const { user, isAdmin } = useAuth();
-  const { connections, pendingIncoming, suggested, respondConnectRequest, sendConnectRequest } = useConnections();
-  const { notifications } = useNotifications();
+  const { connections = [], pendingIncoming = [], suggested = [], respondConnectRequest, sendConnectRequest } = useConnections() || {};
+  const { notifications = [] } = useNotification() || {};
+
 
   const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'documents', 'directory'
   const [processingId, setProcessingId] = useState(null);
