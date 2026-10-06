@@ -61,6 +61,7 @@ router.get('/admin/list', authenticateToken, requireAdmin, (req, res) => {
     let applicantName = 'N/A';
     let email = 'N/A';
     let phone = 'N/A';
+    let proofUrl = p.payment_proof_url || '';
 
     if (p.membership_application_id) {
       const app = inMemoryStore.membershipApplications.find(a => a.id === p.membership_application_id);
@@ -68,6 +69,9 @@ router.get('/admin/list', authenticateToken, requireAdmin, (req, res) => {
         applicantName = app.full_name;
         email = app.email;
         phone = app.mobile;
+        if (!proofUrl && app.payment_proof_url) {
+          proofUrl = app.payment_proof_url;
+        }
       }
     } else if (p.user_id) {
       const u = inMemoryStore.users.find(usr => usr.id === p.user_id);
@@ -78,8 +82,16 @@ router.get('/admin/list', authenticateToken, requireAdmin, (req, res) => {
       }
     }
 
+    if (p.event_registration_id) {
+      const reg = inMemoryStore.eventRegistrations.find(r => r.id === p.event_registration_id);
+      if (reg && !proofUrl && reg.payment_proof_url) {
+        proofUrl = reg.payment_proof_url;
+      }
+    }
+
     return {
       ...p,
+      payment_proof_url: proofUrl,
       applicantName,
       email,
       phone

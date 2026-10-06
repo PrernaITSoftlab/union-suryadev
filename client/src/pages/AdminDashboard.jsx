@@ -42,6 +42,11 @@ export default function AdminDashboard() {
   const [createAnnounceModal, setCreateAnnounceModal] = useState(false);
   const [editAnnounceModal, setEditAnnounceModal] = useState(null);
 
+  // Payment Verification Modals
+  const [viewReceiptModal, setViewReceiptModal] = useState(null);
+  const [rejectPaymentModal, setRejectPaymentModal] = useState(null);
+  const [rejectReason, setRejectReason] = useState('');
+
   // Orders / Notices Modals & Form
   const [createOrderModal, setCreateOrderModal] = useState(false);
   const [editOrderModal, setEditOrderModal] = useState(null);
@@ -130,6 +135,14 @@ export default function AdminDashboard() {
   };
 
   const handleApproveAndGenerate = async (appId) => {
+    const targetApp = pendingApprovals.find(a => a.id === appId) || applications.find(a => a.id === appId);
+    if (targetApp && !targetApp.payment_proof_url) {
+      alert(`Cannot approve application for ${targetApp.full_name}: Payment receipt screenshot is missing. Admin verification requires an uploaded payment receipt.`);
+      return;
+    }
+
+    if (!window.confirm(`Are you sure you want to approve ${targetApp?.full_name || 'member'} and generate login credentials?`)) return;
+
     try {
       const res = await api.post(`/membership-applications/${appId}/approve-and-generate`);
       if (res.data.success) {
@@ -183,14 +196,40 @@ export default function AdminDashboard() {
   };
 
   const handleVerifyPayment = async (paymentId) => {
+    if (!window.confirm('Are you sure you want to approve & verify this payment?')) return;
     try {
-      const res = await api.put(`/payments/admin/${paymentId}/verify`);
+      let res;
+      if (viewReceiptModal?.isApp && viewReceiptModal?.appId) {
+        res = await api.put(`/membership-applications/${viewReceiptModal.appId}/verify-payment`);
+      } else {
+        res = await api.put(`/payments/admin/${paymentId}/verify`);
+      }
       if (res.data.success) {
         setFeedback({ success: res.data.message });
+        setViewReceiptModal(null);
         fetchModuleData();
       }
     } catch (err) {
-      alert('Failed to verify payment.');
+      alert(err.response?.data?.message || 'Failed to verify payment.');
+    }
+  };
+
+  const handleRejectPayment = async (e) => {
+    e?.preventDefault();
+    if (!rejectPaymentModal) return;
+    try {
+      const res = await api.put(`/payments/admin/${rejectPaymentModal.id}/reject`, {
+        remarks: rejectReason || 'Invalid transaction reference or proof screenshot.'
+      });
+      if (res.data.success) {
+        setFeedback({ success: res.data.message });
+        setRejectPaymentModal(null);
+        setViewReceiptModal(null);
+        setRejectReason('');
+        fetchModuleData();
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to reject payment.');
     }
   };
 
@@ -472,7 +511,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Sidebar / Module Nav Tabs */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-slate-200 scrollbar-none">
+        <div className="flex flex-wrap items-center gap-2 pb-3 border-b border-slate-200">
           {[
             { id: 'analytics', label: 'Analytics Hub', icon: LayoutDashboard },
             { id: 'orders', label: 'Notices & Circulars (PDF)', icon: FileText },
@@ -493,13 +532,13 @@ export default function AdminDashboard() {
               <button
                 key={tab.id}
                 onClick={() => { setActiveModule(tab.id); setStatusFilter('all'); }}
-                className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-2 ${
+                className={`px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
                   active 
-                    ? 'bg-amber-500 text-slate-950 shadow-sm' 
+                    ? 'bg-amber-500 text-slate-950 shadow-sm ring-1 ring-amber-600/20' 
                     : 'bg-white border border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-50'
                 }`}
               >
-                <Icon className="w-4 h-4" />
+                <Icon className="w-4 h-4 shrink-0" />
                 <span>{tab.label}</span>
               </button>
             );
@@ -798,15 +837,61 @@ export default function AdminDashboard() {
                             <div className="text-[10px] text-slate-500">{app.office_name || app.post_name}</div>
                           </td>
                           <td className="p-4">
-                            <span className="text-sky-800 font-bold block">{app.transaction_id || 'N/A'}</span>
-                            <span className="text-[10px] text-slate-500 font-sans">{app.payment_date}</span>
+                            <div className="flex items-center gap-2">
+                              {app.payment_proof_url ? (
+                                <img 
+                                  src={app.payment_proof_url} 
+                                  alt="Receipt Screenshot" 
+                                  onClick={() => setViewReceiptModal({
+                                    id: app.id,
+                                    applicantName: app.full_name,
+                                    payment_type: 'MEMBERSHIP',
+                                    amount: app.registration_fee || 500,
+                                    transaction_id: app.transaction_id || 'N/A',
+                                    status: app.payment_status || 'SUBMITTED',
+                                    payment_proof_url: app.payment_proof_url,
+                                    appId: app.id,
+                                    isApp: true
+                                  })}
+                                  className="w-10 h-10 object-cover rounded-lg border border-slate-200 cursor-pointer hover:scale-105 transition-transform shrink-0 shadow-xs" 
+                                />
+                              ) : null}
+                              <div>
+                                <span className="text-sky-800 font-bold block">{app.transaction_id || 'N/A'}</span>
+                                <span className="text-[10px] text-slate-500 font-sans block">{app.payment_date}</span>
+                              </div>
+                            </div>
                           </td>
-                          <td className="p-4">
-                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                              app.payment_status === 'VERIFIED' ? 'bg-emerald-100 text-emerald-900 border border-emerald-300' : 'bg-amber-100 text-amber-900'
-                            }`}>
-                              {app.payment_status}
-                            </span>
+                          <td className="p-4 font-sans">
+                            <div className="space-y-1.5">
+                              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase inline-block ${
+                                app.payment_status === 'VERIFIED' ? 'bg-emerald-100 text-emerald-900 border border-emerald-300' : 'bg-amber-100 text-amber-900 border border-amber-200'
+                              }`}>
+                                {app.payment_status}
+                              </span>
+                              {app.payment_proof_url ? (
+                                <button
+                                  onClick={() => setViewReceiptModal({
+                                    id: app.id,
+                                    applicantName: app.full_name,
+                                    payment_type: 'MEMBERSHIP',
+                                    amount: app.registration_fee || 500,
+                                    transaction_id: app.transaction_id || 'N/A',
+                                    status: app.payment_status || 'SUBMITTED',
+                                    payment_proof_url: app.payment_proof_url,
+                                    appId: app.id,
+                                    isApp: true
+                                  })}
+                                  className="px-2.5 py-1 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-700 font-bold text-[11px] border border-sky-200 flex items-center gap-1.5 transition-colors shrink-0"
+                                  title="View Uploaded Payment Receipt / Screenshot"
+                                >
+                                  <Eye className="w-3.5 h-3.5 text-sky-600 shrink-0" />
+                                  <span>View Payment Receipt</span>
+                                </button>
+                              ) : (
+                                <span className="text-[10px] text-red-500 font-bold block">No Receipt Screenshot</span>
+                              )}
+                            </div>
                           </td>
                           <td className="p-4 text-right">
                             <button
@@ -879,12 +964,35 @@ export default function AdminDashboard() {
                             <div className="text-[10px] text-slate-500 font-sans">{app.email}</div>
                           </td>
                           <td className="p-4">
-                            <span className="text-sky-800 font-bold block">{app.transaction_id || 'N/A'}</span>
-                            <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase ${
-                              app.payment_status === 'VERIFIED' ? 'bg-emerald-100 text-emerald-900 border border-emerald-300' : 'bg-amber-100 text-amber-900'
-                            }`}>
-                              {app.payment_status}
-                            </span>
+                            <div className="space-y-1">
+                              <span className="text-sky-800 font-bold block">{app.transaction_id || 'N/A'}</span>
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase ${
+                                  app.payment_status === 'VERIFIED' ? 'bg-emerald-100 text-emerald-900 border border-emerald-300' : 'bg-amber-100 text-amber-900'
+                                }`}>
+                                  {app.payment_status}
+                                </span>
+                                {app.payment_proof_url && (
+                                  <button
+                                    onClick={() => setViewReceiptModal({
+                                      id: app.id,
+                                      applicantName: app.full_name,
+                                      payment_type: 'MEMBERSHIP',
+                                      amount: app.registration_fee || 500,
+                                      transaction_id: app.transaction_id || 'N/A',
+                                      status: app.payment_status || 'SUBMITTED',
+                                      payment_proof_url: app.payment_proof_url,
+                                      appId: app.id,
+                                      isApp: true
+                                    })}
+                                    className="px-2 py-0.5 rounded bg-sky-50 hover:bg-sky-100 text-sky-700 font-bold text-[10px] border border-sky-200 flex items-center gap-1 transition-colors"
+                                  >
+                                    <Eye className="w-3 h-3 text-sky-600 shrink-0" />
+                                    <span>Receipt</span>
+                                  </button>
+                                )}
+                              </div>
+                            </div>
                           </td>
                           <td className="p-4">
                             <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${
@@ -1197,7 +1305,13 @@ export default function AdminDashboard() {
         {/* MODULE 5: UNIFIED PAYMENTS VERIFICATION */}
         {activeModule === 'payments' && (
           <div className="space-y-6">
-            <h2 className="text-xl font-bold text-slate-900">Unified Payments Verification Center</h2>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-bold text-slate-900">Unified Payments Verification Center</h2>
+                <p className="text-xs text-slate-500 mt-1">Review uploaded receipt screenshots, verify UTR reference numbers, and approve or reject payment requests.</p>
+              </div>
+            </div>
+
             <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm">
               <table className="w-full text-left text-xs">
                 <thead className="bg-slate-50 text-slate-600 font-bold uppercase tracking-wider border-b border-slate-200">
@@ -1206,36 +1320,87 @@ export default function AdminDashboard() {
                     <th className="p-4">Applicant / Member</th>
                     <th className="p-4">Amount</th>
                     <th className="p-4">Transaction UTR</th>
+                    <th className="p-4">Receipt Proof</th>
                     <th className="p-4">Status</th>
-                    <th className="p-4 text-right">Action</th>
+                    <th className="p-4 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-mono">
-                  {payments.map(p => (
-                    <tr key={p.id}>
-                      <td className="p-4 font-bold text-amber-800">{p.payment_type}</td>
-                      <td className="p-4 font-sans text-slate-900 font-bold">{p.applicantName}</td>
-                      <td className="p-4 font-extrabold text-slate-900">₹{p.amount}</td>
-                      <td className="p-4 text-sky-800 font-bold">{p.transaction_id}</td>
-                      <td className="p-4">
-                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                          p.status === 'VERIFIED' ? 'bg-emerald-100 text-emerald-900' : 'bg-amber-100 text-amber-900'
-                        }`}>
-                          {p.status}
-                        </span>
-                      </td>
-                      <td className="p-4 text-right">
-                        {p.status !== 'VERIFIED' && (
-                          <button
-                            onClick={() => handleVerifyPayment(p.id)}
-                            className="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-sans font-bold text-[11px]"
-                          >
-                            Verify Payment
-                          </button>
-                        )}
+                  {payments.length === 0 ? (
+                    <tr>
+                      <td colSpan="7" className="p-8 text-center text-slate-500 font-sans font-medium text-xs">
+                        No payment verification records found.
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    payments.map(p => (
+                      <tr key={p.id} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="p-4 font-bold text-amber-800">{p.payment_type}</td>
+                        <td className="p-4 font-sans text-slate-900 font-bold">
+                          <div>{p.applicantName}</div>
+                          {p.phone && p.phone !== 'N/A' && <div className="text-[10px] text-slate-400 font-normal">{p.phone}</div>}
+                        </td>
+                        <td className="p-4 font-extrabold text-slate-900">₹{p.amount}</td>
+                        <td className="p-4 text-sky-800 font-bold">{p.transaction_id || 'N/A'}</td>
+                        <td className="p-4 font-sans">
+                          {p.payment_proof_url ? (
+                            <div className="flex items-center gap-2">
+                              {p.payment_proof_url.startsWith('data:image') || p.payment_proof_url.includes('unsplash') || p.payment_proof_url.startsWith('http') ? (
+                                <img 
+                                  src={p.payment_proof_url} 
+                                  alt="Receipt Screenshot" 
+                                  onClick={() => setViewReceiptModal(p)}
+                                  className="w-10 h-10 object-cover rounded-lg border border-slate-200 cursor-pointer hover:scale-105 transition-transform shrink-0 shadow-xs" 
+                                />
+                              ) : null}
+                              <button
+                                onClick={() => setViewReceiptModal(p)}
+                                className="px-2.5 py-1.5 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-700 font-bold text-[11px] border border-sky-200 flex items-center gap-1.5 transition-colors shrink-0"
+                              >
+                                <Eye className="w-3.5 h-3.5 text-sky-600" />
+                                <span>View Receipt</span>
+                              </button>
+                            </div>
+                          ) : (
+                            <span className="text-slate-400 font-normal italic text-[11px]">No Receipt</span>
+                          )}
+                        </td>
+                        <td className="p-4 font-sans">
+                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase inline-block ${
+                            p.status === 'VERIFIED' ? 'bg-emerald-100 text-emerald-900 border border-emerald-200' :
+                            p.status === 'REJECTED' ? 'bg-red-100 text-red-900 border border-red-200' :
+                            'bg-amber-100 text-amber-900 border border-amber-200'
+                          }`}>
+                            {p.status}
+                          </span>
+                        </td>
+                        <td className="p-4 text-right font-sans">
+                          <div className="flex items-center justify-end gap-2">
+                            {p.status !== 'VERIFIED' && (
+                              <button
+                                onClick={() => handleVerifyPayment(p.id)}
+                                className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] flex items-center gap-1 shadow-xs transition-colors"
+                                title="Approve & Verify Payment"
+                              >
+                                <Check className="w-3.5 h-3.5" />
+                                <span>Approve</span>
+                              </button>
+                            )}
+                            {p.status !== 'REJECTED' && (
+                              <button
+                                onClick={() => { setRejectPaymentModal(p); setRejectReason(''); }}
+                                className="px-3 py-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 font-bold text-[11px] flex items-center gap-1 transition-colors"
+                                title="Reject Payment"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                                <span>Reject</span>
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
@@ -1947,6 +2112,187 @@ export default function AdminDashboard() {
               </div>
             </form>
           </div>
+        </div>
+      )}
+
+      {/* View Payment Receipt Modal */}
+      {viewReceiptModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/75 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-2xl w-full border border-slate-200 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            {/* Modal Header */}
+            <div className="p-5 sm:p-6 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-amber-500 text-slate-950">
+                  <CreditCard className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-base">Payment Receipt & Verification</h3>
+                  <p className="text-xs text-slate-400 font-medium">Applicant: {viewReceiptModal.applicantName}</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setViewReceiptModal(null)} 
+                className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 overflow-y-auto space-y-5 bg-slate-50/50">
+              {/* Payment Summary Info Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-white p-4 rounded-2xl border border-slate-200 text-xs">
+                <div>
+                  <span className="text-slate-400 block font-medium">Payment Type</span>
+                  <span className="font-bold text-slate-900">{viewReceiptModal.payment_type}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block font-medium">Amount</span>
+                  <span className="font-extrabold text-emerald-700 text-sm">₹{viewReceiptModal.amount}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block font-medium">Transaction UTR</span>
+                  <span className="font-mono font-bold text-sky-700">{viewReceiptModal.transaction_id || 'N/A'}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block font-medium">Status</span>
+                  <span className={`inline-block mt-0.5 px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
+                    viewReceiptModal.status === 'VERIFIED' ? 'bg-emerald-100 text-emerald-900 border border-emerald-200' :
+                    viewReceiptModal.status === 'REJECTED' ? 'bg-red-100 text-red-900 border border-red-200' :
+                    'bg-amber-100 text-amber-900 border border-amber-200'
+                  }`}>
+                    {viewReceiptModal.status}
+                  </span>
+                </div>
+              </div>
+
+              {/* Receipt Screenshot / Document Display */}
+              <div className="bg-white p-4 rounded-2xl border border-slate-200 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                    <ImageIcon className="w-4 h-4 text-sky-600" />
+                    <span>Uploaded Receipt Screenshot</span>
+                  </h4>
+                  {viewReceiptModal.payment_proof_url && (
+                    <a 
+                      href={viewReceiptModal.payment_proof_url} 
+                      target="_blank" 
+                      rel="noreferrer"
+                      download="payment-receipt-screenshot"
+                      className="text-xs font-bold text-sky-600 hover:text-sky-700 flex items-center gap-1 hover:underline"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      <span>Open / Download Original</span>
+                    </a>
+                  )}
+                </div>
+
+                {viewReceiptModal.payment_proof_url ? (
+                  <div className="bg-slate-900/5 rounded-xl p-2 flex items-center justify-center min-h-[240px] max-h-[420px] overflow-auto border border-slate-200">
+                    {viewReceiptModal.payment_proof_url.startsWith('data:application/pdf') ? (
+                      <iframe 
+                        src={viewReceiptModal.payment_proof_url} 
+                        title="Receipt PDF" 
+                        className="w-full h-80 rounded-lg"
+                      />
+                    ) : (
+                      <img 
+                        src={viewReceiptModal.payment_proof_url} 
+                        alt="Uploaded Payment Receipt Screenshot" 
+                        className="max-h-[380px] max-w-full rounded-lg object-contain border border-slate-200 shadow-md"
+                      />
+                    )}
+                  </div>
+                ) : (
+                  <div className="py-12 text-center text-slate-400 text-xs font-medium bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                    No receipt screenshot uploaded for this payment request.
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Modal Footer Actions */}
+            <div className="p-4 sm:p-5 bg-white border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
+              <button 
+                onClick={() => setViewReceiptModal(null)}
+                className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors"
+              >
+                Close
+              </button>
+
+              <div className="flex items-center gap-2">
+                {viewReceiptModal.status !== 'REJECTED' && (
+                  <button
+                    onClick={() => {
+                      const target = viewReceiptModal;
+                      setViewReceiptModal(null);
+                      setRejectPaymentModal(target);
+                      setRejectReason('');
+                    }}
+                    className="px-4 py-2.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 text-xs font-bold flex items-center gap-1.5 transition-colors"
+                  >
+                    <XCircle className="w-4 h-4" />
+                    <span>Reject Payment</span>
+                  </button>
+                )}
+
+                {viewReceiptModal.status !== 'VERIFIED' && (
+                  <button
+                    onClick={() => handleVerifyPayment(viewReceiptModal.id)}
+                    className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-colors"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Approve & Verify Payment</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reject Payment Reason Modal */}
+      {rejectPaymentModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/75 backdrop-blur-sm flex items-center justify-center p-4">
+          <form onSubmit={handleRejectPayment} className="bg-white rounded-3xl max-w-md w-full border border-slate-200 shadow-2xl p-6 space-y-4">
+            <div className="flex items-center gap-3 border-b border-slate-100 pb-3">
+              <div className="p-2 rounded-xl bg-red-100 text-red-600">
+                <XCircle className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-extrabold text-slate-900 text-base">Reject Payment Proof</h3>
+                <p className="text-xs text-slate-500 font-medium">Applicant: {rejectPaymentModal.applicantName}</p>
+              </div>
+            </div>
+
+            <div className="space-y-1.5 text-xs">
+              <label className="block font-bold text-slate-700">Rejection Reason / Remarks</label>
+              <textarea
+                required
+                rows={3}
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                placeholder="e.g. Invalid transaction UTR reference, unreadable payment screenshot, or fee mismatch."
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-slate-900 focus:ring-2 focus:ring-red-500 focus:outline-none font-sans"
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setRejectPaymentModal(null)}
+                className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold shadow-sm"
+              >
+                Confirm Rejection
+              </button>
+            </div>
+          </form>
         </div>
       )}
 

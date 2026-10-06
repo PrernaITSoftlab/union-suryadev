@@ -149,9 +149,24 @@ router.get('/list', authenticateToken, requireAdmin, (req, res) => {
     );
   }
 
+  // Enrich with payment_proof_url fallback if missing
+  const enriched = filtered.map(app => {
+    let proofUrl = app.payment_proof_url || '';
+    if (!proofUrl) {
+      const pay = inMemoryStore.payments.find(p => p.membership_application_id === app.id);
+      if (pay && pay.payment_proof_url) {
+        proofUrl = pay.payment_proof_url;
+      }
+    }
+    return {
+      ...app,
+      payment_proof_url: proofUrl
+    };
+  });
+
   res.json({
     success: true,
-    applications: filtered
+    applications: enriched
   });
 });
 

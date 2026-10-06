@@ -175,7 +175,7 @@ export default function UserDashboard() {
         </div>
 
         {/* Dashboard Navigation Tabs */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-slate-200 scrollbar-none">
+        <div className="flex flex-wrap items-center gap-2 pb-3 border-b border-slate-200">
           {[
             { id: 'overview', label: 'Overview', icon: ShieldCheck },
             { id: 'profile', label: 'My Profile', icon: User },
@@ -193,13 +193,13 @@ export default function UserDashboard() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-2 ${
+                className={`px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
                   active 
-                    ? 'bg-amber-500 text-slate-950 shadow-sm' 
+                    ? 'bg-amber-500 text-slate-950 shadow-sm ring-1 ring-amber-600/20' 
                     : 'bg-white border border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-50'
                 }`}
               >
-                <Icon className="w-4 h-4" />
+                <Icon className="w-4 h-4 shrink-0" />
                 <span>{tab.label}</span>
               </button>
             );
