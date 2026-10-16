@@ -1,4 +1,4 @@
-import { pool, isPgConnected } from '../config/db.js';
+import { pool, isPgConnected, inMemoryStore } from '../config/db.js';
 import { INITIAL_EVENTS } from './seedData.js';
 import fs from 'fs';
 import path from 'path';
@@ -164,14 +164,32 @@ export async function ensureEventsSchemaAndSeed() {
       console.warn('⚠️ Notice on creating event interaction tables:', tableErr.message);
     }
 
-    // 4. Load interactions from DB and update backup
+    // 4. Ensure unique constraint on event_likes
+    try {
+      await pool.query('ALTER TABLE event_likes ADD CONSTRAINT event_likes_event_user_unique UNIQUE (event_id, user_id);');
+    } catch (_) {}
+
+    // 5. Load interactions from DB and update inMemoryStore & backup
     try {
       const dbLikes = await pool.query('SELECT * FROM event_likes ORDER BY created_at ASC');
       const dbComments = await pool.query('SELECT * FROM event_comments ORDER BY created_at ASC');
+      inMemoryStore.eventLikes = dbLikes.rows.map(r => ({
+        ...r,
+        id: Number(r.id),
+        event_id: Number(r.event_id),
+        user_id: Number(r.user_id)
+      }));
+      inMemoryStore.eventComments = dbComments.rows.map(r => ({
+        ...r,
+        id: Number(r.id),
+        event_id: Number(r.event_id),
+        user_id: Number(r.user_id)
+      }));
       saveInteractionsToBackup({
-        likes: dbLikes.rows,
-        comments: dbComments.rows
+        likes: inMemoryStore.eventLikes,
+        comments: inMemoryStore.eventComments
       });
+      console.log(`✅ Loaded & backed up ${inMemoryStore.eventLikes.length} likes and ${inMemoryStore.eventComments.length} comments from PostgreSQL.`);
     } catch (intErr) {
       console.warn('⚠️ Could not backup event interactions:', intErr.message);
     }

@@ -77,10 +77,10 @@ export const EventService = {
         const result = await pool.query(queryText, params);
         eventsList = result.rows.map(normalizeEventRow);
 
-        // Keep in-memory cache and backup updated with latest data from DB
+        // Keep in-memory cache and backup updated with latest data from DB (clean of user-specific like flag)
         if (eventsList.length > 0 && !status && !search && !type && !isPublicOnly) {
-          inMemoryStore.events = [...eventsList];
-          saveEventsToBackup(eventsList);
+          inMemoryStore.events = eventsList.map(e => ({ ...e, is_liked: false }));
+          saveEventsToBackup(inMemoryStore.events);
         }
       } catch (dbErr) {
         console.warn('⚠️ Error querying PostgreSQL events, falling back to cache:', dbErr.message);
@@ -119,9 +119,9 @@ export const EventService = {
       if (userId) {
         userRegistration = await this.getUserRegistration(e.id, userId);
       }
-      const likesCount = e.likes_count !== undefined ? Number(e.likes_count) : (inMemoryStore.eventLikes || []).filter(l => l.event_id === e.id).length;
-      const commentsCount = e.comments_count !== undefined ? Number(e.comments_count) : (inMemoryStore.eventComments || []).filter(c => c.event_id === e.id).length;
-      const isLiked = e.is_liked !== undefined ? Boolean(e.is_liked) : (userId ? (inMemoryStore.eventLikes || []).some(l => l.event_id === e.id && Number(l.user_id) === Number(userId)) : false);
+      const likesCount = e.likes_count !== undefined ? Number(e.likes_count) : (inMemoryStore.eventLikes || []).filter(l => Number(l.event_id) === Number(e.id)).length;
+      const commentsCount = e.comments_count !== undefined ? Number(e.comments_count) : (inMemoryStore.eventComments || []).filter(c => Number(c.event_id) === Number(e.id)).length;
+      const isLiked = userId ? (Boolean(e.is_liked) || (inMemoryStore.eventLikes || []).some(l => Number(l.event_id) === Number(e.id) && Number(l.user_id) === Number(userId))) : false;
 
       return {
         ...e,
@@ -659,7 +659,14 @@ export const EventService = {
   async toggleLike(eventId, user) {
     await this.awaitInit();
     const numEventId = Number(eventId);
-    const userId = Number(user.id);
+    const userId = Number(user?.id);
+
+    if (!numEventId || isNaN(numEventId)) {
+      throw new Error('Valid numeric Event ID is required.');
+    }
+    if (!userId || isNaN(userId)) {
+      throw new Error('Valid User ID is required.');
+    }
 
     let liked = false;
     let likesCount = 0;
@@ -671,15 +678,16 @@ export const EventService = {
           [numEventId, userId]
         );
         if (existing.rows.length > 0) {
-          // Unlike
-          await pool.query('DELETE FROM event_likes WHERE id = $1', [existing.rows[0].id]);
+          // Unlike: delete all rows matching this user and event to ensure no duplicates
+          await pool.query('DELETE FROM event_likes WHERE event_id = $1 AND user_id = $2', [numEventId, userId]);
           liked = false;
         } else {
-          // Like
-          await pool.query(
-            'INSERT INTO event_likes (event_id, user_id, created_at) VALUES ($1, $2, CURRENT_TIMESTAMP)',
-            [numEventId, userId]
-          );
+          // Like: insert safely preventing duplicates with ON CONFLICT DO NOTHING
+          await pool.query(`
+            INSERT INTO event_likes (event_id, user_id, created_at)
+            VALUES ($1, $2, CURRENT_TIMESTAMP)
+            ON CONFLICT (event_id, user_id) DO NOTHING
+          `, [numEventId, userId]);
           liked = true;
         }
         const countRes = await pool.query(
@@ -697,29 +705,28 @@ export const EventService = {
       inMemoryStore.eventLikes = [];
     }
 
-    const memIdx = inMemoryStore.eventLikes.findIndex(
-      l => l.event_id === numEventId && l.user_id === userId
-    );
-
-    if (memIdx !== -1) {
-      if (!pool || !liked) {
-        inMemoryStore.eventLikes.splice(memIdx, 1);
-        if (!pool) liked = false;
-      }
-    } else {
-      if (!pool || liked) {
+    if (liked) {
+      if (!inMemoryStore.eventLikes.some(l => l.event_id === numEventId && Number(l.user_id) === userId)) {
         inMemoryStore.eventLikes.push({
           id: Date.now(),
           event_id: numEventId,
           user_id: userId,
           created_at: new Date().toISOString()
         });
-        if (!pool) liked = true;
       }
+    } else {
+      inMemoryStore.eventLikes = inMemoryStore.eventLikes.filter(
+        l => !(l.event_id === numEventId && Number(l.user_id) === userId)
+      );
     }
 
     if (!pool) {
       likesCount = inMemoryStore.eventLikes.filter(l => l.event_id === numEventId).length;
+    }
+
+    const memEvt = inMemoryStore.events.find(e => e.id === numEventId);
+    if (memEvt) {
+      memEvt.likes_count = likesCount;
     }
 
     saveInteractionsToBackup({
@@ -838,10 +845,15 @@ export const EventService = {
         );
         count = countRes.rows[0]?.count || 0;
       } catch (_) {
-        count = inMemoryStore.eventComments.filter(c => c.event_id === numEventId).length;
+        count = inMemoryStore.eventComments.filter(c => Number(c.event_id) === numEventId).length;
       }
     } else {
-      count = inMemoryStore.eventComments.filter(c => c.event_id === numEventId).length;
+      count = inMemoryStore.eventComments.filter(c => Number(c.event_id) === numEventId).length;
+    }
+
+    const targetEvt = inMemoryStore.events.find(e => e.id === numEventId);
+    if (targetEvt) {
+      targetEvt.comments_count = count;
     }
 
     return { comment: newComment, comments_count: count };
@@ -855,26 +867,48 @@ export const EventService = {
     const numCommentId = Number(commentId);
     const userId = Number(user.id);
     const isAdmin = user.role === 'admin';
+    let targetEventId = null;
 
     if (pool) {
       try {
-        if (isAdmin) {
-          await pool.query('DELETE FROM event_comments WHERE id = $1', [numCommentId]);
-        } else {
-          await pool.query('DELETE FROM event_comments WHERE id = $1 AND user_id = $2', [numCommentId, userId]);
+        const checkRes = await pool.query('SELECT event_id, user_id FROM event_comments WHERE id = $1', [numCommentId]);
+        if (checkRes.rows.length > 0) {
+          targetEventId = Number(checkRes.rows[0].event_id);
+          const ownerId = Number(checkRes.rows[0].user_id);
+          if (isAdmin || ownerId === userId) {
+            await pool.query('DELETE FROM event_comments WHERE id = $1', [numCommentId]);
+          } else {
+            throw new Error('Not authorized to delete this comment.');
+          }
         }
       } catch (err) {
         console.error('Error deleting event comment from DB:', err.message);
+        throw err;
       }
     }
 
     if (Array.isArray(inMemoryStore.eventComments)) {
       const idx = inMemoryStore.eventComments.findIndex(
-        c => c.id === numCommentId && (isAdmin || c.user_id === userId)
+        c => c.id === numCommentId && (isAdmin || Number(c.user_id) === userId)
       );
       if (idx !== -1) {
+        if (!targetEventId) targetEventId = inMemoryStore.eventComments[idx].event_id;
         inMemoryStore.eventComments.splice(idx, 1);
       }
+    }
+
+    let count = 0;
+    if (targetEventId) {
+      if (pool) {
+        try {
+          const countRes = await pool.query('SELECT COUNT(*)::int AS count FROM event_comments WHERE event_id = $1', [targetEventId]);
+          count = countRes.rows[0]?.count || 0;
+        } catch (_) {}
+      } else {
+        count = inMemoryStore.eventComments.filter(c => c.event_id === targetEventId).length;
+      }
+      const targetEvt = inMemoryStore.events.find(e => e.id === targetEventId);
+      if (targetEvt) targetEvt.comments_count = count;
     }
 
     saveInteractionsToBackup({
@@ -882,6 +916,6 @@ export const EventService = {
       comments: inMemoryStore.eventComments || []
     });
 
-    return { success: true };
+    return { success: true, event_id: targetEventId, comments_count: count };
   }
 };

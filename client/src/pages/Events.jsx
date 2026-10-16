@@ -39,7 +39,7 @@ export default function Events() {
 
   useEffect(() => {
     fetchEvents();
-  }, [search]);
+  }, [search, user?.id]);
 
   // Deep linking scroll to event if ?id=xx is present
   useEffect(() => {
@@ -100,16 +100,17 @@ export default function Events() {
     }
   };
 
-  const handleCommentCountUpdate = (newCount) => {
-    if (!commentingEvent) return;
-    setEvents(prev => prev.map(e => e.id === commentingEvent.id ? { ...e, comments_count: newCount } : e));
-    setCommentingEvent(prev => prev ? { ...prev, comments_count: newCount } : null);
+  const handleCommentCountUpdate = (newCount, targetEventId) => {
+    const idToUpdate = targetEventId || commentingEvent?.id;
+    if (!idToUpdate) return;
+    setEvents(prev => prev.map(e => e.id === idToUpdate ? { ...e, comments_count: newCount } : e));
+    setCommentingEvent(prev => (prev && prev.id === idToUpdate) ? { ...prev, comments_count: newCount } : prev);
   };
 
-  // Default Past Programs Data for comprehensive presentation
+  // Default Past Programs Data for fallback presentation
   const pastPrograms = [
     {
-      id: "PAST-2025-01",
+      id: 10,
       title: "31st Annual MPVMAVAKS Union Zonal Delegates Convention 2025",
       start_date: "14 November 2025",
       start_time: "10:00 AM",
@@ -121,7 +122,7 @@ export default function Events() {
       resolution: "Unanimous resolution passed for ₹20L accident relief fund and 7th Pay DA arrears release."
     },
     {
-      id: "PAST-2025-02",
+      id: 11,
       title: "Statewide OPS Advocacy & Lineman Safety Rally 2025",
       start_date: "22 August 2025",
       start_time: "11:30 AM",
@@ -133,7 +134,7 @@ export default function Events() {
       resolution: "10-point charter submitted to MD MPVMAVAKS; high-voltage PTW safety guidelines officially issued."
     },
     {
-      id: "PAST-2025-03",
+      id: 12,
       title: "High-Voltage 33kV Line Earthing & PTW Practical Safety Workshop",
       start_date: "05 May 2025",
       start_time: "09:30 AM",
@@ -150,7 +151,7 @@ export default function Events() {
   const isPastEvent = (e) => Boolean(e.is_past || e.status === 'COMPLETED');
   const upcomingEvents = events.filter(e => !isPastEvent(e));
   const apiPastEvents = events.filter(e => isPastEvent(e));
-  const combinedPastPrograms = apiPastEvents.length > 0 ? [...apiPastEvents, ...pastPrograms] : pastPrograms;
+  const combinedPastPrograms = apiPastEvents.length > 0 ? apiPastEvents : pastPrograms;
 
   const handleJoinClick = (evt) => {
     if (!user) {

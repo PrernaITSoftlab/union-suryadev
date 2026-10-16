@@ -52,7 +52,7 @@ export default function EventCommentsModal({ isOpen, onClose, event, currentUser
         if (isMounted && res.data.success) {
           setComments(res.data.comments || []);
           if (onCommentCountUpdate) {
-            onCommentCountUpdate((res.data.comments || []).length);
+            onCommentCountUpdate((res.data.comments || []).length, event.id);
           }
         }
       } catch (err) {
@@ -99,7 +99,7 @@ export default function EventCommentsModal({ isOpen, onClose, event, currentUser
         setComments(updated);
         setNewComment('');
         if (onCommentCountUpdate) {
-          onCommentCountUpdate(res.data.comments_count || updated.length);
+          onCommentCountUpdate(res.data.comments_count || updated.length, event.id);
         }
         scrollToBottom();
       }
@@ -120,7 +120,7 @@ export default function EventCommentsModal({ isOpen, onClose, event, currentUser
         const updated = comments.filter(c => c.id !== commentId);
         setComments(updated);
         if (onCommentCountUpdate) {
-          onCommentCountUpdate(updated.length);
+          onCommentCountUpdate(updated.length, event.id);
         }
       }
     } catch (err) {

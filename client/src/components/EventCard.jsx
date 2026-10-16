@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Clock, MapPin, Users, ArrowRight, CheckCircle, Video, Heart, MessageCircle, Share2 } from 'lucide-react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -14,6 +14,12 @@ const EventCard = ({ event, onOpenDetail }) => {
   const [commentsCount, setCommentsCount] = useState(Number(event.comments_count || 0));
   const [showComments, setShowComments] = useState(false);
   const [showShare, setShowShare] = useState(false);
+
+  useEffect(() => {
+    setIsLiked(Boolean(event.is_liked));
+    setLikesCount(Number(event.likes_count || 0));
+    setCommentsCount(Number(event.comments_count || 0));
+  }, [event.is_liked, event.likes_count, event.comments_count]);
 
   const handleToggleLike = async (e) => {
     e.stopPropagation();
