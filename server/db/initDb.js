@@ -3,7 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import pg from 'pg';
 import dotenv from 'dotenv';
-import { INITIAL_USERS } from './seedData.js';
+import { INITIAL_USERS, INITIAL_EVENTS } from './seedData.js';
 
 dotenv.config();
 
@@ -65,6 +65,48 @@ export async function initializeDatabase() {
       }
     }
     console.log('✅ Dummy Member and Admin accounts populated in database!');
+
+    // Update constraint & seed INITIAL_EVENTS into PostgreSQL
+    try {
+      await client.query(`
+        ALTER TABLE events DROP CONSTRAINT IF EXISTS events_status_check;
+        ALTER TABLE events ADD CONSTRAINT events_status_check 
+          CHECK (status IN ('DRAFT', 'PUBLISHED', 'REGISTRATION_OPEN', 'REGISTRATION_CLOSED', 'COMPLETED', 'CANCELLED', 'UPCOMING'));
+      `);
+    } catch (_) {}
+
+    for (const evt of INITIAL_EVENTS) {
+      await client.query(`
+        INSERT INTO events (
+          id, title, description, banner_url, event_type, start_date, end_date,
+          start_time, end_time, venue, address, capacity, registered_count,
+          registration_start_date, registration_end_date, is_paid, event_fee,
+          payment_qr_url, payment_instructions, whatsapp_contact, visibility,
+          status, created_by, created_at, updated_at
+        ) VALUES (
+          $1, $2, $3, $4, $5, $6, $7,
+          $8, $9, $10, $11, $12, $13,
+          $14, $15, $16, $17,
+          $18, $19, $20, $21,
+          $22, $23, $24, $25
+        ) ON CONFLICT (id) DO UPDATE SET
+          title = EXCLUDED.title,
+          description = EXCLUDED.description,
+          start_date = EXCLUDED.start_date,
+          venue = EXCLUDED.venue,
+          updated_at = EXCLUDED.updated_at;
+      `, [
+        evt.id, evt.title, evt.description, evt.banner_url || null, evt.event_type || 'GENERAL',
+        evt.start_date, evt.end_date || evt.start_date, evt.start_time || '10:00 AM', evt.end_time || '05:00 PM',
+        evt.venue, evt.address || evt.venue, evt.capacity || 500, evt.registered_count || 0,
+        evt.registration_start_date || evt.start_date, evt.registration_end_date || evt.start_date,
+        Boolean(evt.is_paid), evt.event_fee || 0, evt.payment_qr_url || null, evt.payment_instructions || null,
+        evt.whatsapp_contact || null, evt.visibility || 'PUBLIC', evt.status || 'REGISTRATION_OPEN',
+        evt.created_by || 1, evt.created_at || new Date().toISOString(), evt.updated_at || new Date().toISOString()
+      ]);
+    }
+    await client.query(`SELECT setval('events_id_seq', (SELECT COALESCE(MAX(id), 1) FROM events));`);
+    console.log('✅ Initial events populated in database!');
 
     const res = await client.query(`
       SELECT table_name 

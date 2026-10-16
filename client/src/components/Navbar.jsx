@@ -3,8 +3,8 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
 import { useLanguage } from '../context/LanguageContext';
-import { 
-  Shield, Menu, X, Bell, User, LogOut, ChevronDown, CheckCircle2, 
+import {
+  Shield, Menu, X, Bell, User, LogOut, ChevronDown, CheckCircle2,
   FileText, Calendar, Users, Home, Info, PhoneCall, UserPlus, LogIn, LayoutDashboard, Settings, Languages
 } from 'lucide-react';
 
@@ -27,13 +27,13 @@ export default function Navbar() {
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 text-slate-900 shadow-sm w-full">
       <div className="max-w-[1440px] mx-auto px-2.5 sm:px-4 lg:px-6 xl:px-8">
         <div className="flex items-center justify-between h-20 gap-1.5 sm:gap-3">
-          
+
           {/* Logo & Union Title */}
           <Link to="/" className="flex items-center gap-2.5 shrink-0 group">
-            <img 
-              src={settings?.logo_url || "/images/union-logo.png"} 
-              alt="MPVMAVAKS Union Logo" 
-              className="w-10 h-10 sm:w-12 sm:h-12 object-contain group-hover:scale-105 transition-transform shrink-0" 
+            <img
+              src={settings?.logo_url || "/images/union-logo.png"}
+              alt="MPVMAVAKS Union Logo"
+              className="w-10 h-10 sm:w-12 sm:h-12 object-contain group-hover:scale-105 transition-transform shrink-0"
             />
             <div className="whitespace-nowrap">
               <span className="font-extrabold text-sm sm:text-base lg:text-lg xl:text-xl tracking-tight text-slate-900 block group-hover:text-sky-600 transition-colors">
@@ -47,25 +47,25 @@ export default function Navbar() {
 
           {/* Desktop Navigation Links */}
           <nav className="hidden lg:flex items-center gap-0.5 xl:gap-1 2xl:gap-1.5 flex-nowrap shrink-0">
-            <Link 
-              to="/" 
+            <Link
+              to="/"
               className={`px-1.5 xl:px-2.5 py-1.5 rounded-xl text-[11px] xl:text-xs 2xl:text-sm font-semibold transition-colors whitespace-nowrap shrink-0 ${isActive('/') ? 'bg-sky-50 text-sky-700 border border-sky-200' : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'}`}
             >
               {t('Home')}
             </Link>
-            <Link 
-              to="/about" 
+            <Link
+              to="/about"
               className={`px-1.5 xl:px-2.5 py-1.5 rounded-xl text-[11px] xl:text-xs 2xl:text-sm font-semibold transition-colors whitespace-nowrap shrink-0 ${isActive('/about') ? 'bg-sky-50 text-sky-700 border border-sky-200' : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'}`}
             >
               {t('About Us')}
             </Link>
-            <div 
+            <div
               className="relative"
               onMouseEnter={() => setBoardDropdownOpen(true)}
               onMouseLeave={() => setBoardDropdownOpen(false)}
             >
-              <Link 
-                to="/board-of-union" 
+              <Link
+                to="/board-of-union"
                 className={`px-1.5 xl:px-2.5 py-1.5 rounded-xl text-[11px] xl:text-xs 2xl:text-sm font-semibold transition-colors whitespace-nowrap shrink-0 flex items-center gap-1 ${isActive('/board-of-union') ? 'bg-sky-50 text-sky-700 border border-sky-200' : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'}`}
                 onClick={() => setBoardDropdownOpen(false)}
               >
@@ -157,31 +157,31 @@ export default function Navbar() {
                 </div>
               )}
             </div>
-            <Link 
-              to="/orders" 
+            <Link
+              to="/orders"
               className={`px-1.5 xl:px-2.5 py-1.5 rounded-xl text-[11px] xl:text-xs 2xl:text-sm font-semibold transition-colors whitespace-nowrap shrink-0 ${isActive('/orders') ? 'bg-sky-50 text-sky-700 border border-sky-200' : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'}`}
             >
               {t('Order')}
             </Link>
-            <Link 
-              to="/events" 
+            <Link
+              to="/events"
               className={`px-1.5 xl:px-2.5 py-1.5 rounded-xl text-[11px] xl:text-xs 2xl:text-sm font-semibold transition-colors whitespace-nowrap shrink-0 ${isActive('/events') ? 'bg-sky-50 text-sky-700 border border-sky-200' : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'}`}
             >
               {t('Events')}
             </Link>
-            <Link 
-              to="/notices" 
+            <Link
+              to="/notices"
               className={`px-1.5 xl:px-2.5 py-1.5 rounded-xl text-[11px] xl:text-xs 2xl:text-sm font-semibold transition-colors whitespace-nowrap shrink-0 ${isActive('/notices') ? 'bg-sky-50 text-sky-700 border border-sky-200' : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'}`}
             >
               {t('Notices')}
             </Link>
-            <div 
+            <div
               className="relative"
               onMouseEnter={() => setEnergyDropdownOpen(true)}
               onMouseLeave={() => setEnergyDropdownOpen(false)}
             >
-              <Link 
-                to="/energy-department" 
+              <Link
+                to="/energy-department"
                 className={`px-1.5 xl:px-2.5 py-1.5 rounded-xl text-[11px] xl:text-xs 2xl:text-sm font-semibold transition-colors whitespace-nowrap shrink-0 flex items-center gap-1 ${isActive('/energy-department') ? 'bg-sky-50 text-sky-700 border border-sky-200' : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'}`}
                 onClick={() => setEnergyDropdownOpen(false)}
               >
@@ -254,24 +254,24 @@ export default function Navbar() {
                 </div>
               )}
             </div>
-            <Link 
-              to="/contact" 
+            <Link
+              to="/contact"
               className={`px-1.5 xl:px-2.5 py-1.5 rounded-xl text-[11px] xl:text-xs 2xl:text-sm font-semibold transition-colors whitespace-nowrap shrink-0 ${isActive('/contact') ? 'bg-sky-50 text-sky-700 border border-sky-200' : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'}`}
             >
               {t('Contact Us')}
             </Link>
 
             {user ? (
-              <Link 
-                to={isAdmin ? '/admin/dashboard' : '/dashboard'} 
+              <Link
+                to={isAdmin ? '/admin/dashboard' : '/dashboard'}
                 className={`px-2.5 xl:px-3 py-1.5 rounded-xl text-[11px] xl:text-xs 2xl:text-sm font-bold transition-colors flex items-center gap-1.5 whitespace-nowrap shrink-0 ${location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/admin') ? 'bg-sky-600 text-white shadow-md shadow-sky-600/20' : 'text-sky-700 bg-sky-50 border border-sky-200 hover:bg-sky-100'}`}
               >
                 <LayoutDashboard className="w-3.5 h-3.5 shrink-0" />
                 <span>{isAdmin ? t('Admin Portal') : t('Member Dashboard')}</span>
               </Link>
             ) : (
-              <Link 
-                to="/join" 
+              <Link
+                to="/join"
                 className={`px-2.5 xl:px-3.5 py-1.5 rounded-xl text-[11px] xl:text-xs 2xl:text-sm font-bold transition-all shadow-md flex items-center gap-1.5 whitespace-nowrap shrink-0 ${isActive('/join') ? 'bg-sky-600 text-white' : 'bg-gradient-to-r from-sky-500 via-sky-600 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white shadow-sky-500/20'}`}
               >
                 <UserPlus className="w-3.5 h-3.5 shrink-0" />
@@ -318,7 +318,7 @@ export default function Navbar() {
                       <div className="px-4 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
                         <span className="font-bold text-sm text-slate-900">{t('Notifications')}</span>
                         {unreadCount > 0 && (
-                          <button 
+                          <button
                             onClick={markAllAsRead}
                             className="text-xs text-sky-700 font-bold hover:underline"
                           >
@@ -334,7 +334,7 @@ export default function Navbar() {
                           </div>
                         ) : (
                           notifications.map(n => (
-                            <div 
+                            <div
                               key={n.id}
                               onClick={() => {
                                 markAsRead(n.id);

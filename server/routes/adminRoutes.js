@@ -1,5 +1,6 @@
 import express from 'express';
 import { inMemoryStore } from '../config/db.js';
+import { EventService } from '../services/eventService.js';
 import { authenticateToken, requireAdmin } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
@@ -71,31 +72,45 @@ router.put('/members/:id', authenticateToken, requireAdmin, (req, res) => {
 });
 
 // 5. Admin Get Events (/api/admin/events)
-router.get('/events', authenticateToken, requireAdmin, (req, res) => {
-  res.json({ success: true, events: inMemoryStore.events });
+router.get('/events', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const events = await EventService.getAllEvents();
+    res.json({ success: true, events });
+  } catch (err) {
+    res.json({ success: true, events: inMemoryStore.events });
+  }
 });
 
 // 5.1 Admin Create Event (/api/admin/events)
-router.post('/events', authenticateToken, requireAdmin, (req, res) => {
-  const newEvt = {
-    id: inMemoryStore.events.length + 1,
-    ...req.body,
-    created_at: new Date().toISOString()
-  };
-  inMemoryStore.events.unshift(newEvt);
-  res.status(201).json({ success: true, message: 'Event created successfully', event: newEvt });
+router.post('/events', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const newEvt = await EventService.createEvent(req.body, req.user?.id || 1);
+    res.status(201).json({ success: true, message: 'Event created successfully', event: newEvt });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message || 'Failed to create event' });
+  }
 });
 
 // 6. Admin Delete Event (/api/admin/events/:id)
-router.delete('/events/:id', authenticateToken, requireAdmin, (req, res) => {
-  inMemoryStore.events = inMemoryStore.events.filter(e => e.id !== Number(req.params.id));
-  res.json({ success: true, message: 'Event deleted successfully' });
+router.delete('/events/:id', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    await EventService.deleteEvent(req.params.id);
+    res.json({ success: true, message: 'Event deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message || 'Failed to delete event' });
+  }
 });
 
 // 7. Admin Event Attendees (/api/admin/events/:id/attendees)
-router.get('/events/:id/attendees', authenticateToken, requireAdmin, (req, res) => {
-  const attendees = inMemoryStore.eventRegistrations.filter(r => r.event_id === Number(req.params.id));
-  res.json({ success: true, attendees });
+router.get('/events/:id/attendees', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const allRegs = await EventService.getAdminRegistrations();
+    const attendees = allRegs.filter(r => r.event_id === Number(req.params.id));
+    res.json({ success: true, attendees });
+  } catch (err) {
+    const attendees = inMemoryStore.eventRegistrations.filter(r => r.event_id === Number(req.params.id));
+    res.json({ success: true, attendees });
+  }
 });
 
 // 8. Admin Opportunities (/api/admin/opportunities)

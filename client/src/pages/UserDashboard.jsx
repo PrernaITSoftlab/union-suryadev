@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
 import api from '../services/api';
-import { 
-  User, Users, Calendar, AlertTriangle, FileText, Send, Bell, CreditCard, 
+import {
+  User, Users, Calendar, AlertTriangle, FileText, Send, Bell, CreditCard,
   CheckCircle, Clock, Search, Upload, Download, Eye, Plus, ShieldCheck, Lock, Edit3, X, Share2
 } from 'lucide-react';
 
@@ -131,13 +131,13 @@ export default function UserDashboard() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-        
+
         {/* User Banner Header */}
         <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
           <div className="flex items-center gap-5 text-center sm:text-left">
-            <img 
-              src={user?.profile?.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=400&q=80'} 
-              alt="Avatar" 
+            <img
+              src={user?.profile?.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=400&q=80'}
+              alt="Avatar"
               className="w-20 h-20 rounded-2xl object-cover border-2 border-amber-500 shadow-md"
             />
             <div>
@@ -193,11 +193,10 @@ export default function UserDashboard() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
-                  active 
-                    ? 'bg-amber-500 text-slate-950 shadow-sm ring-1 ring-amber-600/20' 
-                    : 'bg-white border border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-50'
-                }`}
+                className={`px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${active
+                  ? 'bg-amber-500 text-slate-950 shadow-sm ring-1 ring-amber-600/20'
+                  : 'bg-white border border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-50'
+                  }`}
               >
                 <Icon className="w-4 h-4 shrink-0" />
                 <span>{tab.label}</span>
@@ -209,7 +208,7 @@ export default function UserDashboard() {
         {/* TAB 1: OVERVIEW */}
         {activeTab === 'overview' && (
           <div className="space-y-8">
-            
+
             {/* Quick Stats Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               <div className="p-5 rounded-2xl bg-white border border-slate-200 space-y-2 shadow-sm">
@@ -239,7 +238,7 @@ export default function UserDashboard() {
 
             {/* Two Column Section */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-              
+
               {/* Left Column: Recent Announcements & Events */}
               <div className="lg:col-span-7 space-y-6">
                 <div className="p-6 rounded-3xl bg-white border border-slate-200 space-y-4 shadow-sm">
@@ -599,7 +598,7 @@ export default function UserDashboard() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              
+
               {/* Inbox */}
               <div className="space-y-4">
                 <h3 className="font-bold text-base text-sky-800 border-b border-slate-200 pb-2">Shared With Me (Inbox)</h3>
@@ -698,9 +697,8 @@ export default function UserDashboard() {
                     </div>
                     <div className="text-right">
                       <span className="text-base font-extrabold text-slate-900 block">₹{p.amount}</span>
-                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                        p.status === 'VERIFIED' ? 'bg-emerald-100 text-emerald-900 border border-emerald-300' : 'bg-amber-100 text-amber-900'
-                      }`}>
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${p.status === 'VERIFIED' ? 'bg-emerald-100 text-emerald-900 border border-emerald-300' : 'bg-amber-100 text-amber-900'
+                        }`}>
                         {p.status}
                       </span>
                     </div>

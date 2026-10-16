@@ -14,7 +14,7 @@ export const INITIAL_SYSTEM_SETTINGS = {
   registration_qr_url: "/images/payment-qr.png",
   upi_id: "mpvidyut@sbi",
   account_name: "MP VIDYUT MANDAL ARAKSHIT VAR",
-  
+
   bank_name: "State Bank of India (SBI)",
   account_number: "389201928341",
   ifsc_code: "SBIN0001234",
@@ -36,7 +36,7 @@ export const INITIAL_USERS = [
     role: "admin",
     status: "active",
     member_id: "UNION-ADMIN-001",
-    password_hash: "$2a$10$mpvTj5bytuuLyawrcS8tlumtwKqXJvLheQX5WxV62B/QUbSK7y4Te", // admin123
+    password_hash: "$2a$10$qj2RvgdMviuo0LHW2HTTH..Qz84GYpymkukKTmaGLU7XDjHGIR/v.", // admin123
 
     profile: {
       id: 1,
@@ -71,7 +71,7 @@ export const INITIAL_USERS = [
     role: "user",
     status: "active",
     member_id: "UNION-IND-104",
-    password_hash: "$2a$10$9pA1U2okXF9c3Q7fQGFWaOEpD3bsimA2CZxqtiVu4cVrYoweimY5y", // member123
+    password_hash: "$2a$10$emVn1lVyurmFdl1nPO7SnOnsb7fzzmsZyHBT3TyDbPqjnkiKDASPK", // member123
 
     profile: {
       id: 2,
@@ -106,7 +106,7 @@ export const INITIAL_USERS = [
     role: "user",
     status: "active",
     member_id: "UNION-UJJ-209",
-    password_hash: "$2a$10$9pA1U2okXF9c3Q7fQGFWaOEpD3bsimA2CZxqtiVu4cVrYoweimY5y", // member123
+    password_hash: "$2a$10$emVn1lVyurmFdl1nPO7SnOnsb7fzzmsZyHBT3TyDbPqjnkiKDASPK", // member123
 
     profile: {
       id: 3,
@@ -141,7 +141,7 @@ export const INITIAL_USERS = [
     role: "user",
     status: "active",
     member_id: "UNION-DEW-312",
-    password_hash: "$2a$10$9pA1U2okXF9c3Q7fQGFWaOEpD3bsimA2CZxqtiVu4cVrYoweimY5y", // member123
+    password_hash: "$2a$10$emVn1lVyurmFdl1nPO7SnOnsb7fzzmsZyHBT3TyDbPqjnkiKDASPK", // member123
 
     profile: {
       id: 4,
@@ -507,3 +507,55 @@ export const INITIAL_CONTACT_SUBMISSIONS = [
     created_at: "2026-09-22T11:20:00Z"
   }
 ];
+
+export const INITIAL_EVENT_LIKES = [
+  { id: 1, event_id: 1, user_id: 1, created_at: "2026-10-15T08:00:00Z" },
+  { id: 2, event_id: 1, user_id: 2, created_at: "2026-10-15T08:30:00Z" },
+  { id: 3, event_id: 1, user_id: 3, created_at: "2026-10-15T09:15:00Z" },
+  { id: 4, event_id: 1, user_id: 4, created_at: "2026-10-15T09:45:00Z" },
+  { id: 5, event_id: 2, user_id: 1, created_at: "2026-10-15T10:00:00Z" },
+  { id: 6, event_id: 2, user_id: 2, created_at: "2026-10-15T10:15:00Z" },
+  { id: 7, event_id: 2, user_id: 4, created_at: "2026-10-15T10:30:00Z" },
+  { id: 8, event_id: 3, user_id: 2, created_at: "2026-10-15T10:45:00Z" },
+  { id: 9, event_id: 3, user_id: 3, created_at: "2026-10-15T11:00:00Z" }
+];
+
+export const INITIAL_EVENT_COMMENTS = [
+  {
+    id: 1,
+    event_id: 1,
+    user_id: 2,
+    author_name: "Er. Sunita Chouhan",
+    author_avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80",
+    content: "Crucial convention for all field personnel. Looking forward to discussing the safety resolutions and 7th Pay DA arrears with the committee.",
+    created_at: "2026-10-15T09:30:00.000Z"
+  },
+  {
+    id: 2,
+    event_id: 1,
+    user_id: 3,
+    author_name: "Shri Vikramaditya Patel",
+    author_avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80",
+    content: "All delegates please arrive by 09:30 AM for registration badge and delegate kit collection at the auditorium desk.",
+    created_at: "2026-10-15T10:45:00.000Z"
+  },
+  {
+    id: 3,
+    event_id: 2,
+    user_id: 4,
+    author_name: "Er. Amit Joshi",
+    author_avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80",
+    content: "Hands-on practical training on Class-4 gloves and 33kV PTW procedures will definitely save lives in the field. Thank you Union leadership!",
+    created_at: "2026-10-15T11:20:00.000Z"
+  },
+  {
+    id: 4,
+    event_id: 3,
+    user_id: 2,
+    author_name: "Er. Sunita Chouhan",
+    author_avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80",
+    content: "Will this session be streamed live on the Union YouTube channel for members in remote circles?",
+    created_at: "2026-10-15T11:50:00.000Z"
+  }
+];
+

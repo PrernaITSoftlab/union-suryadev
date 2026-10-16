@@ -1,0 +1,89 @@
+{
+  "stories": [
+    {
+      "id": 1,
+      "author_id": 1,
+      "title": "MPVMAVAKS Union Gazette Order 2026 — Revised DA & Grade Pay Notification",
+      "description": "Official Gazette circular detailing 4% Dearness Relief (DR) release and updated hazard compensation for field electrical staff across all 9 MP West Zone circles.",
+      "category": "Wage & Pension Orders",
+      "attachment_url": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+      "attachment_type": "PDF",
+      "visibility": "MEMBERS_ONLY",
+      "status": "PUBLISHED",
+      "created_at": "2026-09-18T10:00:00.000Z",
+      "author_name": "Er. Rajesh Sharma",
+      "author_title": "General Secretary",
+      "author_avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
+      "likes_count": 13,
+      "shares_count": 6,
+      "updated_at": "2026-10-15T11:19:09.229Z",
+      "comments_count": 0
+    },
+    {
+      "id": 2,
+      "author_id": 3,
+      "title": "Field Safety Mandatory Protocol Handbook for 33kV & 11kV Substations",
+      "description": "Standard Operating Procedures for Permit-to-Work (PTW), discharge rod grounding, and transformer maintenance safety checklist.",
+      "category": "Safety Protocols",
+      "attachment_url": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+      "attachment_type": "PDF",
+      "visibility": "MEMBERS_ONLY",
+      "status": "PUBLISHED",
+      "created_at": "2026-09-15T14:30:00.000Z",
+      "author_name": "Shri Vikramaditya Patel",
+      "author_title": "Zonal Secretary (Ujjain)",
+      "author_avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80",
+      "likes_count": 12,
+      "shares_count": 4,
+      "updated_at": "2026-10-15T11:19:09.316Z",
+      "comments_count": 0
+    }
+  ],
+  "comments": [
+    {
+      "id": 3,
+      "story_id": 2,
+      "user_id": 2,
+      "author_name": "Er. Sunita Chouhan",
+      "author_avatar": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80",
+      "content": "Crucial safety guidelines. Earthing discharge rods and PTW confirmation must never be skipped under any load pressure.",
+      "created_at": "2026-09-16T11:45:00.000Z"
+    },
+    {
+      "id": 1,
+      "story_id": 1,
+      "user_id": 2,
+      "author_name": "Er. Sunita Chouhan",
+      "author_avatar": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80",
+      "content": "Excellent achievement by the union leadership. The revised DA order will bring much needed relief to all field engineers and linemen.",
+      "created_at": "2026-09-18T14:20:00.000Z"
+    },
+    {
+      "id": 2,
+      "story_id": 1,
+      "user_id": 3,
+      "author_name": "Shri Vikramaditya Patel",
+      "author_avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80",
+      "content": "Circular received in Ujjain circle offices. We will circulate copies to all 33kV substations tomorrow.",
+      "created_at": "2026-09-19T09:15:00.000Z"
+    },
+    {
+      "id": 4,
+      "story_id": 1,
+      "user_id": 1,
+      "author_name": "Admin Test User",
+      "author_avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=400&q=80",
+      "content": "Test automated comment for persistence",
+      "created_at": "2026-10-15T11:19:26.131Z"
+    },
+    {
+      "id": 5,
+      "story_id": 1,
+      "user_id": null,
+      "author_name": "Er. Rajesh Verma",
+      "author_avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=400&q=80",
+      "content": "Testing dynamic comment addition and database persistence!",
+      "created_at": "2026-10-15T11:30:00.640Z"
+    }
+  ]
+}

@@ -72,7 +72,7 @@ export default function AdminDashboard() {
     title: '', description: '', banner_url: '', event_type: 'GENERAL',
     start_date: '', end_date: '', start_time: '10:00 AM', venue: '',
     capacity: 500, is_paid: false, event_fee: 0, payment_qr_url: '',
-    payment_instructions: '', status: 'REGISTRATION_OPEN'
+    payment_instructions: '', visibility: 'PUBLIC', status: 'REGISTRATION_OPEN'
   });
 
   const [announceForm, setAnnounceForm] = useState({
@@ -364,7 +364,7 @@ export default function AdminDashboard() {
           title: '', description: '', banner_url: '', event_type: 'GENERAL',
           start_date: '', end_date: '', start_time: '10:00 AM', venue: '',
           capacity: 500, is_paid: false, event_fee: 0, payment_qr_url: '',
-          payment_instructions: '', status: 'REGISTRATION_OPEN'
+          payment_instructions: '', visibility: 'PUBLIC', status: 'REGISTRATION_OPEN'
         });
         fetchModuleData();
       }
@@ -1109,7 +1109,7 @@ export default function AdminDashboard() {
                     title: '', description: '', banner_url: '', event_type: 'GENERAL',
                     start_date: new Date().toISOString().split('T')[0], end_date: '', start_time: '10:00 AM', venue: '',
                     capacity: 500, is_paid: false, event_fee: 0, payment_qr_url: '',
-                    payment_instructions: '', status: 'REGISTRATION_OPEN'
+                    payment_instructions: '', visibility: 'PUBLIC', status: 'REGISTRATION_OPEN'
                   });
                   setCreateEventModal(true);
                 }}
@@ -1142,7 +1142,7 @@ export default function AdminDashboard() {
                       <h3 className="font-bold text-slate-900 text-base line-clamp-2">{e.title}</h3>
                       <p className="text-xs text-slate-600 line-clamp-2">{e.description}</p>
                       <div className="text-xs text-slate-500 font-medium">
-                        📍 <strong>{e.venue}</strong> • 📅 <span>{e.start_date}</span>
+                        📍 <strong>{e.venue}</strong> • 📅 <span>{e.start_date ? String(e.start_date).slice(0, 10) : ''}</span>
                       </div>
                     </div>
 
@@ -1159,8 +1159,8 @@ export default function AdminDashboard() {
                               description: e.description || '',
                               banner_url: e.banner_url || '',
                               event_type: e.event_type || 'GENERAL',
-                              start_date: e.start_date || '',
-                              end_date: e.end_date || '',
+                              start_date: e.start_date ? String(e.start_date).slice(0, 10) : '',
+                              end_date: e.end_date ? String(e.end_date).slice(0, 10) : '',
                               start_time: e.start_time || '10:00 AM',
                               venue: e.venue || '',
                               capacity: e.capacity || 500,
@@ -1168,6 +1168,7 @@ export default function AdminDashboard() {
                               event_fee: e.event_fee || 0,
                               payment_qr_url: e.payment_qr_url || '',
                               payment_instructions: e.payment_instructions || '',
+                              visibility: e.visibility || 'PUBLIC',
                               status: e.status || 'REGISTRATION_OPEN'
                             });
                           }}
@@ -1591,7 +1592,7 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label className="block font-bold text-slate-700 mb-1">Venue *</label>
                   <input
@@ -1615,6 +1616,18 @@ export default function AdminDashboard() {
                     <option value="UPCOMING">UPCOMING</option>
                     <option value="COMPLETED">COMPLETED</option>
                     <option value="CANCELLED">CANCELLED</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Visibility</label>
+                  <select
+                    value={eventForm.visibility || 'PUBLIC'}
+                    onChange={(e) => setEventForm({ ...eventForm, visibility: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-900 font-bold"
+                  >
+                    <option value="PUBLIC">PUBLIC (Everyone)</option>
+                    <option value="MEMBERS_ONLY">MEMBERS ONLY</option>
                   </select>
                 </div>
               </div>

@@ -1,0 +1,130 @@
+{
+  "likes": [
+    {
+      "id": 3,
+      "event_id": 1,
+      "user_id": 3,
+      "created_at": "2026-10-15T09:15:00Z"
+    },
+    {
+      "id": 4,
+      "event_id": 1,
+      "user_id": 4,
+      "created_at": "2026-10-15T09:45:00Z"
+    },
+    {
+      "id": 5,
+      "event_id": 2,
+      "user_id": 1,
+      "created_at": "2026-10-15T10:00:00Z"
+    },
+    {
+      "id": 6,
+      "event_id": 2,
+      "user_id": 2,
+      "created_at": "2026-10-15T10:15:00Z"
+    },
+    {
+      "id": 7,
+      "event_id": 2,
+      "user_id": 4,
+      "created_at": "2026-10-15T10:30:00Z"
+    },
+    {
+      "id": 8,
+      "event_id": 3,
+      "user_id": 2,
+      "created_at": "2026-10-15T10:45:00Z"
+    },
+    {
+      "id": 9,
+      "event_id": 3,
+      "user_id": 3,
+      "created_at": "2026-10-15T11:00:00Z"
+    },
+    {
+      "id": 1792135508521,
+      "event_id": 1,
+      "user_id": 2,
+      "created_at": "2026-10-16T07:25:08.521Z"
+    },
+    {
+      "id": 1792135896341,
+      "event_id": 1,
+      "user_id": 1,
+      "created_at": "2026-10-16T07:31:36.341Z"
+    },
+    {
+      "id": 1792135899655,
+      "event_id": 3,
+      "user_id": 1,
+      "created_at": "2026-10-16T07:31:39.655Z"
+    },
+    {
+      "id": 1792135912670,
+      "event_id": 5,
+      "user_id": 1,
+      "created_at": "2026-10-16T07:31:52.670Z"
+    }
+  ],
+  "comments": [
+    {
+      "id": 1,
+      "event_id": 1,
+      "user_id": 2,
+      "author_name": "Er. Sunita Chouhan",
+      "author_avatar": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80",
+      "content": "Crucial convention for all field personnel. Looking forward to discussing the safety resolutions and 7th Pay DA arrears with the committee.",
+      "created_at": "2026-10-15T09:30:00.000Z"
+    },
+    {
+      "id": 2,
+      "event_id": 1,
+      "user_id": 3,
+      "author_name": "Shri Vikramaditya Patel",
+      "author_avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80",
+      "content": "All delegates please arrive by 09:30 AM for registration badge and delegate kit collection at the auditorium desk.",
+      "created_at": "2026-10-15T10:45:00.000Z"
+    },
+    {
+      "id": 3,
+      "event_id": 2,
+      "user_id": 4,
+      "author_name": "Er. Amit Joshi",
+      "author_avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80",
+      "content": "Hands-on practical training on Class-4 gloves and 33kV PTW procedures will definitely save lives in the field. Thank you Union leadership!",
+      "created_at": "2026-10-15T11:20:00.000Z"
+    },
+    {
+      "id": 4,
+      "event_id": 3,
+      "user_id": 2,
+      "author_name": "Er. Sunita Chouhan",
+      "author_avatar": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80",
+      "content": "Will this session be streamed live on the Union YouTube channel for members in remote circles?",
+      "created_at": "2026-10-15T11:50:00.000Z"
+    },
+    {
+      "id": 7,
+      "event_id": 1,
+      "user_id": 2,
+      "author_name": "Er. Sunita Chouhan",
+      "author_avatar": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80",
+      "content": "Testing real-time persistent comment on Event 1!",
+      "created_at": "2026-10-16T07:24:56.604Z",
+      "updated_at": "2026-10-16T07:24:56.604Z",
+      "guest_id": null
+    },
+    {
+      "id": 9,
+      "event_id": 3,
+      "user_id": 1,
+      "author_name": "Er. Rajesh Sharma",
+      "author_avatar": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
+      "content": "hello",
+      "created_at": "2026-10-16T07:31:45.021Z",
+      "updated_at": "2026-10-16T07:31:45.021Z",
+      "guest_id": null
+    }
+  ]
+}

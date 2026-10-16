@@ -15,7 +15,7 @@ router.get('/feed', authenticateToken, (req, res) => {
 
   if (search) {
     const q = search.toLowerCase();
-    stories = stories.filter(s => 
+    stories = stories.filter(s =>
       s.title.toLowerCase().includes(q) ||
       s.description.toLowerCase().includes(q) ||
       s.author_name.toLowerCase().includes(q)

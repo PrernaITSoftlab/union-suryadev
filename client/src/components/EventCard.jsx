@@ -1,12 +1,43 @@
 import React, { useState } from 'react';
-import { Clock, MapPin, Users, ArrowRight, CheckCircle, Video } from 'lucide-react';
+import { Clock, MapPin, Users, ArrowRight, CheckCircle, Video, Heart, MessageCircle, Share2 } from 'lucide-react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import EventCommentsModal from './EventCommentsModal';
+import EventShareModal from './EventShareModal';
 
 const EventCard = ({ event, onOpenDetail }) => {
   const { user } = useAuth();
   const [registered, setRegistered] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isLiked, setIsLiked] = useState(Boolean(event.is_liked));
+  const [likesCount, setLikesCount] = useState(Number(event.likes_count || 0));
+  const [commentsCount, setCommentsCount] = useState(Number(event.comments_count || 0));
+  const [showComments, setShowComments] = useState(false);
+  const [showShare, setShowShare] = useState(false);
+
+  const handleToggleLike = async (e) => {
+    e.stopPropagation();
+    if (!user) {
+      alert('Please log in to like this event!');
+      return;
+    }
+
+    const nextLiked = !isLiked;
+    const nextCount = nextLiked ? likesCount + 1 : Math.max(0, likesCount - 1);
+    setIsLiked(nextLiked);
+    setLikesCount(nextCount);
+
+    try {
+      const res = await api.post(`/events/${event.id}/like`);
+      if (res.data.success) {
+        setIsLiked(res.data.liked);
+        setLikesCount(res.data.likes_count);
+      }
+    } catch (err) {
+      setIsLiked(!nextLiked);
+      setLikesCount(likesCount);
+    }
+  };
 
   const handleRSVP = async (e) => {
     e.stopPropagation();
@@ -35,7 +66,7 @@ const EventCard = ({ event, onOpenDetail }) => {
   });
 
   return (
-    <div 
+    <div
       onClick={() => onOpenDetail && onOpenDetail(event)}
       className="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm hover:border-blue-300 hover:shadow-md cursor-pointer flex flex-col justify-between group h-full transition-all"
     >
@@ -48,14 +79,13 @@ const EventCard = ({ event, onOpenDetail }) => {
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-slate-950/20 to-transparent" />
-          
+
           {/* Location Type Badge */}
           <div className="absolute top-3 left-3">
-            <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-1 shadow-sm ${
-              event.location_type === 'online' 
-                ? 'bg-sky-500 text-white' 
+            <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-1 shadow-sm ${event.location_type === 'online'
+                ? 'bg-sky-500 text-white'
                 : 'bg-blue-600 text-white'
-            }`}>
+              }`}>
               {event.location_type === 'online' ? <Video className="w-3 h-3 shrink-0" /> : <MapPin className="w-3 h-3 shrink-0" />}
               {event.location_type === 'online' ? 'Virtual VIP Lounge' : 'In-Person Summit'}
             </span>
@@ -104,6 +134,42 @@ const EventCard = ({ event, onOpenDetail }) => {
             </div>
           )}
         </div>
+        {/* Interaction Toolbar: Like, Comment, Share */}
+        <div className="px-4 sm:px-5 py-2.5 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-slate-600 bg-white">
+          <button
+            type="button"
+            onClick={handleToggleLike}
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl transition-all group/like ${
+              isLiked ? 'bg-rose-50 text-rose-600 font-bold border border-rose-200' : 'hover:bg-slate-100 hover:text-rose-600'
+            }`}
+            title={isLiked ? "Unlike" : "Like"}
+          >
+            <Heart className={`w-3.5 h-3.5 transition-transform group-hover/like:scale-125 ${
+              isLiked ? 'fill-rose-500 text-rose-500' : ''
+            }`} />
+            <span>{likesCount}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setShowComments(true); }}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl hover:bg-slate-100 hover:text-sky-700 transition-all text-slate-600"
+            title="Comments & Questions"
+          >
+            <MessageCircle className="w-3.5 h-3.5 text-slate-400" />
+            <span>{commentsCount}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setShowShare(true); }}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl hover:bg-slate-100 hover:text-emerald-700 transition-all text-slate-600"
+            title="Share"
+          >
+            <Share2 className="w-3.5 h-3.5 text-slate-400" />
+            <span>Share</span>
+          </button>
+        </div>
       </div>
 
       {/* Footer Controls */}
@@ -128,6 +194,20 @@ const EventCard = ({ event, onOpenDetail }) => {
           </button>
         )}
       </div>
+
+      <EventCommentsModal
+        isOpen={showComments}
+        onClose={() => setShowComments(false)}
+        event={event}
+        currentUser={user}
+        onCommentCountUpdate={(cnt) => setCommentsCount(cnt)}
+      />
+
+      <EventShareModal
+        isOpen={showShare}
+        onClose={() => setShowShare(false)}
+        event={event}
+      />
     </div>
   );
 };

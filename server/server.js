@@ -61,7 +61,7 @@ app.get('/api/health', (req, res) => {
 // Global Error Handler
 app.use(errorHandler);
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`⚡ MPVMAVAKS Union API Server running on port ${PORT}`);
-  console.log(`🌐 Health check available at: http://localhost:${PORT}/api/health`);
+  console.log(`🌐 Health check available at: http://127.0.0.1:${PORT}/api/health`);
 });

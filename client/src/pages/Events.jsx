@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, MapPin, Clock, Users, Shield, QrCode, Search, CheckCircle, AlertCircle, ArrowRight, X, History, FileText, CheckCircle2, Award, ExternalLink } from 'lucide-react';
+import { Calendar, MapPin, Clock, Users, Shield, QrCode, Search, CheckCircle, AlertCircle, ArrowRight, X, History, FileText, CheckCircle2, Award, ExternalLink, Heart, MessageCircle, Share2, Sparkles } from 'lucide-react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import EventCommentsModal from '../components/EventCommentsModal';
+import EventShareModal from '../components/EventShareModal';
 
 export default function Events() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -15,6 +18,11 @@ export default function Events() {
   const [paymentProofUrl, setPaymentProofUrl] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState(null);
+
+  // Social interactions state
+  const [commentingEvent, setCommentingEvent] = useState(null);
+  const [sharingEvent, setSharingEvent] = useState(null);
+  const [toast, setToast] = useState(null);
 
   const fetchEvents = async () => {
     try {
@@ -32,6 +40,71 @@ export default function Events() {
   useEffect(() => {
     fetchEvents();
   }, [search]);
+
+  // Deep linking scroll to event if ?id=xx is present
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const eventId = params.get('id');
+    if (eventId && events.length > 0) {
+      const el = document.getElementById(`event-card-${eventId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.classList.add('ring-4', 'ring-sky-400', 'ring-offset-4');
+        setTimeout(() => {
+          el.classList.remove('ring-4', 'ring-sky-400', 'ring-offset-4');
+        }, 3500);
+      }
+    }
+  }, [events, location.search]);
+
+  // Toast auto-hide
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
+
+  // Like / Unlike Handler
+  const handleToggleLike = async (evt) => {
+    if (!user) {
+      setToast({
+        type: 'info',
+        message: 'Please sign in to like this union event.',
+        actionText: 'Sign In',
+        actionLink: '/login'
+      });
+      return;
+    }
+
+    const prevEvents = [...events];
+    const prevLiked = Boolean(evt.is_liked);
+    const prevCount = Number(evt.likes_count || 0);
+    const nextLiked = !prevLiked;
+    const nextCount = nextLiked ? prevCount + 1 : Math.max(0, prevCount - 1);
+
+    // Optimistic UI update
+    setEvents(prev => prev.map(e => e.id === evt.id ? { ...e, is_liked: nextLiked, likes_count: nextCount } : e));
+
+    try {
+      const res = await api.post(`/events/${evt.id}/like`);
+      if (res.data.success) {
+        setEvents(prev => prev.map(e => e.id === evt.id ? { ...e, is_liked: res.data.liked, likes_count: res.data.likes_count } : e));
+      }
+    } catch (err) {
+      setEvents(prevEvents);
+      setToast({
+        type: 'error',
+        message: err.response?.data?.message || 'Failed to update like status.'
+      });
+    }
+  };
+
+  const handleCommentCountUpdate = (newCount) => {
+    if (!commentingEvent) return;
+    setEvents(prev => prev.map(e => e.id === commentingEvent.id ? { ...e, comments_count: newCount } : e));
+    setCommentingEvent(prev => prev ? { ...prev, comments_count: newCount } : null);
+  };
 
   // Default Past Programs Data for comprehensive presentation
   const pastPrograms = [
@@ -73,10 +146,11 @@ export default function Events() {
     }
   ];
 
-  // Separate fetched events into upcoming and past if date filtering is applied
-  const upcomingEvents = events.filter(e => !e.is_past);
-  const apiPastEvents = events.filter(e => e.is_past);
-  const combinedPastPrograms = apiPastEvents.length > 0 ? apiPastEvents : pastPrograms;
+  // Separate fetched events into upcoming and past
+  const isPastEvent = (e) => Boolean(e.is_past || e.status === 'COMPLETED');
+  const upcomingEvents = events.filter(e => !isPastEvent(e));
+  const apiPastEvents = events.filter(e => isPastEvent(e));
+  const combinedPastPrograms = apiPastEvents.length > 0 ? [...apiPastEvents, ...pastPrograms] : pastPrograms;
 
   const handleJoinClick = (evt) => {
     if (!user) {
@@ -124,7 +198,7 @@ export default function Events() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 py-10 sm:py-14">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
-        
+
         {/* Header & Search */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-6 border-b border-slate-200">
           <div>
@@ -183,11 +257,15 @@ export default function Events() {
                 const regStatus = evt.user_registration?.registration_status;
 
                 return (
-                  <div key={evt.id} className="bg-white border border-slate-200 rounded-3xl overflow-hidden flex flex-col hover:border-sky-300 transition-all shadow-md">
-                    
+                  <div 
+                    key={evt.id} 
+                    id={`event-card-${evt.id}`}
+                    className="bg-white border border-slate-200 rounded-3xl overflow-hidden flex flex-col hover:border-sky-300 transition-all shadow-md group"
+                  >
+
                     {/* Banner */}
                     <div className="relative h-48 overflow-hidden">
-                      <img src={evt.banner_url} alt={evt.title} className="w-full h-full object-cover" />
+                      <img src={evt.banner_url} alt={evt.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                       <div className="absolute top-3 left-3 px-3 py-1 rounded-full bg-white/90 backdrop-blur-md text-[11px] font-extrabold uppercase tracking-wider text-sky-800 border border-sky-300 shadow-sm">
                         {evt.event_type}
                       </div>
@@ -197,9 +275,9 @@ export default function Events() {
                     </div>
 
                     {/* Body */}
-                    <div className="p-6 flex-1 flex flex-col justify-between space-y-6">
+                    <div className="p-6 flex-1 flex flex-col justify-between space-y-5">
                       <div className="space-y-3">
-                        <h3 className="font-bold text-lg text-slate-900 leading-snug">
+                        <h3 className="font-bold text-lg text-slate-900 leading-snug group-hover:text-sky-800 transition-colors">
                           {evt.title}
                         </h3>
                         <p className="text-xs text-slate-600 leading-relaxed line-clamp-3">
@@ -222,8 +300,51 @@ export default function Events() {
                         </div>
                       </div>
 
+                      {/* Social Interaction Toolbar (Like, Comment, Share) */}
+                      <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold">
+                        {/* Like Button */}
+                        <button
+                          type="button"
+                          onClick={() => handleToggleLike(evt)}
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all active:scale-95 group/like ${
+                            evt.is_liked
+                              ? 'bg-rose-50 text-rose-600 font-bold border border-rose-200 shadow-sm'
+                              : 'hover:bg-slate-100 text-slate-600 hover:text-rose-600'
+                          }`}
+                          title={evt.is_liked ? "Unlike Event" : "Like Event"}
+                        >
+                          <Heart className={`w-4 h-4 transition-all duration-300 group-hover/like:scale-125 ${
+                            evt.is_liked ? 'fill-rose-500 text-rose-500 scale-110' : ''
+                          }`} />
+                          <span>{evt.likes_count || 0}</span>
+                        </button>
+
+                        {/* Comment Button */}
+                        <button
+                          type="button"
+                          onClick={() => setCommentingEvent(evt)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl hover:bg-slate-100 hover:text-sky-700 transition-all text-slate-600 active:scale-95 group/comment"
+                          title="View & Add Comments"
+                        >
+                          <MessageCircle className="w-4 h-4 transition-transform group-hover/comment:scale-110 text-slate-500 group-hover/comment:text-sky-600" />
+                          <span>{evt.comments_count || 0}</span>
+                          <span className="hidden sm:inline text-[11px] font-normal text-slate-400">Comments</span>
+                        </button>
+
+                        {/* Share Button */}
+                        <button
+                          type="button"
+                          onClick={() => setSharingEvent(evt)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl hover:bg-slate-100 hover:text-emerald-700 transition-all text-slate-600 active:scale-95 group/share"
+                          title="Share Event Link & Socials"
+                        >
+                          <Share2 className="w-4 h-4 transition-transform group-hover/share:scale-110 text-slate-500 group-hover/share:text-emerald-600" />
+                          <span className="text-[11px]">Share</span>
+                        </button>
+                      </div>
+
                       {/* Join / Status Action */}
-                      <div className="pt-4 border-t border-slate-100">
+                      <div className="pt-2">
                         {isRegistered ? (
                           <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-bold flex items-center justify-between">
                             <span className="flex items-center gap-1.5">
@@ -270,12 +391,16 @@ export default function Events() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {combinedPastPrograms.map(item => (
-              <div key={item.id} className="bg-white border border-slate-200 rounded-3xl overflow-hidden flex flex-col justify-between shadow-sm hover:shadow-md transition-all">
-                
+              <div 
+                key={item.id} 
+                id={`event-card-${item.id}`}
+                className="bg-white border border-slate-200 rounded-3xl overflow-hidden flex flex-col justify-between shadow-sm hover:shadow-md transition-all group"
+              >
+
                 <div>
                   {/* Banner with Outcome Badge */}
                   <div className="relative h-44 overflow-hidden">
-                    <img src={item.banner_url} alt={item.title} className="w-full h-full object-cover filter grayscale-[25%]" />
+                    <img src={item.banner_url} alt={item.title} className="w-full h-full object-cover filter grayscale-[20%] group-hover:scale-105 transition-transform duration-500" />
                     <div className="absolute top-3 left-3 px-3 py-1 rounded-full bg-slate-900/90 text-white text-[10px] font-extrabold uppercase tracking-wider">
                       {item.event_type}
                     </div>
@@ -286,8 +411,8 @@ export default function Events() {
 
                   {/* Details */}
                   <div className="p-6 space-y-3">
-                    <h3 className="font-bold text-base text-slate-900 leading-snug">{item.title}</h3>
-                    
+                    <h3 className="font-bold text-base text-slate-900 leading-snug group-hover:text-sky-800 transition-colors">{item.title}</h3>
+
                     <div className="space-y-1.5 text-xs text-slate-500 font-medium pt-1">
                       <div className="flex items-center gap-2">
                         <Calendar className="w-4 h-4 text-slate-400 shrink-0" />
@@ -299,17 +424,57 @@ export default function Events() {
                       </div>
                       <div className="flex items-center gap-2 text-sky-800 font-semibold">
                         <Users className="w-4 h-4 text-sky-600 shrink-0" />
-                        <span>Outcome Attendance: {item.attendance}</span>
+                        <span>Outcome Attendance: {item.attendance || `${item.registered_count || 450} Delegates`}</span>
                       </div>
                     </div>
 
                     <p className="text-xs text-slate-600 bg-slate-50 p-3 rounded-2xl border border-slate-200 leading-relaxed font-medium mt-2">
-                      <strong>Resolution:</strong> {item.resolution}
+                      <strong>Resolution:</strong> {item.resolution || item.description}
                     </p>
                   </div>
                 </div>
 
-                <div className="p-6 pt-0">
+                <div className="p-6 pt-0 space-y-3">
+                  {/* Social Interaction Bar */}
+                  <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold">
+                    <button
+                      type="button"
+                      onClick={() => handleToggleLike(item)}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all active:scale-95 group/like ${
+                        item.is_liked
+                          ? 'bg-rose-50 text-rose-600 font-bold border border-rose-200 shadow-sm'
+                          : 'hover:bg-slate-100 text-slate-600 hover:text-rose-600'
+                      }`}
+                      title={item.is_liked ? "Unlike" : "Like"}
+                    >
+                      <Heart className={`w-4 h-4 transition-all duration-300 group-hover/like:scale-125 ${
+                        item.is_liked ? 'fill-rose-500 text-rose-500 scale-110' : ''
+                      }`} />
+                      <span>{item.likes_count || 0}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setCommentingEvent(item)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl hover:bg-slate-100 hover:text-sky-700 transition-all text-slate-600 active:scale-95 group/comment"
+                      title="Comments & Resolutions"
+                    >
+                      <MessageCircle className="w-4 h-4 transition-transform group-hover/comment:scale-110 text-slate-500 group-hover/comment:text-sky-600" />
+                      <span>{item.comments_count || 0}</span>
+                      <span className="hidden sm:inline text-[11px] font-normal text-slate-400">Comments</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setSharingEvent(item)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl hover:bg-slate-100 hover:text-emerald-700 transition-all text-slate-600 active:scale-95 group/share"
+                      title="Share Archived Report"
+                    >
+                      <Share2 className="w-4 h-4 transition-transform group-hover/share:scale-110 text-slate-500 group-hover/share:text-emerald-600" />
+                      <span className="text-[11px]">Share</span>
+                    </button>
+                  </div>
+
                   <div className="p-3 rounded-xl bg-slate-100 text-slate-600 text-[11px] font-bold text-center flex items-center justify-center gap-1">
                     <Award className="w-3.5 h-3.5 text-sky-600" />
                     <span>Official Archived Program Report</span>
@@ -415,6 +580,38 @@ export default function Events() {
               </button>
             </form>
           </div>
+        </div>
+      )}
+
+      {/* Comments Drawer / Modal */}
+      <EventCommentsModal
+        isOpen={Boolean(commentingEvent)}
+        onClose={() => setCommentingEvent(null)}
+        event={commentingEvent}
+        currentUser={user}
+        onCommentCountUpdate={handleCommentCountUpdate}
+      />
+
+      {/* Social Share Modal */}
+      <EventShareModal
+        isOpen={Boolean(sharingEvent)}
+        onClose={() => setSharingEvent(null)}
+        event={sharingEvent}
+      />
+
+      {/* Floating Action Toast Notification */}
+      {toast && (
+        <div className="fixed bottom-6 right-6 z-50 max-w-sm bg-slate-900 text-white rounded-2xl p-4 shadow-2xl border border-slate-700 flex items-center justify-between gap-3 animate-in slide-in-from-bottom-5">
+          <p className="text-xs font-medium text-slate-200">{toast.message}</p>
+          {toast.actionLink && (
+            <Link
+              to={toast.actionLink}
+              className="px-3 py-1 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold shrink-0 transition-colors shadow-sm"
+            >
+              {toast.actionText}
+            </Link>
+          )}
+          <button onClick={() => setToast(null)} className="text-slate-400 hover:text-white text-xs p-1">✕</button>
         </div>
       )}
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LogIn, Shield, KeyRound, Mail, AlertCircle, ArrowRight, UserCheck, ShieldCheck, Lock } from 'lucide-react';
+import { LogIn, Shield, KeyRound, Mail, AlertCircle, ArrowRight, UserCheck, ShieldCheck, Lock, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 
@@ -13,8 +13,10 @@ export default function Login({ defaultAdmin = false }) {
 
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -31,7 +33,11 @@ export default function Login({ defaultAdmin = false }) {
         }
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Invalid login credentials. Please check your Admin ID/Email and password.');
+      if (!err.response) {
+        setError('Cannot reach API backend server. Please verify the backend server is running on port 5000.');
+      } else {
+        setError(err.response?.data?.message || 'Invalid login credentials. Please check your credentials and password.');
+      }
     } finally {
       setLoading(false);
     }
@@ -90,13 +96,13 @@ export default function Login({ defaultAdmin = false }) {
           </button>
         </div>
 
+
         {error && (
-          <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-red-800 text-xs flex items-center gap-2 font-semibold animate-pulse">
+          <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-red-800 text-xs flex items-center gap-2 font-semibold">
             <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
             <span>{error}</span>
           </div>
         )}
-
 
         {/* Login Form */}
         <form onSubmit={handleLogin} className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 space-y-5 shadow-md">
@@ -128,13 +134,20 @@ export default function Login({ defaultAdmin = false }) {
             <div className="relative">
               <KeyRound className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 required
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-300 rounded-xl pl-10 pr-4 py-3 text-xs text-slate-900 focus:outline-none focus:border-sky-500 font-medium"
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl pl-10 pr-10 py-3 text-xs text-slate-900 focus:outline-none focus:border-sky-500 font-medium"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3.5 top-3.5 text-slate-400 hover:text-slate-600 focus:outline-none"
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
             </div>
           </div>
 
@@ -170,4 +183,3 @@ export default function Login({ defaultAdmin = false }) {
     </div>
   );
 }
-
