@@ -1,7 +1,7 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { inMemoryStore } from '../config/db.js';
+import { inMemoryStore, query } from '../config/db.js';
 import { authenticateToken } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
@@ -114,23 +114,93 @@ router.post('/login', async (req, res, next) => {
 });
 
 // Get authenticated user details
-router.get('/me', authenticateToken, (req, res) => {
-  const user = inMemoryStore.users.find(u => u.id === req.user.id);
-  if (!user) {
-    return res.status(404).json({ success: false, message: 'User profile not found.' });
-  }
+router.get('/me', authenticateToken, async (req, res) => {
+  try {
+    let user = inMemoryStore.users.find(u => u.id === req.user.id);
 
-  res.json({
-    success: true,
-    user: {
-      id: user.id,
-      email: user.email,
-      role: user.role,
-      status: user.status,
-      member_id: user.member_id,
-      profile: user.profile
+    // Fetch latest profile from PostgreSQL if available
+    try {
+      const dbRes = await query(`
+        SELECT u.id, u.email, u.role, u.status, u.member_id,
+               p.id as profile_id, p.full_name, p.father_husband_name, p.dob, p.gender,
+               p.avatar_url, p.phone, p.whatsapp, p.address, p.city, p.district, p.state,
+               p.pin_code, p.occupation, p.company, p.designation, p.circle,
+               p.union_designation, p.bio, p.emergency_contact, p.joining_date,
+               p.is_public, p.contact_privacy
+        FROM users u
+        LEFT JOIN member_profiles p ON u.id = p.user_id
+        WHERE u.id = $1
+      `, [req.user.id]);
+
+      if (dbRes && dbRes.rows && dbRes.rows.length > 0) {
+        const r = dbRes.rows[0];
+        const profileObj = {
+          id: r.profile_id || r.id,
+          user_id: r.id,
+          full_name: r.full_name,
+          father_husband_name: r.father_husband_name,
+          dob: r.dob,
+          gender: r.gender,
+          avatar_url: r.avatar_url,
+          phone: r.phone,
+          whatsapp: r.whatsapp,
+          address: r.address,
+          city: r.city,
+          district: r.district,
+          state: r.state,
+          pin_code: r.pin_code,
+          occupation: r.occupation,
+          company: r.company,
+          designation: r.designation,
+          circle: r.circle,
+          union_designation: r.union_designation,
+          bio: r.bio,
+          emergency_contact: r.emergency_contact,
+          joining_date: r.joining_date,
+          is_public: r.is_public,
+          contact_privacy: r.contact_privacy
+        };
+
+        if (user) {
+          user.email = r.email;
+          user.role = r.role;
+          user.status = r.status;
+          user.member_id = r.member_id;
+          user.profile = profileObj;
+        } else {
+          user = {
+            id: r.id,
+            email: r.email,
+            role: r.role,
+            status: r.status,
+            member_id: r.member_id,
+            profile: profileObj
+          };
+          inMemoryStore.users.push(user);
+        }
+      }
+    } catch (pgErr) {
+      console.warn('⚠️ /auth/me fallback to in-memory store:', pgErr.message);
     }
-  });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User profile not found.' });
+    }
+
+    res.json({
+      success: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        status: user.status,
+        member_id: user.member_id,
+        profile: user.profile
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to fetch user profile.' });
+  }
 });
 
 export default router;

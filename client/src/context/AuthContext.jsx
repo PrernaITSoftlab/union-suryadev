@@ -4,9 +4,17 @@ import api from '../services/api';
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  // Pre-hydrate user immediately from localStorage to prevent any avatar flicker on refresh
+  const [user, setUser] = useState(() => {
+    try {
+      const cached = localStorage.getItem('union_user');
+      return cached ? JSON.parse(cached) : null;
+    } catch (e) {
+      return null;
+    }
+  });
   const [settings, setSettings] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!user);
 
   // Fetch settings & authenticate user on initial load
   useEffect(() => {
@@ -22,20 +30,30 @@ export const AuthProvider = ({ children }) => {
 
       const token = localStorage.getItem('union_token');
       if (!token) {
+        setUser(null);
+        localStorage.removeItem('union_user');
         setLoading(false);
         return;
       }
 
       try {
         const res = await api.get('/auth/me');
-        if (res.data.success) {
+        if (res.data.success && res.data.user) {
           setUser(res.data.user);
+          localStorage.setItem('union_user', JSON.stringify(res.data.user));
         } else {
           localStorage.removeItem('union_token');
+          localStorage.removeItem('union_user');
+          setUser(null);
         }
       } catch (err) {
         console.error('Auth verification failed:', err);
-        localStorage.removeItem('union_token');
+        // Only clear if 401 unauthorized
+        if (err.response?.status === 401) {
+          localStorage.removeItem('union_token');
+          localStorage.removeItem('union_user');
+          setUser(null);
+        }
       } finally {
         setLoading(false);
       }
@@ -48,6 +66,7 @@ export const AuthProvider = ({ children }) => {
     const res = await api.post('/auth/login', { email, password });
     if (res.data.success) {
       localStorage.setItem('union_token', res.data.token);
+      localStorage.setItem('union_user', JSON.stringify(res.data.user));
       setUser(res.data.user);
     }
     return res.data;
@@ -55,16 +74,68 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     localStorage.removeItem('union_token');
+    localStorage.removeItem('union_user');
     setUser(null);
   };
 
   const updateProfile = async (profileData) => {
     const res = await api.put('/members/profile/update', profileData);
     if (res.data.success) {
-      setUser(prev => ({
-        ...prev,
-        profile: res.data.profile
-      }));
+      setUser(prev => {
+        const updated = {
+          ...prev,
+          profile: res.data.profile,
+          ...(res.data.user || {})
+        };
+        localStorage.setItem('union_user', JSON.stringify(updated));
+        return updated;
+      });
+    }
+    return res.data;
+  };
+
+  const updateProfilePhoto = async (avatarUrl, targetUserId = null) => {
+    const res = await api.put('/members/profile/photo', {
+      avatar_url: avatarUrl,
+      target_user_id: targetUserId
+    });
+    if (res.data.success) {
+      // If updating own profile
+      if (!targetUserId || (user && user.id === Number(targetUserId))) {
+        setUser(prev => {
+          const updated = {
+            ...prev,
+            profile: {
+              ...(prev?.profile || {}),
+              avatar_url: res.data.avatar_url
+            }
+          };
+          localStorage.setItem('union_user', JSON.stringify(updated));
+          return updated;
+        });
+      }
+    }
+    return res.data;
+  };
+
+  const resetProfilePhoto = async (targetUserId = null) => {
+    const res = await api.delete('/members/profile/photo', {
+      data: { target_user_id: targetUserId }
+    });
+    if (res.data.success) {
+      if (!targetUserId || (user && user.id === Number(targetUserId))) {
+        setUser(prev => {
+          const updated = {
+            ...prev,
+            profile: {
+              ...(prev?.profile || {}),
+              avatar_url: res.data.avatar_url
+            }
+          };
+          localStorage.setItem('union_user', JSON.stringify(updated));
+          return updated;
+        });
+      }
     }
     return res.data;
   };
@@ -88,6 +159,8 @@ export const AuthProvider = ({ children }) => {
       login,
       logout,
       updateProfile,
+      updateProfilePhoto,
+      resetProfilePhoto,
       switchDemoUser,
       isAdmin: user?.role === 'admin'
     }}>

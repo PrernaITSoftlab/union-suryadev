@@ -65,6 +65,8 @@ function AppContent() {
 
           {/* Member Protected Dashboard Route */}
           <Route path="/dashboard/*" element={<ProtectedMemberRoute><UserDashboard /></ProtectedMemberRoute>} />
+          <Route path="/profile" element={<ProtectedMemberRoute><UserDashboard /></ProtectedMemberRoute>} />
+          <Route path="/profile/edit" element={<ProtectedMemberRoute><UserDashboard /></ProtectedMemberRoute>} />
 
           {/* Admin Protected Dashboard Route */}
           <Route path="/admin/*" element={<ProtectedAdminRoute><AdminDashboard /></ProtectedAdminRoute>} />

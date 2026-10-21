@@ -420,14 +420,24 @@ export default function Navbar() {
                           </>
                         )}
                         {isAdmin && (
-                          <Link
-                            to="/admin/settings"
-                            onClick={() => setUserDropdownOpen(false)}
-                            className="px-4 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-sky-700 flex items-center gap-2"
-                          >
-                            <Settings className="w-4 h-4" />
-                            <span>{t('System Settings')}</span>
-                          </Link>
+                          <>
+                            <Link
+                              to="/admin/dashboard"
+                              onClick={() => setUserDropdownOpen(false)}
+                              className="px-4 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-sky-700 flex items-center gap-2"
+                            >
+                              <User className="w-4 h-4 text-amber-600" />
+                              <span>{t('Admin Profile & Photo')}</span>
+                            </Link>
+                            <Link
+                              to="/admin/settings"
+                              onClick={() => setUserDropdownOpen(false)}
+                              className="px-4 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-sky-700 flex items-center gap-2"
+                            >
+                              <Settings className="w-4 h-4" />
+                              <span>{t('System Settings')}</span>
+                            </Link>
+                          </>
                         )}
                       </div>
 
@@ -556,25 +566,50 @@ export default function Navbar() {
           </Link>
 
           {user ? (
-            <>
+            <div className="pt-2 space-y-2 border-t border-slate-200 mt-2">
+              <div className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-200">
+                <img
+                  src={user.profile?.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=400&q=80'}
+                  alt="Avatar"
+                  className="w-10 h-10 rounded-xl object-cover border-2 border-amber-500 shadow-sm shrink-0"
+                />
+                <div className="text-left overflow-hidden">
+                  <span className="text-sm font-extrabold text-slate-900 block truncate">
+                    {user.profile?.full_name || 'Member'}
+                  </span>
+                  <span className="text-xs text-amber-800 font-bold block">
+                    {isAdmin ? 'UNION SUPER ADMIN' : (user.member_id || 'MEMBER')}
+                  </span>
+                </div>
+              </div>
+
               <Link
                 to={isAdmin ? '/admin/dashboard' : '/dashboard'}
                 onClick={() => setMobileMenuOpen(false)}
-                className="block px-3 py-2 rounded-lg text-base font-bold text-sky-700 bg-sky-50"
+                className="block px-3.5 py-2.5 rounded-xl text-sm font-bold text-sky-800 bg-sky-50 border border-sky-200"
               >
-                {isAdmin ? t('Admin Portal') : t('Member Dashboard')}
+                {isAdmin ? t('Admin Portal Hub') : t('Member Dashboard')}
               </Link>
+
+              <Link
+                to={isAdmin ? '/admin/dashboard' : '/dashboard/profile'}
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-100"
+              >
+                {isAdmin ? t('Admin Profile & Photo') : t('Edit Profile & ID Card')}
+              </Link>
+
               <button
                 onClick={() => {
                   setMobileMenuOpen(false);
                   logout();
                   navigate('/');
                 }}
-                className="w-full text-left px-3 py-2 rounded-lg text-base font-semibold text-red-600 hover:bg-red-50"
+                className="w-full text-left px-3.5 py-2.5 rounded-xl text-sm font-semibold text-red-600 hover:bg-red-50"
               >
                 {t('Sign Out')}
               </button>
-            </>
+            </div>
           ) : (
             <div className="pt-2 flex flex-col gap-2">
               <Link

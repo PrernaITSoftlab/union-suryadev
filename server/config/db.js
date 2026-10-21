@@ -1,5 +1,8 @@
 import pg from 'pg';
 import dotenv from 'dotenv';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import {
   INITIAL_SYSTEM_SETTINGS,
   INITIAL_USERS,
@@ -16,7 +19,11 @@ import {
   INITIAL_EVENT_COMMENTS
 } from '../db/seedData.js';
 
-dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.join(__dirname, '../.env') });
+
+const USERS_BACKUP_FILE = path.join(__dirname, '../db/users_backup.json');
 
 const { Pool } = pg;
 
@@ -52,6 +59,34 @@ export const inMemoryStore = {
   ]
 };
 
+// Save users to local persistent storage (users_backup.json)
+export const saveUsersBackup = () => {
+  try {
+    fs.writeFileSync(USERS_BACKUP_FILE, JSON.stringify(inMemoryStore.users, null, 2), 'utf-8');
+  } catch (err) {
+    console.warn('⚠️ Could not save users_backup.json:', err.message);
+  }
+};
+
+// Load users from local persistent storage on startup
+export const loadUsersBackup = () => {
+  try {
+    if (fs.existsSync(USERS_BACKUP_FILE)) {
+      const data = fs.readFileSync(USERS_BACKUP_FILE, 'utf-8');
+      const parsed = JSON.parse(data);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        inMemoryStore.users = parsed;
+        console.log(`📁 Loaded ${parsed.length} users with photos from disk storage (users_backup.json).`);
+      }
+    }
+  } catch (err) {
+    console.warn('⚠️ Could not read users_backup.json:', err.message);
+  }
+};
+
+// Pre-load from disk backup if present
+loadUsersBackup();
+
 if (process.env.DATABASE_URL) {
   try {
     pool = new Pool({
@@ -59,13 +94,69 @@ if (process.env.DATABASE_URL) {
       ssl: process.env.DATABASE_URL.includes('localhost') ? false : { rejectUnauthorized: false }
     });
 
-    pool.connect((err, client, release) => {
+    pool.connect(async (err, client, release) => {
       if (err) {
         console.warn('⚠️ PostgreSQL connection unconfigured. Running seamlessly with local in-memory DB store.');
         isPgConnected = false;
       } else {
         isPgConnected = true;
         console.log('✅ Connected to PostgreSQL Database successfully.');
+
+        // Hydrate from PostgreSQL Database so profile photos and updates persist across server/page restarts
+        try {
+          const dbUsers = await client.query(`
+            SELECT u.id, u.email, u.password_hash, u.role, u.status, u.member_id,
+                   p.id as profile_id, p.full_name, p.father_husband_name, p.dob, p.gender,
+                   p.avatar_url, p.phone, p.whatsapp, p.address, p.city, p.district, p.state,
+                   p.pin_code, p.occupation, p.company, p.designation, p.circle,
+                   p.union_designation, p.bio, p.emergency_contact, p.joining_date,
+                   p.is_public, p.contact_privacy
+            FROM users u
+            LEFT JOIN member_profiles p ON u.id = p.user_id
+            ORDER BY u.id ASC
+          `);
+          if (dbUsers.rows.length > 0) {
+            inMemoryStore.users = dbUsers.rows.map(r => ({
+              id: r.id,
+              email: r.email,
+              password_hash: r.password_hash,
+              role: r.role,
+              status: r.status,
+              member_id: r.member_id,
+              profile: {
+                id: r.profile_id || r.id,
+                user_id: r.id,
+                full_name: r.full_name,
+                father_husband_name: r.father_husband_name,
+                dob: r.dob,
+                gender: r.gender,
+                avatar_url: r.avatar_url,
+                phone: r.phone,
+                whatsapp: r.whatsapp,
+                address: r.address,
+                city: r.city,
+                district: r.district,
+                state: r.state,
+                pin_code: r.pin_code,
+                occupation: r.occupation,
+                company: r.company,
+                designation: r.designation,
+                circle: r.circle,
+                union_designation: r.union_designation,
+                bio: r.bio,
+                emergency_contact: r.emergency_contact,
+                joining_date: r.joining_date,
+                is_public: r.is_public,
+                contact_privacy: r.contact_privacy
+              }
+            }));
+            saveUsersBackup();
+            console.log(`✅ Loaded ${inMemoryStore.users.length} users with updated profiles from PostgreSQL.`);
+          }
+        } catch (dbErr) {
+          console.warn('⚠️ Could not hydrate from DB:', dbErr.message);
+        }
+
         release();
       }
     });
@@ -78,9 +169,11 @@ if (process.env.DATABASE_URL) {
 }
 
 export const query = async (text, params) => {
-  if (isPgConnected && pool) {
+  if (pool) {
     try {
-      return await pool.query(text, params);
+      const res = await pool.query(text, params);
+      isPgConnected = true;
+      return res;
     } catch (err) {
       console.error('Database Query Error:', err.message);
       throw err;

@@ -1,15 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
-import { 
-  LayoutDashboard, UserCheck, Users, Calendar, CreditCard, AlertTriangle, FileText, 
-  Send, PhoneCall, Settings, CheckCircle2, XCircle, Eye, UserPlus, Check, X, Search, 
+import {
+  LayoutDashboard, UserCheck, Users, Calendar, CreditCard, AlertTriangle, FileText,
+  Send, PhoneCall, Settings, CheckCircle2, XCircle, Eye, UserPlus, Check, X, Search,
   Filter, Sparkles, RefreshCw, ChevronRight, Edit3, ShieldAlert, Award, Download,
-  Camera, UploadCloud, Trash2, Plus, ExternalLink, Image as ImageIcon
+  Camera, UploadCloud, Trash2, Plus, ExternalLink, Image as ImageIcon, User
 } from 'lucide-react';
+import ProfilePhotoUploader from '../components/ProfilePhotoUploader';
+import ProfilePhotoModal from '../components/ProfilePhotoModal';
 
 export default function AdminDashboard() {
-  const { user, settings } = useAuth();
+  const { user, settings, updateProfile, updateProfilePhoto } = useAuth();
   const [activeModule, setActiveModule] = useState('analytics');
 
   // State data
@@ -24,7 +26,7 @@ export default function AdminDashboard() {
   const [stories, setStories] = useState([]);
   const [contactRequests, setContactRequests] = useState([]);
   const [systemSettingsForm, setSystemSettingsForm] = useState(settings || {});
-  
+
   // Notices / Orders & Photos state
   const [ordersList, setOrdersList] = useState([]);
   const [photosList, setPhotosList] = useState([]);
@@ -82,6 +84,61 @@ export default function AdminDashboard() {
   });
 
   const [feedback, setFeedback] = useState(null);
+
+  // Admin Profile & Photo States
+  const [adminPhotoModalOpen, setAdminPhotoModalOpen] = useState(false);
+  const [editAdminProfileModalOpen, setEditAdminProfileModalOpen] = useState(false);
+  const [adminProfileForm, setAdminProfileForm] = useState({
+    full_name: user?.profile?.full_name || '',
+    phone: user?.profile?.phone || '',
+    whatsapp: user?.profile?.whatsapp || '',
+    city: user?.profile?.city || '',
+    address: user?.profile?.address || '',
+    bio: user?.profile?.bio || '',
+    avatar_url: user?.profile?.avatar_url || ''
+  });
+
+  // Sync admin profile form with user
+  useEffect(() => {
+    if (user?.profile) {
+      setAdminProfileForm({
+        full_name: user.profile.full_name || '',
+        phone: user.profile.phone || '',
+        whatsapp: user.profile.whatsapp || '',
+        city: user.profile.city || '',
+        address: user.profile.address || '',
+        bio: user.profile.bio || '',
+        avatar_url: user.profile.avatar_url || ''
+      });
+    }
+  }, [user]);
+
+  const handleAdminProfileSubmit = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    try {
+      const res = await updateProfile(adminProfileForm);
+      if (res.success) {
+        setFeedback({ success: 'Admin profile and photo updated successfully!' });
+        setEditAdminProfileModalOpen(false);
+        setTimeout(() => setFeedback(null), 4000);
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to update admin profile.');
+    }
+  };
+
+  const handleAdminPhotoSave = async (newPhotoUrl) => {
+    try {
+      const res = await updateProfilePhoto(newPhotoUrl);
+      if (res.success) {
+        setAdminProfileForm(prev => ({ ...prev, avatar_url: newPhotoUrl }));
+        setFeedback({ success: 'Admin profile photo updated successfully!' });
+        setTimeout(() => setFeedback(null), 4000);
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to update admin profile photo.');
+    }
+  };
 
   useEffect(() => {
     fetchModuleData();
@@ -474,12 +531,24 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-        
+
         {/* Admin Header */}
         <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
           <div className="flex items-center gap-4 text-center sm:text-left">
-            <div className="w-14 h-14 rounded-2xl bg-amber-100 border border-amber-300 flex items-center justify-center text-amber-700">
-              <ShieldAlert className="w-8 h-8" />
+            <div className="relative group shrink-0">
+              <img
+                src={user?.profile?.avatar_url || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=400&q=80'}
+                alt="Admin Avatar"
+                className="w-16 h-16 rounded-2xl object-cover border-2 border-red-500 shadow-md group-hover:brightness-95 transition-all"
+              />
+              <button
+                type="button"
+                onClick={() => setAdminPhotoModalOpen(true)}
+                className="absolute -bottom-1 -right-1 p-1.5 bg-red-600 hover:bg-red-500 text-white rounded-xl shadow-md border-2 border-white transition-all transform hover:scale-110 active:scale-95"
+                title="Upload / Change Admin Photo"
+              >
+                <Camera className="w-3.5 h-3.5" />
+              </button>
             </div>
             <div>
               <div className="flex items-center justify-center sm:justify-start gap-2">
@@ -493,6 +562,13 @@ export default function AdminDashboard() {
           </div>
 
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => setEditAdminProfileModalOpen(true)}
+              className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold flex items-center gap-2 shadow-sm transition-all"
+            >
+              <Edit3 className="w-4 h-4" />
+              <span>Edit Profile</span>
+            </button>
             <button
               onClick={fetchModuleData}
               className="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors border border-slate-300"
@@ -514,6 +590,7 @@ export default function AdminDashboard() {
         <div className="flex flex-wrap items-center gap-2 pb-3 border-b border-slate-200">
           {[
             { id: 'analytics', label: 'Analytics Hub', icon: LayoutDashboard },
+            { id: 'admin_profile', label: 'Admin Profile & Photo', icon: User },
             { id: 'orders', label: 'Notices & Circulars (PDF)', icon: FileText },
             { id: 'photos', label: 'Photo Gallery', icon: Camera },
             { id: 'pending_approvals', label: 'Pending Member Approvals', icon: UserCheck },
@@ -532,11 +609,10 @@ export default function AdminDashboard() {
               <button
                 key={tab.id}
                 onClick={() => { setActiveModule(tab.id); setStatusFilter('all'); }}
-                className={`px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
-                  active 
-                    ? 'bg-amber-500 text-slate-950 shadow-sm ring-1 ring-amber-600/20' 
+                className={`px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${active
+                    ? 'bg-amber-500 text-slate-950 shadow-sm ring-1 ring-amber-600/20'
                     : 'bg-white border border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-50'
-                }`}
+                  }`}
               >
                 <Icon className="w-4 h-4 shrink-0" />
                 <span>{tab.label}</span>
@@ -549,6 +625,109 @@ export default function AdminDashboard() {
           <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2 font-bold">
             <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
             <span>{feedback.success}</span>
+          </div>
+        )}
+
+        {/* MODULE: ADMIN PROFILE & PHOTO */}
+        {activeModule === 'admin_profile' && (
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-10 space-y-8 shadow-sm">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div>
+                <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                  <User className="w-5 h-5 text-amber-600" />
+                  <span>Admin Profile & Official Photo</span>
+                </h2>
+                <p className="text-xs text-slate-500 font-medium">Manage administrator credentials, contact information, and upload official display photo</p>
+              </div>
+              <span className="px-3 py-1 rounded-full bg-red-100 text-red-800 border border-red-300 text-xs font-extrabold uppercase">
+                SUPER ADMIN
+              </span>
+            </div>
+
+            <form onSubmit={handleAdminProfileSubmit} className="space-y-6">
+              {/* Profile Photo Uploader with Device File Upload & Presets */}
+              <ProfilePhotoUploader
+                currentPhoto={adminProfileForm.avatar_url}
+                onChange={(newPhoto) => setAdminProfileForm(prev => ({ ...prev, avatar_url: newPhoto }))}
+                onInstantSave={handleAdminPhotoSave}
+                showInstantSaveButton={true}
+              />
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Admin Full Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={adminProfileForm.full_name}
+                    onChange={(e) => setAdminProfileForm({ ...adminProfileForm, full_name: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Official Mobile Phone</label>
+                  <input
+                    type="text"
+                    value={adminProfileForm.phone}
+                    onChange={(e) => setAdminProfileForm({ ...adminProfileForm, phone: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-amber-500 font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">WhatsApp Communication Number</label>
+                  <input
+                    type="text"
+                    value={adminProfileForm.whatsapp}
+                    onChange={(e) => setAdminProfileForm({ ...adminProfileForm, whatsapp: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-amber-500 font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">City / Head Office Location</label>
+                  <input
+                    type="text"
+                    value={adminProfileForm.city}
+                    onChange={(e) => setAdminProfileForm({ ...adminProfileForm, city: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Office Address</label>
+                <input
+                  type="text"
+                  value={adminProfileForm.address}
+                  onChange={(e) => setAdminProfileForm({ ...adminProfileForm, address: e.target.value })}
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-amber-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Admin Bio & Leadership Summary</label>
+                <textarea
+                  rows={3}
+                  value={adminProfileForm.bio}
+                  onChange={(e) => setAdminProfileForm({ ...adminProfileForm, bio: e.target.value })}
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-xs text-slate-900 focus:outline-none focus:border-amber-500"
+                />
+              </div>
+
+              <div className="flex items-center gap-3 pt-2">
+                <button
+                  type="submit"
+                  className="px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-md transition-all flex items-center gap-2"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>Save Admin Profile & Photo</span>
+                </button>
+              </div>
+            </form>
           </div>
         )}
 
@@ -591,7 +770,7 @@ export default function AdminDashboard() {
                           </span>
                           <span className="text-xs font-mono font-bold text-slate-400">{item.id}</span>
                         </div>
-                        <a 
+                        <a
                           href={item.doc_url}
                           target="_blank"
                           rel="noopener noreferrer"
@@ -734,7 +913,7 @@ export default function AdminDashboard() {
         {activeModule === 'analytics' && analytics && (
           <div className="space-y-8">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div 
+              <div
                 onClick={() => setActiveModule('pending_approvals')}
                 className="p-6 rounded-3xl bg-amber-50 border border-amber-300 hover:border-amber-500 space-y-2 shadow-sm cursor-pointer transition-all group"
               >
@@ -839,9 +1018,9 @@ export default function AdminDashboard() {
                           <td className="p-4">
                             <div className="flex items-center gap-2">
                               {app.payment_proof_url ? (
-                                <img 
-                                  src={app.payment_proof_url} 
-                                  alt="Receipt Screenshot" 
+                                <img
+                                  src={app.payment_proof_url}
+                                  alt="Receipt Screenshot"
                                   onClick={() => setViewReceiptModal({
                                     id: app.id,
                                     applicantName: app.full_name,
@@ -853,7 +1032,7 @@ export default function AdminDashboard() {
                                     appId: app.id,
                                     isApp: true
                                   })}
-                                  className="w-10 h-10 object-cover rounded-lg border border-slate-200 cursor-pointer hover:scale-105 transition-transform shrink-0 shadow-xs" 
+                                  className="w-10 h-10 object-cover rounded-lg border border-slate-200 cursor-pointer hover:scale-105 transition-transform shrink-0 shadow-xs"
                                 />
                               ) : null}
                               <div>
@@ -864,9 +1043,8 @@ export default function AdminDashboard() {
                           </td>
                           <td className="p-4 font-sans">
                             <div className="space-y-1.5">
-                              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase inline-block ${
-                                app.payment_status === 'VERIFIED' ? 'bg-emerald-100 text-emerald-900 border border-emerald-300' : 'bg-amber-100 text-amber-900 border border-amber-200'
-                              }`}>
+                              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase inline-block ${app.payment_status === 'VERIFIED' ? 'bg-emerald-100 text-emerald-900 border border-emerald-300' : 'bg-amber-100 text-amber-900 border border-amber-200'
+                                }`}>
                                 {app.payment_status}
                               </span>
                               {app.payment_proof_url ? (
@@ -926,9 +1104,8 @@ export default function AdminDashboard() {
                   <button
                     key={st}
                     onClick={() => setStatusFilter(st)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-colors ${
-                      statusFilter === st ? 'bg-amber-500 text-slate-950 shadow-sm' : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'
-                    }`}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-colors ${statusFilter === st ? 'bg-amber-500 text-slate-950 shadow-sm' : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'
+                      }`}
                   >
                     {st}
                   </button>
@@ -967,9 +1144,8 @@ export default function AdminDashboard() {
                             <div className="space-y-1">
                               <span className="text-sky-800 font-bold block">{app.transaction_id || 'N/A'}</span>
                               <div className="flex items-center gap-1.5 flex-wrap">
-                                <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase ${
-                                  app.payment_status === 'VERIFIED' ? 'bg-emerald-100 text-emerald-900 border border-emerald-300' : 'bg-amber-100 text-amber-900'
-                                }`}>
+                                <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase ${app.payment_status === 'VERIFIED' ? 'bg-emerald-100 text-emerald-900 border border-emerald-300' : 'bg-amber-100 text-amber-900'
+                                  }`}>
                                   {app.payment_status}
                                 </span>
                                 {app.payment_proof_url && (
@@ -995,10 +1171,9 @@ export default function AdminDashboard() {
                             </div>
                           </td>
                           <td className="p-4">
-                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${
-                              app.application_status === 'APPROVED' ? 'bg-emerald-100 text-emerald-900' :
-                              app.application_status === 'REJECTED' ? 'bg-red-100 text-red-900' : 'bg-amber-100 text-amber-900'
-                            }`}>
+                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${app.application_status === 'APPROVED' ? 'bg-emerald-100 text-emerald-900' :
+                                app.application_status === 'REJECTED' ? 'bg-red-100 text-red-900' : 'bg-amber-100 text-amber-900'
+                              }`}>
                               {app.application_status}
                             </span>
                           </td>
@@ -1044,9 +1219,8 @@ export default function AdminDashboard() {
                   <button
                     key={st}
                     onClick={() => setStatusFilter(st)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-colors ${
-                      statusFilter === st ? 'bg-amber-500 text-slate-950 shadow-sm' : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'
-                    }`}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase transition-colors ${statusFilter === st ? 'bg-amber-500 text-slate-950 shadow-sm' : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'
+                      }`}
                   >
                     {st}
                   </button>
@@ -1077,9 +1251,8 @@ export default function AdminDashboard() {
                         <td className="p-4 font-sans text-slate-700">{m.profile?.circle || 'Indore'}</td>
                         <td className="p-4 uppercase font-bold text-sky-800">{m.role}</td>
                         <td className="p-4">
-                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                            m.status === 'active' ? 'bg-emerald-100 text-emerald-900' : 'bg-red-100 text-red-900'
-                          }`}>
+                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${m.status === 'active' ? 'bg-emerald-100 text-emerald-900' : 'bg-red-100 text-red-900'
+                            }`}>
                             {m.status}
                           </span>
                         </td>
@@ -1230,15 +1403,13 @@ export default function AdminDashboard() {
                     <li key={announce.id} className="pt-4 first:pt-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div className="space-y-1.5 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
-                            announce.type === 'STRIKE' ? 'bg-red-100 text-red-900 border border-red-300' :
-                            announce.type === 'URGENT' ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-sky-100 text-sky-800'
-                          }`}>
+                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${announce.type === 'STRIKE' ? 'bg-red-100 text-red-900 border border-red-300' :
+                              announce.type === 'URGENT' ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-sky-100 text-sky-800'
+                            }`}>
                             {announce.type}
                           </span>
-                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
-                            announce.priority === 'CRITICAL' ? 'bg-purple-100 text-purple-900 border border-purple-300' : 'bg-slate-100 text-slate-700'
-                          }`}>
+                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${announce.priority === 'CRITICAL' ? 'bg-purple-100 text-purple-900 border border-purple-300' : 'bg-slate-100 text-slate-700'
+                            }`}>
                             Priority: {announce.priority}
                           </span>
                           {announce.is_popup && (
@@ -1347,11 +1518,11 @@ export default function AdminDashboard() {
                           {p.payment_proof_url ? (
                             <div className="flex items-center gap-2">
                               {p.payment_proof_url.startsWith('data:image') || p.payment_proof_url.includes('unsplash') || p.payment_proof_url.startsWith('http') ? (
-                                <img 
-                                  src={p.payment_proof_url} 
-                                  alt="Receipt Screenshot" 
+                                <img
+                                  src={p.payment_proof_url}
+                                  alt="Receipt Screenshot"
                                   onClick={() => setViewReceiptModal(p)}
-                                  className="w-10 h-10 object-cover rounded-lg border border-slate-200 cursor-pointer hover:scale-105 transition-transform shrink-0 shadow-xs" 
+                                  className="w-10 h-10 object-cover rounded-lg border border-slate-200 cursor-pointer hover:scale-105 transition-transform shrink-0 shadow-xs"
                                 />
                               ) : null}
                               <button
@@ -1367,11 +1538,10 @@ export default function AdminDashboard() {
                           )}
                         </td>
                         <td className="p-4 font-sans">
-                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase inline-block ${
-                            p.status === 'VERIFIED' ? 'bg-emerald-100 text-emerald-900 border border-emerald-200' :
-                            p.status === 'REJECTED' ? 'bg-red-100 text-red-900 border border-red-200' :
-                            'bg-amber-100 text-amber-900 border border-amber-200'
-                          }`}>
+                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase inline-block ${p.status === 'VERIFIED' ? 'bg-emerald-100 text-emerald-900 border border-emerald-200' :
+                              p.status === 'REJECTED' ? 'bg-red-100 text-red-900 border border-red-200' :
+                                'bg-amber-100 text-amber-900 border border-amber-200'
+                            }`}>
                             {p.status}
                           </span>
                         </td>
@@ -1645,7 +1815,7 @@ export default function AdminDashboard() {
                     accept="image/*"
                     className="hidden"
                   />
-                  <div 
+                  <div
                     onClick={() => eventBannerInputRef.current && eventBannerInputRef.current.click()}
                     className="flex flex-col items-center justify-center gap-1"
                   >
@@ -1776,7 +1946,7 @@ export default function AdminDashboard() {
                     accept=".pdf,image/*"
                     className="hidden"
                   />
-                  <div 
+                  <div
                     onClick={() => announceAttachmentInputRef.current && announceAttachmentInputRef.current.click()}
                     className="flex flex-col items-center justify-center gap-1"
                   >
@@ -1965,7 +2135,7 @@ export default function AdminDashboard() {
                     accept=".pdf"
                     className="hidden"
                   />
-                  <div 
+                  <div
                     onClick={() => pdfInputRef.current && pdfInputRef.current.click()}
                     className="flex flex-col items-center justify-center gap-1"
                   >
@@ -2084,7 +2254,7 @@ export default function AdminDashboard() {
                     accept="image/*"
                     className="hidden"
                   />
-                  <div 
+                  <div
                     onClick={() => photoInputRef.current && photoInputRef.current.click()}
                     className="flex flex-col items-center justify-center gap-1"
                   >
@@ -2145,8 +2315,8 @@ export default function AdminDashboard() {
                   <p className="text-xs text-slate-400 font-medium">Applicant: {viewReceiptModal.applicantName}</p>
                 </div>
               </div>
-              <button 
-                onClick={() => setViewReceiptModal(null)} 
+              <button
+                onClick={() => setViewReceiptModal(null)}
                 className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
               >
                 <X className="w-5 h-5" />
@@ -2171,11 +2341,10 @@ export default function AdminDashboard() {
                 </div>
                 <div>
                   <span className="text-slate-400 block font-medium">Status</span>
-                  <span className={`inline-block mt-0.5 px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
-                    viewReceiptModal.status === 'VERIFIED' ? 'bg-emerald-100 text-emerald-900 border border-emerald-200' :
-                    viewReceiptModal.status === 'REJECTED' ? 'bg-red-100 text-red-900 border border-red-200' :
-                    'bg-amber-100 text-amber-900 border border-amber-200'
-                  }`}>
+                  <span className={`inline-block mt-0.5 px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${viewReceiptModal.status === 'VERIFIED' ? 'bg-emerald-100 text-emerald-900 border border-emerald-200' :
+                      viewReceiptModal.status === 'REJECTED' ? 'bg-red-100 text-red-900 border border-red-200' :
+                        'bg-amber-100 text-amber-900 border border-amber-200'
+                    }`}>
                     {viewReceiptModal.status}
                   </span>
                 </div>
@@ -2189,9 +2358,9 @@ export default function AdminDashboard() {
                     <span>Uploaded Receipt Screenshot</span>
                   </h4>
                   {viewReceiptModal.payment_proof_url && (
-                    <a 
-                      href={viewReceiptModal.payment_proof_url} 
-                      target="_blank" 
+                    <a
+                      href={viewReceiptModal.payment_proof_url}
+                      target="_blank"
                       rel="noreferrer"
                       download="payment-receipt-screenshot"
                       className="text-xs font-bold text-sky-600 hover:text-sky-700 flex items-center gap-1 hover:underline"
@@ -2205,15 +2374,15 @@ export default function AdminDashboard() {
                 {viewReceiptModal.payment_proof_url ? (
                   <div className="bg-slate-900/5 rounded-xl p-2 flex items-center justify-center min-h-[240px] max-h-[420px] overflow-auto border border-slate-200">
                     {viewReceiptModal.payment_proof_url.startsWith('data:application/pdf') ? (
-                      <iframe 
-                        src={viewReceiptModal.payment_proof_url} 
-                        title="Receipt PDF" 
+                      <iframe
+                        src={viewReceiptModal.payment_proof_url}
+                        title="Receipt PDF"
                         className="w-full h-80 rounded-lg"
                       />
                     ) : (
-                      <img 
-                        src={viewReceiptModal.payment_proof_url} 
-                        alt="Uploaded Payment Receipt Screenshot" 
+                      <img
+                        src={viewReceiptModal.payment_proof_url}
+                        alt="Uploaded Payment Receipt Screenshot"
                         className="max-h-[380px] max-w-full rounded-lg object-contain border border-slate-200 shadow-md"
                       />
                     )}
@@ -2228,7 +2397,7 @@ export default function AdminDashboard() {
 
             {/* Modal Footer Actions */}
             <div className="p-4 sm:p-5 bg-white border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
-              <button 
+              <button
                 onClick={() => setViewReceiptModal(null)}
                 className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors"
               >
@@ -2310,6 +2479,129 @@ export default function AdminDashboard() {
           </form>
         </div>
       )}
+
+      {/* EDIT ADMIN PROFILE MODAL */}
+      {editAdminProfileModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-in fade-in">
+          <div className="bg-white border border-slate-200 rounded-3xl max-w-2xl w-full p-6 space-y-5 shadow-2xl animate-in zoom-in-95 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-amber-100 text-amber-700">
+                  <User className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-extrabold text-slate-900">Edit Administrator Profile</h3>
+                  <p className="text-xs text-slate-500 font-medium">Update admin profile details and official photograph</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setEditAdminProfileModalOpen(false)}
+                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleAdminProfileSubmit} className="space-y-5 text-xs">
+              <ProfilePhotoUploader
+                currentPhoto={adminProfileForm.avatar_url}
+                onChange={(newPhoto) => setAdminProfileForm(prev => ({ ...prev, avatar_url: newPhoto }))}
+              />
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-bold text-slate-800 mb-1">Full Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={adminProfileForm.full_name}
+                    onChange={(e) => setAdminProfileForm({ ...adminProfileForm, full_name: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-slate-900 font-medium"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-800 mb-1">Mobile Phone</label>
+                  <input
+                    type="text"
+                    value={adminProfileForm.phone}
+                    onChange={(e) => setAdminProfileForm({ ...adminProfileForm, phone: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-slate-900 font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-bold text-slate-800 mb-1">WhatsApp Communication</label>
+                  <input
+                    type="text"
+                    value={adminProfileForm.whatsapp}
+                    onChange={(e) => setAdminProfileForm({ ...adminProfileForm, whatsapp: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-slate-900 font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-800 mb-1">City Location</label>
+                  <input
+                    type="text"
+                    value={adminProfileForm.city}
+                    onChange={(e) => setAdminProfileForm({ ...adminProfileForm, city: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-slate-900 font-medium"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-800 mb-1">Office Address</label>
+                <input
+                  type="text"
+                  value={adminProfileForm.address}
+                  onChange={(e) => setAdminProfileForm({ ...adminProfileForm, address: e.target.value })}
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-slate-900 font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-800 mb-1">Leadership Bio</label>
+                <textarea
+                  rows={3}
+                  value={adminProfileForm.bio}
+                  onChange={(e) => setAdminProfileForm({ ...adminProfileForm, bio: e.target.value })}
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-slate-900 font-sans"
+                />
+              </div>
+
+              <div className="flex items-center gap-3 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setEditAdminProfileModalOpen(false)}
+                  className="flex-1 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold shadow-md"
+                >
+                  Save Profile Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Admin Quick Photo Modal */}
+      <ProfilePhotoModal
+        isOpen={adminPhotoModalOpen}
+        onClose={() => setAdminPhotoModalOpen(false)}
+        initialPhoto={user?.profile?.avatar_url || ''}
+        onSave={handleAdminPhotoSave}
+        title="Update Admin Profile Photo"
+        subtitle="Upload your photo from your device or choose an official portrait"
+      />
 
     </div>
   );

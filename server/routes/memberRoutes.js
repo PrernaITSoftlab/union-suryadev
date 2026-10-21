@@ -1,6 +1,6 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
-import { inMemoryStore } from '../config/db.js';
+import { inMemoryStore, query, saveUsersBackup } from '../config/db.js';
 import { authenticateToken, requireAdmin } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
@@ -50,7 +50,7 @@ router.get('/directory', authenticateToken, (req, res) => {
 
   if (search) {
     const q = search.toLowerCase();
-    activeUsers = activeUsers.filter(u => 
+    activeUsers = activeUsers.filter(u =>
       u.profile.full_name.toLowerCase().includes(q) ||
       (u.member_id && u.member_id.toLowerCase().includes(q)) ||
       (u.profile.company && u.profile.company.toLowerCase().includes(q)) ||
@@ -108,7 +108,7 @@ router.get('/admin/list', authenticateToken, requireAdmin, (req, res) => {
 
   if (search) {
     const q = search.toLowerCase();
-    members = members.filter(u => 
+    members = members.filter(u =>
       (u.email && u.email.toLowerCase().includes(q)) ||
       (u.member_id && u.member_id.toLowerCase().includes(q)) ||
       (u.profile && u.profile.full_name.toLowerCase().includes(q)) ||
@@ -237,49 +237,278 @@ router.post('/admin/create', authenticateToken, requireAdmin, async (req, res, n
   }
 });
 
+// Helper: Validate photo data URI or URL
+const validatePhotoPayload = (avatarUrl) => {
+  if (!avatarUrl || typeof avatarUrl !== 'string') {
+    return { valid: false, message: 'Photo data or URL is required.' };
+  }
+  const trimmed = avatarUrl.trim();
+  if (trimmed.startsWith('data:')) {
+    // Validate image MIME type
+    const matches = trimmed.match(/^data:(image\/[a-zA-Z0-9+.-]+);base64,/);
+    if (!matches) {
+      return { valid: false, message: 'Invalid image format. Supported formats: PNG, JPG, JPEG, WEBP, GIF, SVG.' };
+    }
+    // Calculate approximate byte size from base64
+    const base64Data = trimmed.split(',')[1] || '';
+    const approximateBytes = Math.ceil((base64Data.length * 3) / 4);
+    const MAX_PHOTO_BYTES = 5 * 1024 * 1024; // 5MB
+    if (approximateBytes > MAX_PHOTO_BYTES) {
+      return { valid: false, message: 'Profile photo size exceeds maximum limit of 5MB. Please choose a smaller photo.' };
+    }
+    return { valid: true, url: trimmed };
+  } else if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('/')) {
+    return { valid: true, url: trimmed };
+  } else {
+    return { valid: false, message: 'Photo must be a valid image file (base64) or web URL (http/https).' };
+  }
+};
+
 // 4. Update Profile (User self edit / Admin edit)
-router.put('/profile/update', authenticateToken, (req, res) => {
-  const {
-    full_name, phone, whatsapp, address, city, district, state, pin_code,
-    bio, avatar_url, emergency_contact, contact_privacy, target_user_id
-  } = req.body;
+router.put('/profile/update', authenticateToken, async (req, res) => {
+  try {
+    const {
+      full_name, phone, whatsapp, address, city, district, state, pin_code,
+      bio, avatar_url, emergency_contact, contact_privacy, target_user_id
+    } = req.body;
 
-  // If target_user_id provided and requester is Admin, edit target user; otherwise edit self
-  let userIdToEdit = req.user.id;
-  if (target_user_id && req.user.role === 'admin') {
-    userIdToEdit = Number(target_user_id);
+    // If target_user_id provided and requester is Admin, edit target user; otherwise edit self
+    let userIdToEdit = req.user.id;
+    if (target_user_id && req.user.role === 'admin') {
+      userIdToEdit = Number(target_user_id);
+    }
+
+    const user = inMemoryStore.users.find(u => u.id === userIdToEdit);
+    if (!user || !user.profile) {
+      return res.status(404).json({ success: false, message: 'Member profile not found.' });
+    }
+
+    // Validate avatar_url if provided
+    if (avatar_url !== undefined && avatar_url !== '') {
+      const photoValidation = validatePhotoPayload(avatar_url);
+      if (!photoValidation.valid) {
+        return res.status(400).json({ success: false, message: photoValidation.message });
+      }
+      user.profile.avatar_url = photoValidation.url;
+    }
+
+    if (full_name) user.profile.full_name = full_name;
+    if (phone) user.profile.phone = phone;
+    if (whatsapp) user.profile.whatsapp = whatsapp;
+    if (address !== undefined) user.profile.address = address;
+    if (city !== undefined) user.profile.city = city;
+    if (district !== undefined) user.profile.district = district;
+    if (state !== undefined) user.profile.state = state;
+    if (pin_code !== undefined) user.profile.pin_code = pin_code;
+    if (bio !== undefined) user.profile.bio = bio;
+    if (emergency_contact !== undefined) user.profile.emergency_contact = emergency_contact;
+    if (contact_privacy) user.profile.contact_privacy = contact_privacy;
+
+    // Admin restricted fields
+    if (req.user.role === 'admin') {
+      if (req.body.designation) user.profile.designation = req.body.designation;
+      if (req.body.circle) user.profile.circle = req.body.circle;
+      if (req.body.union_designation) user.profile.union_designation = req.body.union_designation;
+      if (req.body.member_id) user.member_id = req.body.member_id;
+    }
+
+    // Persist to Neon PostgreSQL Database
+    try {
+      await query(`
+        UPDATE member_profiles
+        SET full_name = COALESCE($1, full_name),
+            phone = COALESCE($2, phone),
+            whatsapp = COALESCE($3, whatsapp),
+            address = COALESCE($4, address),
+            city = COALESCE($5, city),
+            district = COALESCE($6, district),
+            state = COALESCE($7, state),
+            pin_code = COALESCE($8, pin_code),
+            bio = COALESCE($9, bio),
+            avatar_url = COALESCE($10, avatar_url),
+            emergency_contact = COALESCE($11, emergency_contact),
+            updated_at = CURRENT_TIMESTAMP
+        WHERE user_id = $12
+      `, [
+        user.profile.full_name,
+        user.profile.phone,
+        user.profile.whatsapp,
+        user.profile.address,
+        user.profile.city,
+        user.profile.district,
+        user.profile.state,
+        user.profile.pin_code,
+        user.profile.bio,
+        user.profile.avatar_url,
+        user.profile.emergency_contact,
+        userIdToEdit
+      ]);
+    } catch (dbErr) {
+      console.warn('⚠️ Could not update member_profiles in DB:', dbErr.message);
+    }
+
+    // Persist to local backup JSON
+    saveUsersBackup();
+
+    res.json({
+      success: true,
+      message: 'Profile updated successfully.',
+      profile: user.profile,
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        status: user.status,
+        member_id: user.member_id,
+        profile: user.profile
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to update profile.' });
   }
+});
 
-  const user = inMemoryStore.users.find(u => u.id === userIdToEdit);
+// Dedicated Photo Upload & Update Handler
+const handlePhotoUpdate = async (req, res) => {
+  try {
+    const { avatar_url, target_user_id } = req.body;
+    let userIdToEdit = req.user.id;
+    if (target_user_id && req.user.role === 'admin') {
+      userIdToEdit = Number(target_user_id);
+    }
+
+    const user = inMemoryStore.users.find(u => u.id === userIdToEdit);
+    if (!user || !user.profile) {
+      return res.status(404).json({ success: false, message: 'Member profile not found.' });
+    }
+
+    const validation = validatePhotoPayload(avatar_url);
+    if (!validation.valid) {
+      return res.status(400).json({ success: false, message: validation.message });
+    }
+
+    user.profile.avatar_url = validation.url;
+
+    // Persist to Neon PostgreSQL Database
+    try {
+      await query(`
+        UPDATE member_profiles
+        SET avatar_url = $1,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE user_id = $2
+      `, [validation.url, userIdToEdit]);
+    } catch (dbErr) {
+      console.warn('⚠️ Could not update avatar_url in DB:', dbErr.message);
+    }
+
+    // Persist to local backup JSON
+    saveUsersBackup();
+
+    // Log admin action if admin updated someone else's photo
+    if (target_user_id && req.user.role === 'admin' && userIdToEdit !== req.user.id) {
+      inMemoryStore.auditLogs.unshift({
+        id: inMemoryStore.auditLogs.length + 1,
+        action: 'MEMBER_PHOTO_UPDATED',
+        actor_id: req.user.id,
+        actor_name: req.user.profile?.full_name || 'Admin',
+        entity_type: 'USER',
+        entity_id: String(userIdToEdit),
+        details: `Updated profile photo for member ${user.email} (${user.member_id})`,
+        created_at: new Date().toISOString()
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Profile photo updated successfully!',
+      avatar_url: validation.url,
+      profile: user.profile,
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        status: user.status,
+        member_id: user.member_id,
+        profile: user.profile
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to update profile photo.' });
+  }
+};
+
+router.put('/profile/photo', authenticateToken, handlePhotoUpdate);
+router.post('/profile/photo', authenticateToken, handlePhotoUpdate);
+
+// Remove Profile Photo (Reset to default)
+router.delete('/profile/photo', authenticateToken, async (req, res) => {
+  try {
+    const { target_user_id } = req.body || {};
+    let userIdToEdit = req.user.id;
+    if (target_user_id && req.user.role === 'admin') {
+      userIdToEdit = Number(target_user_id);
+    }
+
+    const user = inMemoryStore.users.find(u => u.id === userIdToEdit);
+    if (!user || !user.profile) {
+      return res.status(404).json({ success: false, message: 'Member profile not found.' });
+    }
+
+    // Default portrait
+    const defaultAvatar = user.profile.gender === 'Female'
+      ? 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80'
+      : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=400&q=80';
+
+    user.profile.avatar_url = defaultAvatar;
+
+    try {
+      await query(`
+        UPDATE member_profiles
+        SET avatar_url = $1,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE user_id = $2
+      `, [defaultAvatar, userIdToEdit]);
+    } catch (dbErr) {
+      console.warn('⚠️ Could not reset avatar_url in DB:', dbErr.message);
+    }
+
+    saveUsersBackup();
+
+    res.json({
+      success: true,
+      message: 'Profile photo reset to default.',
+      avatar_url: defaultAvatar,
+      profile: user.profile,
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        status: user.status,
+        member_id: user.member_id,
+        profile: user.profile
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to reset profile photo.' });
+  }
+});
+
+// Get My Profile endpoint
+router.get('/my-profile', authenticateToken, (req, res) => {
+  const user = inMemoryStore.users.find(u => u.id === req.user.id);
   if (!user || !user.profile) {
-    return res.status(404).json({ success: false, message: 'Member profile not found.' });
+    return res.status(404).json({ success: false, message: 'Profile not found.' });
   }
-
-  if (full_name) user.profile.full_name = full_name;
-  if (phone) user.profile.phone = phone;
-  if (whatsapp) user.profile.whatsapp = whatsapp;
-  if (address) user.profile.address = address;
-  if (city) user.profile.city = city;
-  if (district) user.profile.district = district;
-  if (state) user.profile.state = state;
-  if (pin_code) user.profile.pin_code = pin_code;
-  if (bio !== undefined) user.profile.bio = bio;
-  if (avatar_url) user.profile.avatar_url = avatar_url;
-  if (emergency_contact !== undefined) user.profile.emergency_contact = emergency_contact;
-  if (contact_privacy) user.profile.contact_privacy = contact_privacy;
-
-  // Admin restricted fields
-  if (req.user.role === 'admin') {
-    if (req.body.designation) user.profile.designation = req.body.designation;
-    if (req.body.circle) user.profile.circle = req.body.circle;
-    if (req.body.union_designation) user.profile.union_designation = req.body.union_designation;
-    if (req.body.member_id) user.member_id = req.body.member_id;
-  }
-
   res.json({
     success: true,
-    message: 'Profile updated successfully.',
-    profile: user.profile
+    user: {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      status: user.status,
+      member_id: user.member_id,
+      profile: user.profile
+    }
   });
 });
 
