@@ -1,133 +1,1086 @@
-import React, { useState } from 'react';
-import { Building, MapPin, Briefcase, UserPlus, Check, Sparkles } from 'lucide-react';
-import { useConnections } from '../context/ConnectionContext';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
+import {
+  CreditCard, Download, Printer, RotateCw, Check, CheckCircle2,
+  ShieldCheck, Copy, Sparkles, Share2, ExternalLink, QrCode as QrIcon,
+  Building, MapPin, Phone, Mail, Calendar, User, Award, Lock, Zap, Eye
+} from 'lucide-react';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
+import { urlToBase64, generateMemberQrCode, getBarcodePattern } from '../utils/memberCardHelpers';
 
-const MemberCard = ({ member, onOpenDetails }) => {
-  const { user } = useAuth();
-  const { connections, pendingSent, sendConnectRequest } = useConnections();
-  const [connecting, setConnecting] = useState(false);
-  const [justSent, setJustSent] = useState(false);
+/**
+ * High-definition SVG Barcode component
+ */
+const BarcodeSvg = ({ value = 'UNION-IND-104', height = 36 }) => {
+  const bars = useMemo(() => getBarcodePattern(value), [value]);
+  let currentX = 10;
+  const barElements = [];
 
-  const profile = member.profile || {};
-  const isConnected = connections.some(c => c.id === member.id);
-  const isPending = pendingSent.some(p => p.addressee?.id === member.id);
-  const isSelf = user?.id === member.id;
-
-  const handleConnect = async (e) => {
-    e.stopPropagation();
-    if (!user) {
-      alert("Please log in to connect with members!");
-      return;
+  bars.forEach((width, index) => {
+    // Alternate black bar and white space
+    if (index % 2 === 0) {
+      barElements.push(
+        <rect
+          key={index}
+          x={currentX}
+          y="2"
+          width={width * 1.6}
+          height={height - 12}
+          fill="#0F172A"
+        />
+      );
     }
-    setConnecting(true);
-    try {
-      await sendConnectRequest(member.id);
-      setJustSent(true);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setConnecting(false);
-    }
-  };
+    currentX += width * 1.6;
+  });
 
   return (
-    <div 
-      onClick={() => onOpenDetails && onOpenDetails(member)}
-      className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-sm hover:border-blue-300 hover:shadow-md cursor-pointer relative flex flex-col justify-between group h-full transition-all"
-    >
-      <div className="space-y-3">
-        {/* Header Avatar & Status */}
-        <div className="flex items-start justify-between gap-3">
-          <div className="relative shrink-0">
-            <img
-              src={profile.avatar_url || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=400&q=80"}
-              alt={profile.full_name}
-              className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl object-cover ring-2 ring-blue-500/30 shadow-sm group-hover:ring-blue-600 transition-all"
-            />
-            <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full" title="Active Member" />
-          </div>
-
-          <span className="px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200 text-blue-700 text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider truncate max-w-[130px]">
-            {profile.industry || 'Professional'}
-          </span>
-        </div>
-
-        {/* Member Info */}
-        <div>
-          <h3 className="text-base sm:text-lg font-extrabold text-slate-900 group-hover:text-blue-600 transition-colors truncate">
-            {profile.full_name}
-          </h3>
-          
-          <p className="text-xs font-semibold text-slate-700 mt-0.5 flex items-center gap-1.5 truncate">
-            <Briefcase className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-            <span className="truncate">{profile.title || 'Executive Leader'}</span>
-          </p>
-
-          <p className="text-xs text-slate-500 mt-1 flex items-center gap-1.5 truncate">
-            <Building className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-            <span className="truncate">{profile.company || 'Enterprise Partner'}</span>
-          </p>
-
-          <p className="text-[11px] text-slate-500 mt-1 flex items-center gap-1.5 truncate">
-            <MapPin className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-            <span className="truncate">{profile.location || 'Global'}</span>
-          </p>
-        </div>
-
-        {/* Short Bio */}
-        {profile.bio && (
-          <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
-            {profile.bio}
-          </p>
-        )}
-
-        {/* Skills Tags */}
-        {profile.skills && profile.skills.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 pt-1">
-            {profile.skills.slice(0, 3).map((skill, idx) => (
-              <span key={idx} className="px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200 text-[10px] text-slate-700 font-medium">
-                {skill}
-              </span>
-            ))}
-            {profile.skills.length > 3 && (
-              <span className="px-2 py-0.5 rounded-md bg-slate-100 text-[10px] text-slate-500">
-                +{profile.skills.length - 3}
-              </span>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Footer Connection Button */}
-      <div className="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between gap-2">
-        <span className="text-[11px] font-semibold text-slate-500 shrink-0">
-          Score <span className="text-blue-700 font-extrabold">98%</span>
-        </span>
-
-        {isSelf ? (
-          <span className="text-xs font-bold text-slate-400">Your Profile</span>
-        ) : isConnected ? (
-          <span className="px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold flex items-center gap-1">
-            <Check className="w-3.5 h-3.5" /> Connected
-          </span>
-        ) : isPending || justSent ? (
-          <span className="px-3 py-1.5 rounded-xl bg-amber-50 text-amber-800 border border-amber-200 text-xs font-bold">
-            Pending
-          </span>
-        ) : (
-          <button
-            onClick={handleConnect}
-            disabled={connecting}
-            className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm flex items-center gap-1.5 transition-all shrink-0"
-          >
-            <UserPlus className="w-3.5 h-3.5" />
-            {connecting ? 'Sending...' : 'Connect'}
-          </button>
-        )}
-      </div>
+    <div className="flex flex-col items-center">
+      <svg
+        viewBox={`0 0 ${Math.max(currentX + 10, 160)} ${height}`}
+        className="w-full h-8"
+        preserveAspectRatio="none"
+      >
+        {barElements}
+      </svg>
+      <span className="font-mono text-[9px] tracking-[0.25em] text-slate-800 font-bold -mt-0.5">
+        {value}
+      </span>
     </div>
   );
 };
 
-export default MemberCard;
+/**
+ * Realistic Gold EMV Smart Chip SVG
+ */
+const EmvChipSvg = ({ className = "w-10 h-7" }) => (
+  <svg viewBox="0 0 44 32" className={className} fill="none">
+    <rect width="44" height="32" rx="4" fill="url(#chip-grad)" stroke="#92400E" strokeWidth="0.8" />
+    <path d="M0 11H16M0 21H16M28 11H44M28 21H44M16 6V26M28 6V26" stroke="#78350F" strokeWidth="0.75" />
+    <circle cx="22" cy="16" r="4.5" fill="none" stroke="#78350F" strokeWidth="0.75" />
+    <defs>
+      <linearGradient id="chip-grad" x1="0" y1="0" x2="44" y2="32" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#FDE68A" />
+        <stop offset="0.4" stopColor="#F59E0B" />
+        <stop offset="0.7" stopColor="#FBBF24" />
+        <stop offset="1" stopColor="#D97706" />
+      </linearGradient>
+    </defs>
+  </svg>
+);
+
+/**
+ * Official MPVMAVAKS Union Rubber Seal Stamp SVG
+ */
+const UnionSealStamp = ({ className = "w-16 h-16" }) => (
+  <svg viewBox="0 0 100 100" className={className}>
+    <circle cx="50" cy="50" r="46" fill="none" stroke="#D97706" strokeWidth="1.5" strokeDasharray="3 2" />
+    <circle cx="50" cy="50" r="42" fill="none" stroke="#D97706" strokeWidth="2" />
+    <circle cx="50" cy="50" r="30" fill="none" stroke="#D97706" strokeWidth="1" />
+    <path
+      id="seal-text-path-top"
+      d="M 18,50 A 32,32 0 0,1 82,50"
+      fill="none"
+    />
+    <path
+      id="seal-text-path-bottom"
+      d="M 82,50 A 32,32 0 0,1 18,50"
+      fill="none"
+    />
+    <text fill="#D97706" fontSize="7.5" fontWeight="900" letterSpacing="0.8">
+      <textPath href="#seal-text-path-top" startOffset="50%" textAnchor="middle">
+        MPVMAVAKS UNION
+      </textPath>
+    </text>
+    <text fill="#D97706" fontSize="6.5" fontWeight="bold" letterSpacing="0.6">
+      <textPath href="#seal-text-path-bottom" startOffset="50%" textAnchor="middle">
+        ★ OFFICIAL VERIFIED ★
+      </textPath>
+    </text>
+    <text x="50" y="48" fill="#B45309" fontSize="9" fontWeight="900" textAnchor="middle">
+      REGD.
+    </text>
+    <text x="50" y="58" fill="#B45309" fontSize="8" fontWeight="800" textAnchor="middle">
+      4404
+    </text>
+  </svg>
+);
+
+/**
+ * Main MemberCard Component
+ */
+export default function MemberCard({
+  member,
+  onOpenDetails,
+  variant = 'official',
+  className = ''
+}) {
+  const { user: authUser } = useAuth();
+  const { t, isHindi } = useLanguage();
+
+  // If member is passed use that, else use logged-in auth user
+  const effectiveUser = member || authUser;
+  const profile = effectiveUser?.profile || {};
+
+  // Core Member Information
+  const memberId = effectiveUser?.member_id || 'UNION-IND-104';
+  const fullName = profile.full_name || 'Er. Sunita Chouhan';
+  const unionDesignation = profile.union_designation || 'Union Zonal Executive Member';
+  const designation = profile.designation || profile.occupation || 'Superintending Engineer (SE)';
+  const company = profile.company || 'MP West Zone Electricity Discom';
+  const circle = profile.circle || 'Indore Corporate Circle';
+  const phone = profile.phone || '+91 98261 44556';
+  const emergencyPhone = profile.emergency_contact || '+91 98261 00000';
+  const joiningDate = profile.joining_date || '2019-06-10';
+  const memberStatus = (effectiveUser?.status || 'active').toUpperCase();
+  const avatarUrl = profile.avatar_url || 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80';
+  const dob = profile.dob || '1985-08-20';
+  const fatherName = profile.father_husband_name || 'Shri R. S. Chouhan';
+  const bloodGroup = profile.blood_group || 'O+';
+  const address = profile.address || `${profile.city || 'Indore'}, Madhya Pradesh`;
+
+  // UI Interactive States
+  const [isFlipped, setIsFlipped] = useState(false);
+  const [cardTheme, setCardTheme] = useState('gold'); // 'gold' | 'cyan'
+  const [qrDataUrl, setQrDataUrl] = useState(null);
+  const [avatarBase64, setAvatarBase64] = useState(null);
+  const [logoBase64, setLogoBase64] = useState(null);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
+  const [copiedId, setCopiedId] = useState(false);
+  const [downloadSuccess, setDownloadSuccess] = useState(false);
+  const [viewMode, setViewMode] = useState('interactive'); // 'interactive' | 'side-by-side'
+
+  // Hidden references for high-res PDF generation
+  const printableSheetRef = useRef(null);
+  const standaloneFrontRef = useRef(null);
+  const standaloneBackRef = useRef(null);
+
+  // Pre-load QR Code and images as base64 to ensure 100% reliable PDF generation without CORS issues
+  useEffect(() => {
+    let isMounted = true;
+
+    async function prepareCardAssets() {
+      try {
+        const qr = await generateMemberQrCode({
+          memberId,
+          fullName,
+          designation,
+          circle,
+          unionRole: unionDesignation
+        });
+        if (isMounted && qr) setQrDataUrl(qr);
+
+        const avatarB64 = await urlToBase64(avatarUrl);
+        if (isMounted && avatarB64) setAvatarBase64(avatarB64);
+
+        const logoB64 = await urlToBase64('/images/union-logo.png');
+        if (isMounted && logoB64) setLogoBase64(logoB64);
+      } catch (err) {
+        console.warn('Error preparing member card assets:', err);
+      }
+    }
+
+    prepareCardAssets();
+    return () => { isMounted = false; };
+  }, [memberId, fullName, avatarUrl, designation, circle, unionDesignation]);
+
+  const handleCopyId = (e) => {
+    e.stopPropagation();
+    navigator.clipboard?.writeText(memberId);
+    setCopiedId(true);
+    setTimeout(() => setCopiedId(false), 2500);
+  };
+
+  /**
+   * PDF Generator: Produces a high-resolution, multi-page, properly formatted PDF:
+   * Page 1: Official Printable ID Card Certificate & Cut-out Sheet (A4 Landscape)
+   * Page 2: Standalone Front Side in exact ISO CR80 standard card format (85.6mm × 54mm)
+   * Page 3: Standalone Back Side in exact ISO CR80 standard card format (85.6mm × 54mm)
+   */
+  const handleDownloadPdf = async () => {
+    setGeneratingPdf(true);
+    setDownloadSuccess(false);
+
+    try {
+      // 1. Capture Printable A4 Sheet
+      if (!printableSheetRef.current || !standaloneFrontRef.current || !standaloneBackRef.current) {
+        throw new Error('Card elements not ready for export');
+      }
+
+      const captureOptions = {
+        scale: 2.2,
+        useCORS: true,
+        allowTaint: false,
+        backgroundColor: '#FFFFFF',
+        logging: false
+      };
+
+      // Render Page 1 (A4 Sheet)
+      const sheetCanvas = await html2canvas(printableSheetRef.current, captureOptions);
+      const sheetImgData = sheetCanvas.toDataURL('image/png');
+
+      // Render Page 2 (Front Standalone CR80)
+      const frontCanvas = await html2canvas(standaloneFrontRef.current, {
+        scale: 3,
+        useCORS: true,
+        allowTaint: false,
+        backgroundColor: '#0F172A',
+        logging: false
+      });
+      const frontImgData = frontCanvas.toDataURL('image/png');
+
+      // Render Page 3 (Back Standalone CR80)
+      const backCanvas = await html2canvas(standaloneBackRef.current, {
+        scale: 3,
+        useCORS: true,
+        allowTaint: false,
+        backgroundColor: '#FFFFFF',
+        logging: false
+      });
+      const backImgData = backCanvas.toDataURL('image/png');
+
+      // Initialize jsPDF A4 Landscape
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      // Page 1: Full printable sheet (297mm × 210mm)
+      pdf.addImage(sheetImgData, 'PNG', 0, 0, 297, 210, '', 'FAST');
+
+      // Page 2: Standalone Front Side (Standard CR80 85.6mm × 54mm)
+      pdf.addPage([85.6, 54], 'landscape');
+      pdf.addImage(frontImgData, 'PNG', 0, 0, 85.6, 54, '', 'FAST');
+
+      // Page 3: Standalone Back Side (Standard CR80 85.6mm × 54mm)
+      pdf.addPage([85.6, 54], 'landscape');
+      pdf.addImage(backImgData, 'PNG', 0, 0, 85.6, 54, '', 'FAST');
+
+      // Save PDF with clear naming
+      const safeId = memberId.replace(/[^a-zA-Z0-9_-]/g, '_');
+      pdf.save(`MPVMAVAKS-MemberCard-${safeId}.pdf`);
+
+      setDownloadSuccess(true);
+      setTimeout(() => setDownloadSuccess(false), 4000);
+    } catch (err) {
+      console.error('PDF generation error:', err);
+      alert('Unable to generate Member Card PDF. Please try again.');
+    } finally {
+      setGeneratingPdf(false);
+    }
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  // Backwards compatibility for directory networking view
+  if (variant === 'network' && onOpenDetails) {
+    return (
+      <div
+        onClick={() => onOpenDetails(effectiveUser)}
+        className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm hover:border-amber-400 hover:shadow-md cursor-pointer transition-all"
+      >
+        <div className="flex items-center gap-4">
+          <img
+            src={avatarBase64 || avatarUrl}
+            alt={fullName}
+            className="w-14 h-14 rounded-2xl object-cover ring-2 ring-amber-500/30"
+          />
+          <div>
+            <h3 className="font-bold text-sm text-slate-900">{fullName}</h3>
+            <span className="text-xs text-amber-700 font-bold block">{unionDesignation}</span>
+            <span className="text-[10px] font-mono text-slate-500">{memberId} • {circle}</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`space-y-6 ${className}`}>
+
+      {/* Card Header & Controls Bar */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-slate-50 border border-slate-200 p-4 sm:p-5 rounded-2xl shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-600 shrink-0">
+            <CreditCard className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm sm:text-base font-extrabold text-slate-900">
+                {t('Digital ID Card', 'Official Member Identity Card')}
+              </h3>
+              <span className="px-2 py-0.5 rounded-full bg-emerald-100 border border-emerald-300 text-emerald-800 text-[10px] font-extrabold uppercase flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
+                {memberStatus}
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 font-medium">
+              ISO/IEC 7810 ID-1 standard PVC format with cryptographic QR verification
+            </p>
+          </div>
+        </div>
+
+        {/* Action Buttons: Download PDF, Print, Flip */}
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+          {/* Flip Toggle Button */}
+          <button
+            type="button"
+            onClick={() => setIsFlipped(!isFlipped)}
+            className="px-3 py-2 rounded-xl bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all"
+            title="Flip to see front/back side"
+          >
+            <RotateCw className="w-3.5 h-3.5 text-amber-600 transition-transform" />
+            <span>{isFlipped ? 'View Front Side' : 'View Back Side'}</span>
+          </button>
+
+          {/* Theme Selector */}
+          <button
+            type="button"
+            onClick={() => setCardTheme(cardTheme === 'gold' ? 'cyan' : 'gold')}
+            className="px-3 py-2 rounded-xl bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all"
+            title="Toggle card aesthetic theme"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-sky-600" />
+            <span>{cardTheme === 'gold' ? 'Executive Gold' : 'Discom Blue'}</span>
+          </button>
+
+          {/* Print Button */}
+          <button
+            type="button"
+            onClick={handlePrint}
+            className="px-3 py-2 rounded-xl bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all"
+            title="Quick print"
+          >
+            <Printer className="w-3.5 h-3.5 text-slate-600" />
+            <span className="hidden md:inline">Print</span>
+          </button>
+
+          {/* Primary Action: Download PDF */}
+          <button
+            type="button"
+            onClick={handleDownloadPdf}
+            disabled={generatingPdf}
+            className="flex-1 sm:flex-initial px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 active:scale-95 text-slate-950 text-xs font-black flex items-center justify-center gap-2 shadow-md hover:shadow-amber-500/20 transition-all disabled:opacity-50"
+          >
+            {generatingPdf ? (
+              <>
+                <RotateCw className="w-4 h-4 animate-spin" />
+                <span>Generating PDF...</span>
+              </>
+            ) : downloadSuccess ? (
+              <>
+                <Check className="w-4 h-4 text-slate-950 stroke-[3]" />
+                <span>Downloaded!</span>
+              </>
+            ) : (
+              <>
+                <Download className="w-4 h-4" />
+                <span>Download Member Card (PDF)</span>
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Main Interactive Card Showcase Container */}
+      <div className="flex flex-col lg:flex-row items-center justify-center gap-8 py-4">
+
+        {/* 3D Flip Card Container */}
+        <div
+          className="w-full max-w-[480px] cursor-pointer group"
+          style={{ perspective: '1200px' }}
+          onClick={() => setIsFlipped(!isFlipped)}
+        >
+          <div
+            className="w-full transition-all duration-700 relative"
+            style={{
+              transformStyle: 'preserve-3d',
+              transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)'
+            }}
+          >
+
+            {/* ================= FRONT SIDE (Interactive Display) ================= */}
+            <div
+              className={`w-full aspect-[85.6/54] rounded-2xl p-4 sm:p-5 text-white flex flex-col justify-between relative overflow-hidden select-none shadow-2xl transition-all ${
+                cardTheme === 'gold'
+                  ? 'bg-gradient-to-br from-[#070B19] via-[#0F172A] to-[#1E293B] border-2 border-amber-500/70 shadow-amber-500/10'
+                  : 'bg-gradient-to-br from-[#07132A] via-[#0C2340] to-[#0A192F] border-2 border-sky-400/70 shadow-sky-400/10'
+              }`}
+              style={{
+                backfaceVisibility: 'hidden',
+                WebkitBackfaceVisibility: 'hidden'
+              }}
+            >
+              {/* Subtle Guilloche & Grid Watermark Pattern */}
+              <div
+                className="absolute inset-0 opacity-[0.06] pointer-events-none network-bg-grid"
+                style={{ backgroundSize: '16px 16px' }}
+              />
+
+              {/* Holographic Sheen Overlay */}
+              <div className="absolute -inset-full bg-gradient-to-r from-transparent via-white/5 to-transparent rotate-45 pointer-events-none group-hover:translate-x-full transition-transform duration-1000" />
+
+              {/* CARD HEADER */}
+              <div className="relative z-10 flex items-start justify-between gap-3 border-b border-amber-500/30 pb-2">
+                <div className="flex items-center gap-2.5">
+                  <img
+                    src={logoBase64 || '/images/union-logo.png'}
+                    alt="Union Logo"
+                    className="w-9 h-9 sm:w-10 sm:h-10 object-contain rounded-full bg-white/10 p-0.5 border border-amber-400/60 shrink-0"
+                  />
+                  <div>
+                    <h4 className="text-[10px] sm:text-[11px] font-extrabold text-amber-400 leading-tight uppercase tracking-tight">
+                      म.प्र.वि.म. आरक्षित वर्ग अधिकारी / कर्मचारी संघ
+                    </h4>
+                    <h5 className="text-[10px] sm:text-[11px] font-black text-white leading-tight tracking-wider uppercase">
+                      MPVMAVAKS ELECTRICITY EMPLOYEES UNION
+                    </h5>
+                    <p className="text-[7.5px] sm:text-[8px] font-mono text-slate-300 tracking-wider">
+                      M.P. West Zone Electricity Distribution Co. • Regd. No. 4404
+                    </p>
+                  </div>
+                </div>
+
+                <div className="text-right shrink-0">
+                  <span className="px-2 py-0.5 rounded-md bg-amber-500/20 border border-amber-500/40 text-amber-300 text-[8px] sm:text-[9px] font-mono font-black tracking-widest uppercase block">
+                    DIGITAL ID
+                  </span>
+                  <span className="text-[7px] text-slate-400 font-mono block mt-0.5">
+                    CR80 STANDARD
+                  </span>
+                </div>
+              </div>
+
+              {/* CARD MAIN BODY */}
+              <div className="relative z-10 flex items-center gap-3.5 sm:gap-4 my-auto">
+                {/* Member Photo & Member ID */}
+                <div className="flex flex-col items-center shrink-0">
+                  <div className="relative">
+                    <img
+                      src={avatarBase64 || avatarUrl}
+                      alt={fullName}
+                      crossOrigin="anonymous"
+                      className="w-20 h-24 sm:w-22 sm:h-26 rounded-xl object-cover border-2 border-amber-400 shadow-lg bg-slate-800"
+                    />
+                    <span className="absolute bottom-1 right-1 w-3 h-3 bg-emerald-500 border-2 border-slate-900 rounded-full" title="Active Member" />
+                  </div>
+                  <div
+                    onClick={handleCopyId}
+                    className="mt-1.5 px-2 py-0.5 rounded-md bg-slate-900/90 border border-amber-400/50 text-amber-300 text-[9px] sm:text-[10px] font-mono font-black tracking-wider flex items-center gap-1 hover:bg-slate-800 transition-colors cursor-copy"
+                    title="Click to copy Member ID"
+                  >
+                    <span>{memberId}</span>
+                    {copiedId ? <Check className="w-2.5 h-2.5 text-emerald-400" /> : <Copy className="w-2.5 h-2.5 text-slate-400" />}
+                  </div>
+                </div>
+
+                {/* Member Details */}
+                <div className="flex-1 min-w-0 space-y-1">
+                  <div>
+                    <h2 className="text-sm sm:text-base font-black text-white leading-tight truncate tracking-wide">
+                      {fullName}
+                    </h2>
+                    <p className="text-[10px] sm:text-xs font-extrabold text-amber-400 truncate">
+                      {unionDesignation}
+                    </p>
+                  </div>
+
+                  <div className="space-y-0.5 text-[9px] sm:text-[10px] font-medium text-slate-300">
+                    <div className="flex items-center gap-1.5 truncate">
+                      <Zap className="w-3 h-3 text-amber-400 shrink-0" />
+                      <span className="truncate text-slate-200 font-semibold">{designation}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 truncate">
+                      <Building className="w-3 h-3 text-sky-400 shrink-0" />
+                      <span className="truncate">{company}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 truncate">
+                      <MapPin className="w-3 h-3 text-emerald-400 shrink-0" />
+                      <span className="truncate font-semibold text-slate-200">{circle}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 truncate">
+                      <Phone className="w-3 h-3 text-slate-400 shrink-0" />
+                      <span className="truncate font-mono text-[9px]">{phone}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* CARD FOOTER: CHIP, QR, SEAL & SIGNATURE */}
+              <div className="relative z-10 flex items-end justify-between gap-2 border-t border-amber-500/30 pt-1.5">
+                {/* Left: EMV Chip */}
+                <div className="flex items-center gap-2">
+                  <EmvChipSvg className="w-8 h-6 sm:w-9 sm:h-6.5 shrink-0" />
+                  <div className="hidden sm:block">
+                    <span className="text-[7.5px] font-mono text-slate-400 block leading-tight">
+                      VALID THRU
+                    </span>
+                    <span className="text-[8.5px] font-mono font-bold text-amber-300 block leading-tight">
+                      LIFETIME / 2029
+                    </span>
+                  </div>
+                </div>
+
+                {/* Center: Security Hologram Badge */}
+                <div className="px-2 py-0.5 rounded bg-gradient-to-r from-amber-500/20 via-sky-500/20 to-amber-500/20 border border-amber-400/30 text-[8px] font-mono font-bold text-amber-300 tracking-wider">
+                  ★ VERIFIED MEMBER ★
+                </div>
+
+                {/* Right: Dynamic QR Code */}
+                <div className="flex items-center gap-2">
+                  <div className="text-right">
+                    <span className="text-[7.5px] font-mono text-slate-400 block leading-tight">
+                      AUTH SIGN
+                    </span>
+                    <span className="text-[8px] font-serif italic text-amber-300 block font-bold">
+                      Rajesh Sharma
+                    </span>
+                  </div>
+                  {qrDataUrl && (
+                    <img
+                      src={qrDataUrl}
+                      alt="Verification QR"
+                      className="w-8 h-8 sm:w-9 sm:h-9 bg-white p-0.5 rounded object-contain shrink-0 shadow-sm"
+                    />
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* ================= BACK SIDE (Interactive Display) ================= */}
+            <div
+              className="w-full aspect-[85.6/54] rounded-2xl p-4 sm:p-5 text-slate-900 bg-white border-2 border-slate-300 flex flex-col justify-between select-none shadow-2xl absolute inset-0 overflow-hidden"
+              style={{
+                backfaceVisibility: 'hidden',
+                WebkitBackfaceVisibility: 'hidden',
+                transform: 'rotateY(180deg)'
+              }}
+            >
+              {/* Magnetic Stripe */}
+              <div className="-mx-4 sm:-mx-5 -mt-4 sm:-mt-5 h-8 bg-slate-900 flex items-center justify-between px-4">
+                <span className="text-[8px] font-mono text-slate-400 tracking-widest">
+                  MPVMAVAKS SECURE CARD TRACK
+                </span>
+                <span className="text-[8px] font-mono text-amber-400 font-bold">
+                  {memberId}
+                </span>
+              </div>
+
+              {/* Back Content Grid */}
+              <div className="grid grid-cols-2 gap-3 pt-2 text-[8.5px] sm:text-[9.5px]">
+                {/* Left Column: Member Confidential Info */}
+                <div className="space-y-1">
+                  <span className="text-[9px] font-extrabold uppercase text-amber-800 tracking-wide block">
+                    Member Particulars
+                  </span>
+                  <div className="border-b border-slate-100 pb-0.5">
+                    <span className="text-slate-500 block text-[7.5px]">Father/Spouse:</span>
+                    <span className="font-bold text-slate-800 truncate block">{fatherName}</span>
+                  </div>
+                  <div className="border-b border-slate-100 pb-0.5">
+                    <span className="text-slate-500 block text-[7.5px]">Date of Birth / Blood Group:</span>
+                    <span className="font-mono font-bold text-slate-800">{dob} • {bloodGroup}</span>
+                  </div>
+                  <div className="border-b border-slate-100 pb-0.5">
+                    <span className="text-slate-500 block text-[7.5px]">Emergency Contact:</span>
+                    <span className="font-mono font-bold text-amber-800">{emergencyPhone}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 block text-[7.5px]">Circle Headquarters:</span>
+                    <span className="font-medium text-slate-700 truncate block">{address}</span>
+                  </div>
+                </div>
+
+                {/* Right Column: Union Rules & Seal */}
+                <div className="space-y-1 flex flex-col justify-between">
+                  <div>
+                    <span className="text-[9px] font-extrabold uppercase text-slate-900 tracking-wide block">
+                      Official Declaration
+                    </span>
+                    <p className="text-[7px] text-slate-600 leading-tight mt-0.5">
+                      1. This card is non-transferable and remains the official property of MPVMAVAKS Union.
+                    </p>
+                    <p className="text-[7px] text-slate-600 leading-tight">
+                      2. Entitles bearer to official representation, grievance defense, and union welfare fund.
+                    </p>
+                    <p className="text-[7px] text-slate-600 leading-tight">
+                      3. If found, please return to: Central Secretariat, Govindpura, Bhopal.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2 pt-1">
+                    <UnionSealStamp className="w-10 h-10 shrink-0 opacity-80" />
+                    <div className="text-right">
+                      <span className="font-serif italic font-bold text-[9px] text-slate-900 block leading-tight">
+                        Rajesh Sharma
+                      </span>
+                      <span className="text-[6.5px] font-mono text-slate-500 uppercase block">
+                        Gen. Secretary
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bottom Barcode & Helpline */}
+              <div className="border-t border-slate-200 pt-1 flex items-center justify-between gap-3">
+                <div className="flex-1 max-w-[180px]">
+                  <BarcodeSvg value={memberId} height={32} />
+                </div>
+                <div className="text-right text-[7.5px] font-mono text-slate-600">
+                  <span className="block font-bold text-slate-800">Helpline: +91 94249 44041</span>
+                  <span>mpmavaks@gmail.com</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        {/* Info Column & Instructions */}
+        <div className="w-full lg:max-w-xs space-y-4 text-xs">
+          <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-950 space-y-2">
+            <div className="flex items-center gap-2 font-bold text-amber-900">
+              <ShieldCheck className="w-4 h-4 text-amber-600" />
+              <span>Verified Membership Credentials</span>
+            </div>
+            <p className="text-[11px] text-amber-900/80 leading-relaxed">
+              Your Member ID <strong className="font-mono text-amber-950 font-black">{memberId}</strong> is registered under MP West Zone Electricity Discom with lifetime union rights.
+            </p>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-sm space-y-2.5">
+            <span className="text-[11px] font-extrabold uppercase text-slate-700 tracking-wider block">
+              Cardholder Quick Actions
+            </span>
+
+            <button
+              type="button"
+              onClick={() => setIsFlipped(!isFlipped)}
+              className="w-full py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold flex items-center justify-between transition-colors"
+            >
+              <span>{isFlipped ? 'View Front Side' : 'Flip to View Back Side'}</span>
+              <RotateCw className="w-3.5 h-3.5 text-amber-600" />
+            </button>
+
+            <button
+              type="button"
+              onClick={handleCopyId}
+              className="w-full py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold flex items-center justify-between transition-colors"
+            >
+              <span>{copiedId ? 'Copied to Clipboard!' : 'Copy Unique Member ID'}</span>
+              {copiedId ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-slate-500" />}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleDownloadPdf}
+              disabled={generatingPdf}
+              className="w-full py-2.5 px-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black flex items-center justify-center gap-2 shadow-sm transition-all"
+            >
+              <Download className="w-4 h-4" />
+              <span>{generatingPdf ? 'Generating PDF...' : 'Download Member Card PDF'}</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      {/* Container positioned offscreen with full opacity for html2canvas capture */}
+      <div
+        style={{
+          position: 'fixed',
+          left: '-9999px',
+          top: '0px',
+          pointerEvents: 'none',
+          zIndex: -1000
+        }}
+      >
+
+        {/* CONTAINER 1: FULL A4 PRINTABLE MEMBERSHIP SHEET */}
+        <div
+          ref={printableSheetRef}
+          className="w-[1120px] h-[792px] bg-white p-8 flex flex-col justify-between text-slate-900 font-sans"
+          style={{ boxSizing: 'border-box' }}
+        >
+          {/* Ornate Header */}
+          <div className="border-b-2 border-amber-600 pb-4 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <img
+                src={logoBase64 || '/images/union-logo.png'}
+                alt="Logo"
+                className="w-16 h-16 object-contain"
+              />
+              <div>
+                <h1 className="text-xl font-black text-amber-900 tracking-tight">
+                  मध्य प्रदेश विद्युत मंडल आरक्षित वर्ग अधिकारी / कर्मचारी संघ
+                </h1>
+                <h2 className="text-base font-extrabold text-slate-900 tracking-wider">
+                  MADHYA PRADESH VIDYUT MANDAL ARAKSHIT VARG ADHIKARI / KARMACHARI SANGH
+                </h2>
+                <p className="text-xs font-semibold text-slate-600">
+                  Regd. No. 4404 under Trade Unions Act 1926 • MP West Zone Electricity Distribution Discom
+                </p>
+              </div>
+            </div>
+
+            <div className="text-right">
+              <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 text-xs font-extrabold uppercase inline-block">
+                OFFICIAL VERIFIED IDENTITY SLIP
+              </span>
+              <p className="text-xs font-mono text-slate-500 mt-1">
+                Issued: {new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}
+              </p>
+            </div>
+          </div>
+
+          {/* Center Cards (Front and Back Side-by-Side for Direct Cutting & Folding) */}
+          <div className="my-auto py-2">
+            <div className="text-center mb-2">
+              <span className="text-[11px] font-mono text-slate-500 font-bold uppercase tracking-widest">
+                ✂ CUT ALONG OUTER DASHED BOUNDARY • FOLD ALONG CENTER LINE FOR PVC SLEEVE ✂
+              </span>
+            </div>
+
+            <div className="flex items-center justify-center gap-6 border-2 border-dashed border-amber-500/60 p-4 rounded-3xl bg-slate-50/50">
+
+              {/* CARD FRONT (Exact 85.6mm x 54mm equivalent ~ 460px x 290px) */}
+              <div
+                className="w-[460px] h-[290px] rounded-2xl p-4 text-white flex flex-col justify-between relative overflow-hidden shadow-md bg-gradient-to-br from-[#070B19] via-[#0F172A] to-[#1E293B] border-2 border-amber-500"
+              >
+                {/* Header */}
+                <div className="flex items-start justify-between border-b border-amber-500/40 pb-1.5">
+                  <div className="flex items-center gap-2">
+                    <img
+                      src={logoBase64 || '/images/union-logo.png'}
+                      alt="Logo"
+                      className="w-8 h-8 object-contain rounded-full bg-white/10 p-0.5 border border-amber-400"
+                    />
+                    <div>
+                      <h4 className="text-[9px] font-extrabold text-amber-400 leading-tight uppercase">
+                        म.प्र.वि.म. आरक्षित वर्ग संघ
+                      </h4>
+                      <h5 className="text-[9px] font-black text-white leading-tight uppercase">
+                        MPVMAVAKS ELECTRICITY UNION
+                      </h5>
+                    </div>
+                  </div>
+                  <span className="px-1.5 py-0.5 rounded bg-amber-500/20 border border-amber-400/50 text-amber-300 text-[8px] font-mono font-black">
+                    DIGITAL ID
+                  </span>
+                </div>
+
+                {/* Body */}
+                <div className="flex items-center gap-3.5 my-auto">
+                  <div className="flex flex-col items-center shrink-0">
+                    <img
+                      src={avatarBase64 || avatarUrl}
+                      alt={fullName}
+                      crossOrigin="anonymous"
+                      className="w-18 h-22 rounded-xl object-cover border-2 border-amber-400 bg-slate-800"
+                    />
+                    <span className="mt-1 px-1.5 py-0.5 rounded bg-slate-900 border border-amber-400/50 text-amber-300 text-[9px] font-mono font-black">
+                      {memberId}
+                    </span>
+                  </div>
+
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <h2 className="text-sm font-black text-white truncate">{fullName}</h2>
+                    <p className="text-[10px] font-extrabold text-amber-400 truncate">{unionDesignation}</p>
+                    <div className="space-y-0.5 text-[8.5px] text-slate-300 font-medium">
+                      <p className="truncate text-slate-100 font-bold">{designation}</p>
+                      <p className="truncate">{company}</p>
+                      <p className="truncate font-semibold text-slate-100">{circle}</p>
+                      <p className="font-mono text-[8.5px] text-amber-200">{phone}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer */}
+                <div className="flex items-end justify-between border-t border-amber-500/40 pt-1.5">
+                  <EmvChipSvg className="w-8 h-5.5 shrink-0" />
+                  <span className="text-[7.5px] font-mono text-amber-300 font-bold">
+                    VALID: LIFETIME
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <div className="text-right">
+                      <span className="text-[7px] text-slate-400 block">AUTH SIGN</span>
+                      <span className="text-[7.5px] font-serif italic text-amber-300 font-bold">Rajesh Sharma</span>
+                    </div>
+                    {qrDataUrl && (
+                      <img src={qrDataUrl} alt="QR" className="w-7 h-7 bg-white p-0.5 rounded object-contain" />
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* FOLD CUT DIVIDER */}
+              <div className="h-[280px] flex flex-col items-center justify-between text-slate-400 font-mono text-[9px]">
+                <span>✂</span>
+                <div className="w-0.5 h-full border-r-2 border-dashed border-amber-500 my-2" />
+                <span className="rotate-90 origin-center whitespace-nowrap text-[8px] font-bold text-slate-500">
+                  FOLD HERE
+                </span>
+                <div className="w-0.5 h-full border-r-2 border-dashed border-amber-500 my-2" />
+                <span>✂</span>
+              </div>
+
+              {/* CARD BACK (Exact 85.6mm x 54mm equivalent ~ 460px x 290px) */}
+              <div
+                className="w-[460px] h-[290px] rounded-2xl p-4 text-slate-900 bg-white border-2 border-slate-400 flex flex-col justify-between shadow-md overflow-hidden"
+              >
+                {/* Magnetic Stripe */}
+                <div className="-mx-4 -mt-4 h-7 bg-slate-900 flex items-center justify-between px-4">
+                  <span className="text-[7.5px] font-mono text-slate-400 tracking-widest">
+                    MPVMAVAKS SECURE TRACK
+                  </span>
+                  <span className="text-[7.5px] font-mono text-amber-400 font-bold">
+                    {memberId}
+                  </span>
+                </div>
+
+                {/* Back Body */}
+                <div className="grid grid-cols-2 gap-2 text-[8px] pt-1">
+                  <div className="space-y-1">
+                    <span className="text-[8.5px] font-extrabold uppercase text-amber-800 block">
+                      Member Record
+                    </span>
+                    <div>
+                      <span className="text-slate-500 block text-[7px]">Father/Spouse:</span>
+                      <span className="font-bold text-slate-800 truncate block">{fatherName}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 block text-[7px]">DOB / Blood Group:</span>
+                      <span className="font-mono font-bold text-slate-800">{dob} • {bloodGroup}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 block text-[7px]">Emergency Phone:</span>
+                      <span className="font-mono font-bold text-amber-800">{emergencyPhone}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 block text-[7px]">Circle Office:</span>
+                      <span className="font-semibold text-slate-700 truncate block">{address}</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1 flex flex-col justify-between">
+                    <div>
+                      <span className="text-[8.5px] font-extrabold uppercase text-slate-900 block">
+                        Rules & Validity
+                      </span>
+                      <p className="text-[6.5px] text-slate-600 leading-tight">
+                        1. Official non-transferable property of MPVMAVAKS Union.
+                      </p>
+                      <p className="text-[6.5px] text-slate-600 leading-tight">
+                        2. Entitles bearer to union advocacy, hazard coverage & welfare rights.
+                      </p>
+                      <p className="text-[6.5px] text-slate-600 leading-tight">
+                        3. If found, please return to Secretariat, Govindpura, Bhopal.
+                      </p>
+                    </div>
+
+                    <div className="flex items-center justify-end gap-1.5 pt-1">
+                      <UnionSealStamp className="w-9 h-9 opacity-80" />
+                      <div className="text-right">
+                        <span className="font-serif italic font-bold text-[8px] text-slate-900 block">
+                          Rajesh Sharma
+                        </span>
+                        <span className="text-[6px] font-mono text-slate-500 block uppercase">
+                          Gen. Secretary
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer Barcode */}
+                <div className="border-t border-slate-200 pt-1 flex items-center justify-between gap-2">
+                  <div className="flex-1 max-w-[160px]">
+                    <BarcodeSvg value={memberId} height={28} />
+                  </div>
+                  <div className="text-right text-[7px] font-mono text-slate-600">
+                    <span className="block font-bold text-slate-800">+91 94249 44041</span>
+                    <span>mpmavaks@gmail.com</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          {/* Printable Sheet Footer */}
+          <div className="border-t border-slate-200 pt-3 flex items-center justify-between text-xs text-slate-500 font-mono">
+            <div>
+              <span>Official Verification Hash: </span>
+              <strong className="text-slate-700">{memberId}-{Date.now().toString(36).toUpperCase()}</strong>
+            </div>
+            <div>
+              <span>Registered Office: 138, Private Bijli Nagar Colony, Govindpura, Bhopal - 462023</span>
+            </div>
+          </div>
+        </div>
+
+        {/* CONTAINER 2: STANDALONE FRONT CARD (FOR EXACT CR80 PAGE 2) */}
+        <div
+          ref={standaloneFrontRef}
+          className="w-[500px] h-[316px] rounded-2xl p-5 text-white flex flex-col justify-between bg-gradient-to-br from-[#070B19] via-[#0F172A] to-[#1E293B] border-2 border-amber-500"
+        >
+          {/* Header */}
+          <div className="flex items-start justify-between border-b border-amber-500/40 pb-2">
+            <div className="flex items-center gap-2.5">
+              <img
+                src={logoBase64 || '/images/union-logo.png'}
+                alt="Logo"
+                className="w-10 h-10 object-contain rounded-full bg-white/10 p-0.5 border border-amber-400"
+              />
+              <div>
+                <h4 className="text-[11px] font-extrabold text-amber-400 leading-tight uppercase">
+                  म.प्र.वि.म. आरक्षित वर्ग अधिकारी / कर्मचारी संघ
+                </h4>
+                <h5 className="text-[11px] font-black text-white leading-tight uppercase">
+                  MPVMAVAKS ELECTRICITY EMPLOYEES UNION
+                </h5>
+                <p className="text-[8px] font-mono text-slate-300">
+                  M.P. West Zone Discom • Regd. No. 4404
+                </p>
+              </div>
+            </div>
+            <span className="px-2 py-0.5 rounded bg-amber-500/20 border border-amber-400 text-amber-300 text-[9px] font-mono font-black">
+              DIGITAL ID
+            </span>
+          </div>
+
+          {/* Body */}
+          <div className="flex items-center gap-4 my-auto">
+            <div className="flex flex-col items-center shrink-0">
+              <img
+                src={avatarBase64 || avatarUrl}
+                alt={fullName}
+                crossOrigin="anonymous"
+                className="w-20 h-24 rounded-xl object-cover border-2 border-amber-400 bg-slate-800"
+              />
+              <span className="mt-1 px-2 py-0.5 rounded bg-slate-900 border border-amber-400 text-amber-300 text-[10px] font-mono font-black">
+                {memberId}
+              </span>
+            </div>
+
+            <div className="flex-1 min-w-0 space-y-1">
+              <h2 className="text-base font-black text-white truncate">{fullName}</h2>
+              <p className="text-xs font-extrabold text-amber-400 truncate">{unionDesignation}</p>
+              <div className="space-y-0.5 text-[9.5px] text-slate-300 font-medium">
+                <p className="truncate text-slate-100 font-bold">{designation}</p>
+                <p className="truncate">{company}</p>
+                <p className="truncate font-semibold text-slate-100">{circle}</p>
+                <p className="font-mono text-[9px] text-amber-200">{phone}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="flex items-end justify-between border-t border-amber-500/40 pt-2">
+            <EmvChipSvg className="w-9 h-6.5 shrink-0" />
+            <span className="text-[8.5px] font-mono text-amber-300 font-bold">
+              VALID: LIFETIME / 2029
+            </span>
+            <div className="flex items-center gap-2">
+              <div className="text-right">
+                <span className="text-[7.5px] text-slate-400 block">AUTH SIGN</span>
+                <span className="text-[8.5px] font-serif italic text-amber-300 font-bold">Rajesh Sharma</span>
+              </div>
+              {qrDataUrl && (
+                <img src={qrDataUrl} alt="QR" className="w-8 h-8 bg-white p-0.5 rounded object-contain" />
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* CONTAINER 3: STANDALONE BACK CARD (FOR EXACT CR80 PAGE 3) */}
+        <div
+          ref={standaloneBackRef}
+          className="w-[500px] h-[316px] rounded-2xl p-5 text-slate-900 bg-white border-2 border-slate-400 flex flex-col justify-between overflow-hidden"
+        >
+          {/* Magnetic Stripe */}
+          <div className="-mx-5 -mt-5 h-8 bg-slate-900 flex items-center justify-between px-5">
+            <span className="text-[8px] font-mono text-slate-400 tracking-widest">
+              MPVMAVAKS SECURE CARD TRACK
+            </span>
+            <span className="text-[8px] font-mono text-amber-400 font-bold">
+              {memberId}
+            </span>
+          </div>
+
+          {/* Back Body */}
+          <div className="grid grid-cols-2 gap-3 text-[9px] pt-1">
+            <div className="space-y-1">
+              <span className="text-[9.5px] font-extrabold uppercase text-amber-800 block">
+                Member Record
+              </span>
+              <div>
+                <span className="text-slate-500 block text-[7.5px]">Father/Spouse:</span>
+                <span className="font-bold text-slate-800 truncate block">{fatherName}</span>
+              </div>
+              <div>
+                <span className="text-slate-500 block text-[7.5px]">DOB / Blood Group:</span>
+                <span className="font-mono font-bold text-slate-800">{dob} • {bloodGroup}</span>
+              </div>
+              <div>
+                <span className="text-slate-500 block text-[7.5px]">Emergency Phone:</span>
+                <span className="font-mono font-bold text-amber-800">{emergencyPhone}</span>
+              </div>
+              <div>
+                <span className="text-slate-500 block text-[7.5px]">Circle Office:</span>
+                <span className="font-semibold text-slate-700 truncate block">{address}</span>
+              </div>
+            </div>
+
+            <div className="space-y-1 flex flex-col justify-between">
+              <div>
+                <span className="text-[9.5px] font-extrabold uppercase text-slate-900 block">
+                  Rules & Validity
+                </span>
+                <p className="text-[7.5px] text-slate-600 leading-tight">
+                  1. Official non-transferable property of MPVMAVAKS Union.
+                </p>
+                <p className="text-[7.5px] text-slate-600 leading-tight">
+                  2. Entitles bearer to union advocacy, hazard coverage & welfare rights.
+                </p>
+                <p className="text-[7.5px] text-slate-600 leading-tight">
+                  3. If found, please return to Secretariat, Govindpura, Bhopal.
+                </p>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-1">
+                <UnionSealStamp className="w-10 h-10 opacity-80" />
+                <div className="text-right">
+                  <span className="font-serif italic font-bold text-[9px] text-slate-900 block">
+                    Rajesh Sharma
+                  </span>
+                  <span className="text-[6.5px] font-mono text-slate-500 block uppercase">
+                    Gen. Secretary
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer Barcode */}
+          <div className="border-t border-slate-200 pt-1.5 flex items-center justify-between gap-2">
+            <div className="flex-1 max-w-[180px]">
+              <BarcodeSvg value={memberId} height={32} />
+            </div>
+            <div className="text-right text-[8px] font-mono text-slate-600">
+              <span className="block font-bold text-slate-800">+91 94249 44041</span>
+              <span>mpmavaks@gmail.com</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  );
+}

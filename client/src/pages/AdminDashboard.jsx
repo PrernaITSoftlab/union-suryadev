@@ -1575,7 +1575,9 @@ export default function AdminDashboard() {
                   >
                     <option value="GENERAL">GENERAL</option>
                     <option value="STRIKE">STRIKE / AGITATION</option>
-                    <option value="WORKSHOP">WORKSHOP / SAFETY</option>
+                    <option value="MEETING">MEETING</option>
+                    <option value="SOCIAL">SOCIAL</option>
+                    <option value="MEMORANDUM">MEMORANDUM</option>
                     <option value="CONVENTION">CONVENTION</option>
                   </select>
                 </div>

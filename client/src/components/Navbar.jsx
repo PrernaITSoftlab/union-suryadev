@@ -5,7 +5,7 @@ import { useNotification } from '../context/NotificationContext';
 import { useLanguage } from '../context/LanguageContext';
 import {
   Shield, Menu, X, Bell, User, LogOut, ChevronDown, CheckCircle2,
-  FileText, Calendar, Users, Home, Info, PhoneCall, UserPlus, LogIn, LayoutDashboard, Settings, Languages
+  FileText, Calendar, Users, Home, Info, PhoneCall, UserPlus, LogIn, LayoutDashboard, Settings, Languages, CreditCard
 } from 'lucide-react';
 
 export default function Navbar() {
@@ -400,14 +400,24 @@ export default function Navbar() {
                           <span>{t('Dashboard Hub')}</span>
                         </Link>
                         {!isAdmin && (
-                          <Link
-                            to="/dashboard/profile"
-                            onClick={() => setUserDropdownOpen(false)}
-                            className="px-4 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-sky-700 flex items-center gap-2"
-                          >
-                            <User className="w-4 h-4" />
-                            <span>{t('My Profile')}</span>
-                          </Link>
+                          <>
+                            <Link
+                              to="/dashboard/profile"
+                              onClick={() => setUserDropdownOpen(false)}
+                              className="px-4 py-2.5 text-xs font-bold text-amber-800 hover:bg-amber-50 hover:text-amber-900 flex items-center gap-2"
+                            >
+                              <CreditCard className="w-4 h-4 text-amber-600" />
+                              <span>{t('Digital ID Card', 'Digital Member Card')}</span>
+                            </Link>
+                            <Link
+                              to="/dashboard/profile"
+                              onClick={() => setUserDropdownOpen(false)}
+                              className="px-4 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-sky-700 flex items-center gap-2"
+                            >
+                              <User className="w-4 h-4" />
+                              <span>{t('My Profile')}</span>
+                            </Link>
+                          </>
                         )}
                         {isAdmin && (
                           <Link

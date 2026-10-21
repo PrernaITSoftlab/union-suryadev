@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
 import api from '../services/api';
@@ -6,12 +7,29 @@ import {
   User, Users, Calendar, AlertTriangle, FileText, Send, Bell, CreditCard,
   CheckCircle, Clock, Search, Upload, Download, Eye, Plus, ShieldCheck, Lock, Edit3, X, Share2
 } from 'lucide-react';
+import MemberCard from '../components/MemberCard';
 
 export default function UserDashboard() {
   const { user, updateProfile } = useAuth();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotification();
+  const location = useLocation();
+  const navigate = useNavigate();
 
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState(() => {
+    const path = window.location.pathname.replace('/dashboard', '').replace(/^\//, '');
+    if (path === 'profile' || path === 'card') return 'profile';
+    return 'overview';
+  });
+
+  // Sync activeTab with URL path
+  useEffect(() => {
+    const path = location.pathname.replace('/dashboard', '').replace(/^\//, '');
+    if (path === 'profile' || path === 'card') {
+      setActiveTab('profile');
+    } else if (['overview', 'directory', 'events', 'announcements', 'stories', 'documents', 'notifications', 'payments'].includes(path)) {
+      setActiveTab(path);
+    }
+  }, [location.pathname]);
 
   // Data states
   const [directory, setDirectory] = useState([]);
@@ -159,6 +177,13 @@ export default function UserDashboard() {
           <div className="flex items-center gap-3">
             <button
               onClick={() => setActiveTab('profile')}
+              className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold flex items-center gap-2 shadow-sm transition-all"
+            >
+              <CreditCard className="w-4 h-4" />
+              <span>Digital Member Card</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('profile')}
               className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-800 border border-slate-300 flex items-center gap-2"
             >
               <User className="w-4 h-4 text-amber-700" />
@@ -166,7 +191,7 @@ export default function UserDashboard() {
             </button>
             <button
               onClick={() => setShareDocModal(true)}
-              className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold flex items-center gap-2 shadow-sm"
+              className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center gap-2 border border-slate-200 shadow-sm"
             >
               <Send className="w-4 h-4" />
               <span>Share Doc</span>
@@ -308,8 +333,8 @@ export default function UserDashboard() {
           <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-10 space-y-8 shadow-sm">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div>
-                <h2 className="text-xl font-bold text-slate-900">Member Official Profile</h2>
-                <p className="text-xs text-slate-500 font-medium">View and update your personal and contact details</p>
+                <h2 className="text-xl font-bold text-slate-900">Member Official Profile & ID Card</h2>
+                <p className="text-xs text-slate-500 font-medium">View and download your official digital union identity card and employment records</p>
               </div>
               <button
                 onClick={() => setEditingProfile(!editingProfile)}
@@ -318,6 +343,13 @@ export default function UserDashboard() {
                 <Edit3 className="w-4 h-4" />
                 <span>{editingProfile ? 'Cancel Edit' : 'Edit Profile'}</span>
               </button>
+            </div>
+
+            {/* Official Member Identity Card with Download PDF */}
+            <div className="border-b border-slate-100 pb-6">
+              <MemberCard
+                member={editingProfile ? { ...user, profile: { ...user?.profile, ...profileForm } } : user}
+              />
             </div>
 
             {editingProfile ? (
