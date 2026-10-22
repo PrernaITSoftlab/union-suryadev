@@ -17,6 +17,7 @@ import orderRoutes from './routes/orderRoutes.js';
 import photoRoutes from './routes/photoRoutes.js';
 import strikeRoutes from './routes/strikeRoutes.js';
 import opportunityRoutes from './routes/opportunityRoutes.js';
+import chatRoutes from './routes/chatRoutes.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 dotenv.config();
@@ -24,8 +25,22 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Enable CORS and JSON parsing
-app.use(cors());
+// Enable CORS with full support for localhost, 127.0.0.1, Vercel, and Chrome Private Network Access
+app.use((req, res, next) => {
+  const origin = req.headers.origin || '*';
+  res.header('Access-Control-Allow-Origin', origin);
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Access-Control-Request-Private-Network');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  if (req.headers['access-control-request-private-network']) {
+    res.header('Access-Control-Allow-Private-Network', 'true');
+  }
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(204);
+  }
+  next();
+});
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
@@ -52,6 +67,7 @@ mountRoute('/orders', orderRoutes);
 mountRoute('/photos', photoRoutes);
 mountRoute('/strike', strikeRoutes);
 mountRoute('/opportunities', opportunityRoutes);
+mountRoute('/chat', chatRoutes);
 
 // Health check endpoint (all paths)
 const healthHandler = (req, res) => {
@@ -69,7 +85,8 @@ app.get('/health', healthHandler);
 // Global Error Handler
 app.use(errorHandler);
 
-app.listen(PORT, '0.0.0.0', () => {
+// Listen on dual-stack IPv6 (::) and IPv4 (0.0.0.0/127.0.0.1)
+app.listen(PORT, () => {
   console.log(`⚡ MPVMAVAKS Union API Server running on port ${PORT}`);
-  console.log(`🌐 Health check available at: http://127.0.0.1:${PORT}/api/health`);
+  console.log(`🌐 Health check available at: http://localhost:${PORT}/api/health and http://127.0.0.1:${PORT}/api/health`);
 });

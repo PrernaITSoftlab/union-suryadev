@@ -8,6 +8,30 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const BACKUP_FILE = path.join(__dirname, 'events_backup.json');
 const INTERACTIONS_BACKUP_FILE = path.join(__dirname, 'event_interactions_backup.json');
+const REGISTRATIONS_BACKUP_FILE = path.join(__dirname, 'event_registrations_backup.json');
+
+export function saveRegistrationsToBackup(registrations) {
+  try {
+    fs.writeFileSync(REGISTRATIONS_BACKUP_FILE, JSON.stringify(registrations, null, 2), 'utf-8');
+  } catch (err) {
+    console.warn('Could not write event registrations backup file:', err.message);
+  }
+}
+
+export function loadRegistrationsFromBackup() {
+  try {
+    if (fs.existsSync(REGISTRATIONS_BACKUP_FILE)) {
+      const data = fs.readFileSync(REGISTRATIONS_BACKUP_FILE, 'utf-8');
+      const parsed = JSON.parse(data);
+      if (Array.isArray(parsed)) {
+        return parsed;
+      }
+    }
+  } catch (err) {
+    console.warn('Could not read event registrations backup file:', err.message);
+  }
+  return null;
+}
 
 export function saveEventsToBackup(events) {
   try {
@@ -22,7 +46,7 @@ export function loadEventsFromBackup() {
     if (fs.existsSync(BACKUP_FILE)) {
       const data = fs.readFileSync(BACKUP_FILE, 'utf-8');
       const parsed = JSON.parse(data);
-      if (Array.isArray(parsed) && parsed.length > 0) {
+      if (Array.isArray(parsed)) {
         return parsed;
       }
     }
@@ -58,33 +82,90 @@ export function loadInteractionsFromBackup() {
 export async function ensureEventsSchemaAndSeed() {
   if (!pool) {
     console.warn('⚠️ No PostgreSQL pool available. Using local events backup / in-memory store.');
+    const diskRegs = loadRegistrationsFromBackup();
+    if (diskRegs && diskRegs.length > 0) {
+      inMemoryStore.eventRegistrations = diskRegs;
+    }
     return;
   }
 
   try {
-    // 1. Ensure events_status_check allows UPCOMING as well
+    // 1. Ensure events and event_registrations schema, columns & constraints
     try {
       await pool.query(`
         ALTER TABLE events DROP CONSTRAINT IF EXISTS events_status_check;
         ALTER TABLE events ADD CONSTRAINT events_status_check 
           CHECK (status IN ('DRAFT', 'PUBLISHED', 'REGISTRATION_OPEN', 'REGISTRATION_CLOSED', 'COMPLETED', 'CANCELLED', 'UPCOMING'));
         ALTER TABLE events ADD COLUMN IF NOT EXISTS requires_approval BOOLEAN DEFAULT true;
+
+        CREATE TABLE IF NOT EXISTS event_registrations (
+          id SERIAL PRIMARY KEY,
+          event_id INT REFERENCES events (id) ON DELETE CASCADE,
+          user_id INT REFERENCES users (id) ON DELETE CASCADE,
+          pass_code VARCHAR(100) UNIQUE,
+          amount DECIMAL(10, 2) DEFAULT 0.00,
+          payment_status VARCHAR(50) DEFAULT 'PENDING',
+          registration_status VARCHAR(50) DEFAULT 'PENDING',
+          transaction_id VARCHAR(100),
+          payment_proof_url TEXT,
+          rejection_reason TEXT,
+          registered_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+          CONSTRAINT unique_event_user UNIQUE (event_id, user_id)
+        );
+
         ALTER TABLE event_registrations DROP CONSTRAINT IF EXISTS event_registrations_registration_status_check;
         ALTER TABLE event_registrations ADD CONSTRAINT event_registrations_registration_status_check 
           CHECK (registration_status IN ('PENDING', 'CONFIRMED', 'REJECTED', 'CANCELLED', 'ATTENDED'));
+
+        ALTER TABLE event_registrations ADD COLUMN IF NOT EXISTS transaction_id VARCHAR(100);
+        ALTER TABLE event_registrations ADD COLUMN IF NOT EXISTS payment_proof_url TEXT;
+        ALTER TABLE event_registrations ADD COLUMN IF NOT EXISTS rejection_reason TEXT;
+        ALTER TABLE event_registrations ADD COLUMN IF NOT EXISTS registered_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;
+
+        CREATE TABLE IF NOT EXISTS payments (
+          id SERIAL PRIMARY KEY,
+          user_id INT REFERENCES users (id) ON DELETE SET NULL,
+          membership_application_id INT REFERENCES membership_applications (id) ON DELETE SET NULL,
+          event_registration_id INT REFERENCES event_registrations (id) ON DELETE SET NULL,
+          payment_type VARCHAR(50) NOT NULL,
+          amount DECIMAL(10, 2) NOT NULL,
+          transaction_id VARCHAR(100) NOT NULL,
+          payment_proof_url TEXT,
+          payment_date DATE DEFAULT CURRENT_DATE,
+          status VARCHAR(50) DEFAULT 'SUBMITTED',
+          verified_by INT REFERENCES users (id),
+          verified_at TIMESTAMP WITH TIME ZONE,
+          remarks TEXT,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        );
+
+        ALTER TABLE payments ADD COLUMN IF NOT EXISTS event_registration_id INT;
+        ALTER TABLE payments ADD COLUMN IF NOT EXISTS remarks TEXT;
       `);
-      console.log('✅ PostgreSQL events constraints & columns verified.');
+      console.log('✅ PostgreSQL events, registrations, and payments schema & columns verified.');
     } catch (conErr) {
-      console.warn('⚠️ Notice on events constraints update:', conErr.message);
+      console.warn('⚠️ Notice on events/registrations constraints update:', conErr.message);
     }
 
-    // 2. Check if events table has records
+    // 2. Check if events table has been seeded before
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS system_metadata (
+        key VARCHAR(100) PRIMARY KEY,
+        value TEXT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    const metaRes = await pool.query("SELECT value FROM system_metadata WHERE key = 'events_seeded'");
+    const alreadySeeded = metaRes.rows.length > 0;
+
     const countRes = await pool.query('SELECT count(*) as count FROM events');
     const count = parseInt(countRes.rows[0]?.count || '0', 10);
-    console.log(`ℹ️ Current events count in PostgreSQL: ${count}`);
+    console.log(`ℹ️ Current events count in PostgreSQL: ${count}, alreadySeeded: ${alreadySeeded}`);
 
-    if (count === 0) {
-      console.log('⏳ Seeding INITIAL_EVENTS into PostgreSQL events table...');
+    // Only seed if NEVER seeded before and count is 0
+    if (count === 0 && !alreadySeeded) {
+      console.log('⏳ First-time initialization: Seeding INITIAL_EVENTS into PostgreSQL events table...');
       for (const evt of INITIAL_EVENTS) {
         await pool.query(`
           INSERT INTO events (
@@ -136,7 +217,10 @@ export async function ensureEventsSchemaAndSeed() {
 
       // Update sequence to highest id
       await pool.query(`SELECT setval('events_id_seq', (SELECT COALESCE(MAX(id), 1) FROM events));`);
+      await pool.query("INSERT INTO system_metadata (key, value) VALUES ('events_seeded', 'true') ON CONFLICT (key) DO NOTHING;");
       console.log('✅ INITIAL_EVENTS seeded into PostgreSQL successfully.');
+    } else if (!alreadySeeded) {
+      await pool.query("INSERT INTO system_metadata (key, value) VALUES ('events_seeded', 'true') ON CONFLICT (key) DO NOTHING;");
     }
 
     // 3. Ensure event_likes and event_comments tables exist
@@ -198,7 +282,30 @@ export async function ensureEventsSchemaAndSeed() {
       console.warn('⚠️ Could not backup event interactions:', intErr.message);
     }
 
-    // 5. Sync events from PostgreSQL into backup file
+    // 5.1 Load and hydrate event registrations from PostgreSQL
+    try {
+      const dbRegs = await pool.query('SELECT * FROM event_registrations ORDER BY registered_at DESC');
+      if (dbRegs.rows.length > 0) {
+        inMemoryStore.eventRegistrations = dbRegs.rows.map(r => ({
+          ...r,
+          id: Number(r.id),
+          event_id: Number(r.event_id),
+          user_id: Number(r.user_id),
+          amount: Number(r.amount || 0)
+        }));
+        saveRegistrationsToBackup(inMemoryStore.eventRegistrations);
+        console.log(`✅ Loaded & backed up ${inMemoryStore.eventRegistrations.length} registrations from PostgreSQL.`);
+      } else {
+        const diskRegs = loadRegistrationsFromBackup();
+        if (diskRegs && diskRegs.length > 0) {
+          inMemoryStore.eventRegistrations = diskRegs;
+        }
+      }
+    } catch (regErr) {
+      console.warn('⚠️ Could not load event registrations from PostgreSQL:', regErr.message);
+    }
+
+    // 6. Sync events from PostgreSQL into backup file
     const allEvents = await pool.query(`
       SELECT e.*,
         (SELECT COUNT(*)::int FROM event_likes WHERE event_id = e.id) AS likes_count,
@@ -214,7 +321,7 @@ export async function ensureEventsSchemaAndSeed() {
   } catch (err) {
     console.error('❌ Error in ensureEventsSchemaAndSeed:', err.message);
     const backup = loadEventsFromBackup();
-    return backup || INITIAL_EVENTS;
+    return backup !== null ? backup : INITIAL_EVENTS;
   }
 }
 

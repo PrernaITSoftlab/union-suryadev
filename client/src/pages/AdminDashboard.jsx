@@ -1,17 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import {
   LayoutDashboard, UserCheck, Users, Calendar, CreditCard, AlertTriangle, FileText,
   Send, PhoneCall, Settings, CheckCircle2, XCircle, Eye, UserPlus, Check, X, Search,
   Filter, Sparkles, RefreshCw, ChevronRight, Edit3, ShieldAlert, Award, Download,
-  Camera, UploadCloud, Trash2, Plus, ExternalLink, Image as ImageIcon, User
+  Camera, UploadCloud, Trash2, Plus, ExternalLink, Image as ImageIcon, User, MessageSquare
 } from 'lucide-react';
 import ProfilePhotoUploader from '../components/ProfilePhotoUploader';
 import ProfilePhotoModal from '../components/ProfilePhotoModal';
 
 export default function AdminDashboard() {
   const { user, settings, updateProfile, updateProfilePhoto } = useAuth();
+  const navigate = useNavigate();
   const [activeModule, setActiveModule] = useState('analytics');
 
   // State data
@@ -41,6 +43,7 @@ export default function AdminDashboard() {
   const [generatedCredentialsModal, setGeneratedCredentialsModal] = useState(null);
   const [createEventModal, setCreateEventModal] = useState(false);
   const [editEventModal, setEditEventModal] = useState(null);
+  const [publishingEvent, setPublishingEvent] = useState(false);
   const [createAnnounceModal, setCreateAnnounceModal] = useState(false);
   const [editAnnounceModal, setEditAnnounceModal] = useState(null);
 
@@ -422,6 +425,8 @@ export default function AdminDashboard() {
 
   const handleCreateEvent = async (e) => {
     e.preventDefault();
+    if (publishingEvent) return;
+    setPublishingEvent(true);
     try {
       const payload = {
         ...eventForm,
@@ -443,12 +448,15 @@ export default function AdminDashboard() {
       }
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to create event.');
+    } finally {
+      setPublishingEvent(false);
     }
   };
 
   const handleUpdateEvent = async (e) => {
     e.preventDefault();
-    if (!editEventModal) return;
+    if (!editEventModal || publishingEvent) return;
+    setPublishingEvent(true);
     try {
       const payload = {
         ...eventForm,
@@ -463,6 +471,8 @@ export default function AdminDashboard() {
       }
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to update event.');
+    } finally {
+      setPublishingEvent(false);
     }
   };
 
@@ -471,7 +481,10 @@ export default function AdminDashboard() {
     try {
       const res = await api.delete(`/events/admin/${eventId}`);
       if (res.data.success) {
-        setFeedback({ success: res.data.message });
+        setEvents(prev => prev.filter(e => e.id !== eventId));
+        setEventRegs(prev => prev.filter(r => r.event_id !== eventId));
+        setFeedback({ success: res.data.message || 'Event permanently deleted.' });
+        setTimeout(() => setFeedback(null), 4000);
         fetchModuleData();
       }
     } catch (err) {
@@ -627,6 +640,13 @@ export default function AdminDashboard() {
 
           <div className="flex items-center gap-3">
             <button
+              onClick={() => navigate('/chat')}
+              className="px-4 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold flex items-center gap-2 shadow-sm transition-all"
+            >
+              <MessageSquare className="w-4 h-4" />
+              <span>Group Chat</span>
+            </button>
+            <button
               onClick={() => setEditAdminProfileModalOpen(true)}
               className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold flex items-center gap-2 shadow-sm transition-all"
             >
@@ -654,8 +674,9 @@ export default function AdminDashboard() {
         <div className="flex flex-wrap items-center gap-2 pb-3 border-b border-slate-200">
           {[
             { id: 'analytics', label: 'Analytics Hub', icon: LayoutDashboard },
+            { id: 'chat', label: 'Union Group Chat', icon: MessageSquare, isExternal: true },
             { id: 'admin_profile', label: 'Admin Profile & Photo', icon: User },
-            { id: 'orders', label: 'Notices & Circulars (PDF)', icon: FileText },
+            { id: 'orders', label: 'Correspondence & Circulars (PDF)', icon: FileText },
             { id: 'photos', label: 'Photo Gallery', icon: Camera },
             { id: 'pending_approvals', label: 'Pending Member Approvals', icon: UserCheck },
             { id: 'applications', label: 'Membership Requests', icon: FileText },
@@ -677,13 +698,22 @@ export default function AdminDashboard() {
             return (
               <button
                 key={tab.id}
-                onClick={() => { setActiveModule(tab.id); setStatusFilter('all'); }}
-                className={`px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${active
+                onClick={() => {
+                  if (tab.id === 'chat') {
+                    navigate('/chat');
+                  } else {
+                    setActiveModule(tab.id);
+                    setStatusFilter('all');
+                  }
+                }}
+                className={`px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${tab.id === 'chat'
+                    ? 'bg-sky-50 text-sky-700 border border-sky-200 hover:bg-sky-100'
+                    : active
                     ? 'bg-amber-500 text-slate-950 shadow-sm ring-1 ring-amber-600/20'
                     : 'bg-white border border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-50'
                   }`}
               >
-                <Icon className="w-4 h-4 shrink-0" />
+                <Icon className={`w-4 h-4 shrink-0 ${tab.id === 'chat' ? 'text-sky-600' : ''}`} />
                 <span>{tab.label}</span>
                 {tab.badge > 0 && (
                   <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-rose-600 text-white shadow-sm">
@@ -812,7 +842,7 @@ export default function AdminDashboard() {
               <div>
                 <h2 className="text-xl font-extrabold text-slate-900 flex items-center gap-2">
                   <FileText className="w-5 h-5 text-sky-600" />
-                  <span>Notices & Circulars Directory (Orders)</span>
+                  <span>Correspondence & Circulars Directory (Orders)</span>
                 </h2>
                 <p className="text-xs text-slate-500 font-medium mt-1">Add, update, and delete union & government circulars with attached PDF documents.</p>
               </div>
@@ -825,14 +855,14 @@ export default function AdminDashboard() {
                 className="px-4 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs flex items-center gap-2 shadow-md shrink-0"
               >
                 <Plus className="w-4 h-4" />
-                <span>Add New Notice / Circular (PDF)</span>
+                <span>Add New Correspondence / Circular (PDF)</span>
               </button>
             </div>
 
             {/* Notices List (Single-Line Underlined Style) */}
             <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm space-y-4">
               {ordersList.length === 0 ? (
-                <div className="py-12 text-center text-xs text-slate-500 font-medium">No notices or circulars available.</div>
+                <div className="py-12 text-center text-xs text-slate-500 font-medium">No correspondence or circulars available.</div>
               ) : (
                 <ul className="space-y-4 divide-y divide-slate-100">
                   {ordersList.map((item) => (
@@ -2149,7 +2179,7 @@ export default function AdminDashboard() {
                 <Calendar className="w-5 h-5 text-sky-600" />
                 <span>{editEventModal ? 'Edit Event Details' : 'Create New Event / Agitation'}</span>
               </h3>
-              <button onClick={() => { setCreateEventModal(false); setEditEventModal(null); }} className="text-slate-400 hover:text-slate-700">
+              <button onClick={() => { if (!publishingEvent) { setCreateEventModal(false); setEditEventModal(null); } }} disabled={publishingEvent} className="text-slate-400 hover:text-slate-700 disabled:opacity-50">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -2381,13 +2411,19 @@ export default function AdminDashboard() {
               <div className="flex items-center gap-3 pt-2">
                 <button
                   type="button"
+                  disabled={publishingEvent}
                   onClick={() => { setCreateEventModal(false); setEditEventModal(null); }}
-                  className="flex-1 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold"
+                  className="flex-1 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed text-slate-700 font-bold transition-all"
                 >
                   Cancel
                 </button>
-                <button type="submit" className="flex-1 py-3 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold shadow-md">
-                  {editEventModal ? 'Update Event' : 'Publish Event'}
+                <button
+                  type="submit"
+                  disabled={publishingEvent}
+                  className="flex-1 py-3 rounded-xl bg-sky-600 hover:bg-sky-500 disabled:bg-sky-400 disabled:cursor-not-allowed text-white font-bold shadow-md transition-all flex items-center justify-center gap-2"
+                >
+                  {publishingEvent && <RefreshCw className="w-4 h-4 animate-spin text-white" />}
+                  <span>{publishingEvent ? (editEventModal ? 'Updating...' : 'Publishing Event...') : (editEventModal ? 'Update Event' : 'Publish Event')}</span>
                 </button>
               </div>
             </form>
@@ -2636,7 +2672,7 @@ export default function AdminDashboard() {
                     <option value="Govt. Circulars">Govt. Circulars</option>
                     <option value="SC/ST Circulars">SC/ST Circulars</option>
                     <option value="Normal Circulars">Normal Circulars</option>
-                    <option value="Notices">Notices & Directives</option>
+                    <option value="Notices">Correspondence & Directives</option>
                     <option value="Safety Directives">Safety & PTW Rules</option>
                   </select>
                 </div>
@@ -3178,23 +3214,37 @@ export default function AdminDashboard() {
           <div className="bg-white border border-slate-200 rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl animate-in zoom-in-95">
             <div className="flex justify-between items-center border-b border-slate-100 pb-3">
               <div>
-                <h3 className="text-base font-extrabold text-slate-900">Payment Screenshot Proof</h3>
-                <p className="text-xs text-slate-500">{viewRegProofModal.member_name} • UTR: {viewRegProofModal.transaction_id || 'N/A'}</p>
+                <h3 className="text-base font-extrabold text-slate-900">Event Payment Receipt Proof</h3>
+                <p className="text-xs text-slate-500">
+                  {viewRegProofModal.member_name} • UTR: <strong className="text-slate-800 font-mono">{viewRegProofModal.transaction_id || 'N/A'}</strong>
+                </p>
+                <p className="text-[11px] text-sky-700 font-bold mt-0.5">{viewRegProofModal.event_title}</p>
               </div>
               <button onClick={() => setViewRegProofModal(null)} className="text-slate-400 hover:text-slate-700">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="max-h-[60vh] overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 flex items-center justify-center">
-              <img
-                src={viewRegProofModal.payment_proof_url}
-                alt="Payment Receipt"
-                className="w-full h-full max-h-[55vh] object-contain"
-              />
+            <div className="max-h-[60vh] overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 flex items-center justify-center min-h-[220px]">
+              {viewRegProofModal.payment_proof_url && (
+                viewRegProofModal.payment_proof_url.startsWith('data:application/pdf') ||
+                viewRegProofModal.payment_proof_url.toLowerCase().endsWith('.pdf')
+              ) ? (
+                <iframe
+                  src={viewRegProofModal.payment_proof_url}
+                  title="Payment Receipt PDF"
+                  className="w-full h-80 rounded-xl"
+                />
+              ) : (
+                <img
+                  src={viewRegProofModal.payment_proof_url}
+                  alt="Payment Receipt"
+                  className="w-full h-full max-h-[55vh] object-contain"
+                />
+              )}
             </div>
 
-            <div className="flex items-center justify-between pt-2">
+            <div className="flex items-center justify-between text-xs pt-1">
               <a
                 href={viewRegProofModal.payment_proof_url}
                 target="_blank"
@@ -3205,13 +3255,59 @@ export default function AdminDashboard() {
                 <span>Open Full Size</span>
               </a>
 
+              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                viewRegProofModal.registration_status === 'CONFIRMED'
+                  ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                  : viewRegProofModal.registration_status === 'REJECTED'
+                  ? 'bg-rose-100 text-rose-900 border border-rose-300'
+                  : 'bg-amber-100 text-amber-900 border border-amber-300'
+              }`}>
+                Status: {viewRegProofModal.registration_status || 'PENDING'}
+              </span>
+            </div>
+
+            {/* Quick Action Buttons for Admin Review */}
+            <div className="flex items-center justify-between gap-3 pt-3 border-t border-slate-100">
               <button
                 type="button"
                 onClick={() => setViewRegProofModal(null)}
-                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold"
+                className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors"
               >
-                Close
+                Close Preview
               </button>
+
+              <div className="flex items-center gap-2">
+                {viewRegProofModal.registration_status !== 'CONFIRMED' && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const regId = viewRegProofModal.id;
+                      setViewRegProofModal(null);
+                      handleApproveRegistration(regId);
+                    }}
+                    className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs flex items-center gap-1.5 shadow-sm transition-all"
+                  >
+                    <Check className="w-4 h-4" />
+                    <span>Approve Request</span>
+                  </button>
+                )}
+
+                {viewRegProofModal.registration_status !== 'REJECTED' && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const target = viewRegProofModal;
+                      setViewRegProofModal(null);
+                      setRejectRegModal(target);
+                      setRejectRegReason('');
+                    }}
+                    className="px-4 py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-xs flex items-center gap-1.5 transition-all"
+                  >
+                    <X className="w-4 h-4" />
+                    <span>Reject</span>
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>

@@ -367,6 +367,45 @@ CREATE INDEX IF NOT EXISTS idx_applications_status ON membership_applications (
 
 CREATE INDEX IF NOT EXISTS idx_payments_status ON payments (status, payment_type);
 
-CREATE INDEX IF NOT EXISTS idx_shared_docs_recipient ON shared_documents (recipient_id);
-
 CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications (user_id, is_read);
+
+-- 14. Chat Groups Table
+CREATE TABLE IF NOT EXISTS chat_groups (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    avatar_url TEXT,
+    created_by INT REFERENCES users(id) ON DELETE SET NULL,
+    category VARCHAR(100) DEFAULT 'GENERAL',
+    circle VARCHAR(100) DEFAULT 'ALL',
+    is_private BOOLEAN DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 15. Chat Group Members Table
+CREATE TABLE IF NOT EXISTS chat_group_members (
+    id SERIAL PRIMARY KEY,
+    group_id INT REFERENCES chat_groups(id) ON DELETE CASCADE,
+    user_id INT REFERENCES users(id) ON DELETE CASCADE,
+    role VARCHAR(50) DEFAULT 'MEMBER' CHECK (role IN ('ADMIN', 'MEMBER')),
+    joined_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    last_read_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(group_id, user_id)
+);
+
+-- 16. Chat Messages Table
+CREATE TABLE IF NOT EXISTS chat_messages (
+    id SERIAL PRIMARY KEY,
+    group_id INT REFERENCES chat_groups(id) ON DELETE CASCADE,
+    sender_id INT REFERENCES users(id) ON DELETE SET NULL,
+    message_text TEXT NOT NULL,
+    attachment_url TEXT,
+    attachment_type VARCHAR(50),
+    is_system BOOLEAN DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_chat_messages_group ON chat_messages(group_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_chat_members_user ON chat_group_members(user_id);
+CREATE INDEX IF NOT EXISTS idx_chat_members_group ON chat_group_members(group_id);

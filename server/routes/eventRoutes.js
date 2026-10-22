@@ -40,6 +40,20 @@ router.get('/list', optionalAuth, async (req, res) => {
   }
 });
 
+// 1.1 Get Authenticated Member's Event Registrations
+router.get('/my-registrations', authenticateToken, async (req, res) => {
+  try {
+    const registrations = await EventService.getMyRegistrations(req.user.id);
+    res.json({
+      success: true,
+      registrations
+    });
+  } catch (err) {
+    console.error('Error fetching member registrations:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch member event registrations.' });
+  }
+});
+
 // 2. Get Single Event Details
 router.get('/:id', optionalAuth, async (req, res) => {
   try {

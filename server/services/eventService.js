@@ -1,9 +1,11 @@
-import { pool, inMemoryStore } from '../config/db.js';
+import { pool, inMemoryStore, saveRegistrationsBackup } from '../config/db.js';
 import {
   ensureEventsSchemaAndSeed,
   normalizeEventRow,
   saveEventsToBackup,
   loadEventsFromBackup,
+  saveRegistrationsToBackup,
+  loadRegistrationsFromBackup,
   saveInteractionsToBackup,
   loadInteractionsFromBackup,
   formatDbDate
@@ -11,16 +13,19 @@ import {
 
 // Auto-run schema check and initial sync on module load
 let initialSyncPromise = ensureEventsSchemaAndSeed().then(loaded => {
-  if (Array.isArray(loaded) && loaded.length > 0) {
+  if (Array.isArray(loaded)) {
     inMemoryStore.events = [...loaded];
   }
 }).catch(err => {
   console.warn('⚠️ Initial events sync notice:', err.message);
   const backup = loadEventsFromBackup();
-  if (backup && backup.length > 0) {
+  if (Array.isArray(backup)) {
     inMemoryStore.events = [...backup];
   }
 });
+
+// Track pending in-flight event creations to prevent race conditions on concurrent clicks
+const pendingEventCreations = new Map();
 
 export const EventService = {
   /**
@@ -39,6 +44,7 @@ export const EventService = {
     await this.awaitInit();
 
     let eventsList = [];
+    let dbSuccess = false;
 
     if (pool) {
       try {
@@ -76,9 +82,10 @@ export const EventService = {
 
         const result = await pool.query(queryText, params);
         eventsList = result.rows.map(normalizeEventRow);
+        dbSuccess = true;
 
         // Keep in-memory cache and backup updated with latest data from DB (clean of user-specific like flag)
-        if (eventsList.length > 0 && !status && !search && !type && !isPublicOnly) {
+        if (!status && !search && !type && !isPublicOnly) {
           inMemoryStore.events = eventsList.map(e => ({ ...e, is_liked: false }));
           saveEventsToBackup(inMemoryStore.events);
         }
@@ -90,8 +97,8 @@ export const EventService = {
       eventsList = [...inMemoryStore.events];
     }
 
-    // In-memory fallback filtering if DB didn't run or threw
-    if (eventsList.length === 0 && inMemoryStore.events.length > 0) {
+    // In-memory fallback filtering ONLY if DB query failed or pool is unavailable
+    if (!dbSuccess && eventsList.length === 0 && inMemoryStore.events.length > 0) {
       eventsList = [...inMemoryStore.events];
     }
 
@@ -209,98 +216,159 @@ export const EventService = {
     const finalIsPaid = Boolean(is_paid) || finalFee > 0;
     const finalRequiresApproval = requires_approval !== undefined ? Boolean(requires_approval) : true;
 
-    let createdEvent = null;
+    // Deduplication check: if an identical event was created in the last 10 seconds, return it
+    const trimmedTitle = (title || '').trim();
+    const trimmedVenue = (venue || '').trim();
+    const dedupKey = `${trimmedTitle.toLowerCase()}__${finalStartDate}__${trimmedVenue.toLowerCase()}`;
 
-    if (pool) {
-      try {
-        const queryText = `
-          INSERT INTO events (
-            title, description, banner_url, event_type, start_date, end_date,
-            start_time, end_time, venue, address, capacity, registered_count,
-            registration_start_date, registration_end_date, is_paid, event_fee,
-            payment_qr_url, payment_instructions, whatsapp_contact, visibility,
-            status, requires_approval, created_by, created_at, updated_at
-          ) VALUES (
-            $1, $2, $3, $4, $5, $6,
-            $7, $8, $9, $10, $11, $12,
-            $13, $14, $15, $16,
-            $17, $18, $19, $20,
-            $21, $22, $23, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
-          ) RETURNING *;
-        `;
+    // 1. If an identical event creation is already in-flight, await and return its result
+    if (trimmedTitle && pendingEventCreations.has(dedupKey)) {
+      console.log(`⚠️ Deduplicating in-flight creation request for "${trimmedTitle}".`);
+      return await pendingEventCreations.get(dedupKey);
+    }
 
-        const values = [
-          title.trim(),
-          description || '',
-          banner_url || 'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=1200&q=80',
-          event_type || 'GENERAL',
-          finalStartDate,
-          finalEndDate,
-          start_time || '10:00 AM',
-          end_time || '05:00 PM',
-          venue.trim(),
-          address || venue,
-          Number(capacity) || 500,
-          0,
-          finalRegStart,
-          finalRegEnd,
-          finalIsPaid,
-          finalFee,
-          payment_qr_url || defaultQr,
-          payment_instructions || 'Pay fee using QR code and submit UTR number.',
-          whatsapp_contact || inMemoryStore.systemSettings?.payment_whatsapp_number || '+91 94249 44041',
-          visibility || 'PUBLIC',
-          status || 'REGISTRATION_OPEN',
-          finalRequiresApproval,
-          userId || 1
-        ];
-
-        const res = await pool.query(queryText, values);
-        if (res.rows.length > 0) {
-          createdEvent = normalizeEventRow(res.rows[0]);
+    const executeCreation = async () => {
+      // 2. Deduplication check: if an identical event was created in the last 10 seconds, return it
+      if (pool && trimmedTitle) {
+        try {
+          const dupCheck = await pool.query(
+            `SELECT * FROM events 
+             WHERE LOWER(TRIM(title)) = LOWER($1) 
+               AND LOWER(TRIM(venue)) = LOWER($2) 
+               AND created_at >= NOW() - INTERVAL '10 seconds'
+             ORDER BY id DESC LIMIT 1`,
+            [trimmedTitle, trimmedVenue]
+          );
+          if (dupCheck.rows.length > 0) {
+            console.log(`⚠️ Prevented duplicate event creation for "${trimmedTitle}". Returning recently created event.`);
+            return normalizeEventRow(dupCheck.rows[0]);
+          }
+        } catch (dupErr) {
+          // Fallback to checking in-memory
         }
-      } catch (err) {
-        console.error('❌ Error saving event to PostgreSQL:', err.message);
       }
+
+      if (trimmedTitle) {
+        const recentInMemory = (inMemoryStore.events || []).find(e => 
+          e.title && e.title.trim().toLowerCase() === trimmedTitle.toLowerCase() &&
+          e.venue && e.venue.trim().toLowerCase() === trimmedVenue.toLowerCase() &&
+          (Date.now() - new Date(e.created_at || Date.now()).getTime()) < 10000
+        );
+        if (recentInMemory) {
+          console.log(`⚠️ Prevented duplicate event creation for "${trimmedTitle}" (in-memory). Returning recently created event.`);
+          return recentInMemory;
+        }
+      }
+
+      let createdEvent = null;
+
+      if (pool) {
+        try {
+          const queryText = `
+            INSERT INTO events (
+              title, description, banner_url, event_type, start_date, end_date,
+              start_time, end_time, venue, address, capacity, registered_count,
+              registration_start_date, registration_end_date, is_paid, event_fee,
+              payment_qr_url, payment_instructions, whatsapp_contact, visibility,
+              status, requires_approval, created_by, created_at, updated_at
+            ) VALUES (
+              $1, $2, $3, $4, $5, $6,
+              $7, $8, $9, $10, $11, $12,
+              $13, $14, $15, $16,
+              $17, $18, $19, $20,
+              $21, $22, $23, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+            ) RETURNING *;
+          `;
+
+          const values = [
+            trimmedTitle,
+            description || '',
+            banner_url || 'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=1200&q=80',
+            event_type || 'GENERAL',
+            finalStartDate,
+            finalEndDate,
+            start_time || '10:00 AM',
+            end_time || '05:00 PM',
+            trimmedVenue,
+            address || venue,
+            Number(capacity) || 500,
+            0,
+            finalRegStart,
+            finalRegEnd,
+            finalIsPaid,
+            finalFee,
+            payment_qr_url || defaultQr,
+            payment_instructions || 'Pay fee using QR code and submit UTR number.',
+            whatsapp_contact || inMemoryStore.systemSettings?.payment_whatsapp_number || '+91 94249 44041',
+            visibility || 'PUBLIC',
+            status || 'REGISTRATION_OPEN',
+            finalRequiresApproval,
+            userId || 1
+          ];
+
+          const res = await pool.query(queryText, values);
+          if (res.rows.length > 0) {
+            createdEvent = normalizeEventRow(res.rows[0]);
+          }
+        } catch (err) {
+          console.error('❌ Error saving event to PostgreSQL:', err.message);
+        }
+      }
+
+      if (!createdEvent) {
+        // In-memory fallback
+        createdEvent = {
+          id: (inMemoryStore.events.reduce((max, e) => Math.max(max, e.id || 0), 0)) + 1,
+          title: trimmedTitle,
+          description: description || '',
+          banner_url: banner_url || 'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=1200&q=80',
+          event_type: event_type || 'GENERAL',
+          start_date: finalStartDate,
+          end_date: finalEndDate,
+          start_time: start_time || '10:00 AM',
+          end_time: end_time || '05:00 PM',
+          venue: trimmedVenue,
+          address: address || venue,
+          capacity: Number(capacity) || 500,
+          registered_count: 0,
+          registration_start_date: finalRegStart,
+          registration_end_date: finalRegEnd,
+          is_paid: finalIsPaid,
+          event_fee: finalFee,
+          requires_approval: finalRequiresApproval,
+          payment_qr_url: payment_qr_url || defaultQr,
+          payment_instructions: payment_instructions || 'Pay fee using QR code and submit UTR number.',
+          whatsapp_contact: whatsapp_contact || inMemoryStore.systemSettings?.payment_whatsapp_number || '+91 94249 44041',
+          visibility: visibility || 'PUBLIC',
+          status: status || 'REGISTRATION_OPEN',
+          created_by: userId || 1,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+      }
+
+      // Always update inMemoryStore and local backup
+      inMemoryStore.events.unshift(createdEvent);
+      saveEventsToBackup(inMemoryStore.events);
+
+      return createdEvent;
+    };
+
+    const creationPromise = executeCreation();
+    if (trimmedTitle) {
+      pendingEventCreations.set(dedupKey, creationPromise);
     }
 
-    if (!createdEvent) {
-      // In-memory fallback
-      createdEvent = {
-        id: (inMemoryStore.events.reduce((max, e) => Math.max(max, e.id || 0), 0)) + 1,
-        title: title.trim(),
-        description: description || '',
-        banner_url: banner_url || 'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=1200&q=80',
-        event_type: event_type || 'GENERAL',
-        start_date: finalStartDate,
-        end_date: finalEndDate,
-        start_time: start_time || '10:00 AM',
-        end_time: end_time || '05:00 PM',
-        venue: venue.trim(),
-        address: address || venue,
-        capacity: Number(capacity) || 500,
-        registered_count: 0,
-        registration_start_date: finalRegStart,
-        registration_end_date: finalRegEnd,
-        is_paid: finalIsPaid,
-        event_fee: finalFee,
-        requires_approval: finalRequiresApproval,
-        payment_qr_url: payment_qr_url || defaultQr,
-        payment_instructions: payment_instructions || 'Pay fee using QR code and submit UTR number.',
-        whatsapp_contact: whatsapp_contact || inMemoryStore.systemSettings?.payment_whatsapp_number || '+91 94249 44041',
-        visibility: visibility || 'PUBLIC',
-        status: status || 'REGISTRATION_OPEN',
-        created_by: userId || 1,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
+    try {
+      const result = await creationPromise;
+      setTimeout(() => {
+        pendingEventCreations.delete(dedupKey);
+      }, 5000);
+      return result;
+    } catch (err) {
+      pendingEventCreations.delete(dedupKey);
+      throw err;
     }
-
-    // Always update inMemoryStore and local backup
-    inMemoryStore.events.unshift(createdEvent);
-    saveEventsToBackup(inMemoryStore.events);
-
-    return createdEvent;
   },
 
   /**
@@ -413,7 +481,7 @@ export const EventService = {
   },
 
   /**
-   * Delete an event by ID
+   * Delete an event by ID permanently
    */
   async deleteEvent(id) {
     await this.awaitInit();
@@ -423,23 +491,57 @@ export const EventService = {
 
     if (pool) {
       try {
+        // Cascade delete child registrations, likes, comments to prevent any constraint failure
+        await pool.query('DELETE FROM event_registrations WHERE event_id = $1', [numId]);
+        await pool.query('DELETE FROM event_likes WHERE event_id = $1', [numId]);
+        await pool.query('DELETE FROM event_comments WHERE event_id = $1', [numId]);
+
         const res = await pool.query('DELETE FROM events WHERE id = $1 RETURNING *', [numId]);
         if (res.rows.length > 0) {
           deletedEvent = normalizeEventRow(res.rows[0]);
         }
       } catch (err) {
         console.error('❌ Error deleting event from PostgreSQL:', err.message);
+        throw new Error(`Failed to delete event from database: ${err.message}`);
       }
     }
 
-    const memIndex = inMemoryStore.events.findIndex(e => e.id === numId);
+    // Remove from inMemoryStore events
+    const memIndex = inMemoryStore.events.findIndex(e => Number(e.id) === numId);
     if (memIndex !== -1) {
       const spliced = inMemoryStore.events.splice(memIndex, 1)[0];
       if (!deletedEvent) deletedEvent = spliced;
     }
+    inMemoryStore.events = inMemoryStore.events.filter(e => Number(e.id) !== numId);
 
+    // Clean up in-memory registrations, likes, comments
+    inMemoryStore.eventRegistrations = (inMemoryStore.eventRegistrations || []).filter(r => Number(r.event_id) !== numId);
+    inMemoryStore.eventLikes = (inMemoryStore.eventLikes || []).filter(l => Number(l.event_id) !== numId);
+    inMemoryStore.eventComments = (inMemoryStore.eventComments || []).filter(c => Number(c.event_id) !== numId);
+
+    // If pool is connected, sync inMemoryStore.events with the current database state
+    if (pool) {
+      try {
+        const remaining = await pool.query(`
+          SELECT e.*,
+            (SELECT COUNT(*)::int FROM event_likes WHERE event_id = e.id) AS likes_count,
+            (SELECT COUNT(*)::int FROM event_comments WHERE event_id = e.id) AS comments_count,
+            false AS is_liked
+          FROM events e
+          ORDER BY e.start_date ASC, e.id ASC
+        `);
+        inMemoryStore.events = remaining.rows.map(normalizeEventRow);
+      } catch (_) {}
+    }
+
+    // Persist clean state to disk backup
     saveEventsToBackup(inMemoryStore.events);
-    return deletedEvent;
+    saveInteractionsToBackup({
+      likes: inMemoryStore.eventLikes,
+      comments: inMemoryStore.eventComments
+    });
+
+    return deletedEvent || { id: numId, title: 'Event' };
   },
 
   /**
@@ -462,8 +564,13 @@ export const EventService = {
     const isPaidEvent = Boolean(event.is_paid && Number(event.event_fee) > 0);
     const { transaction_id, payment_proof_url } = regData || {};
 
-    if (isPaidEvent && !transaction_id) {
-      throw new Error('Payment Transaction ID / UTR is required for paid events.');
+    if (isPaidEvent) {
+      if (!transaction_id || !transaction_id.trim()) {
+        throw new Error('Payment Transaction ID / UTR number is required for paid events.');
+      }
+      if (!payment_proof_url || !payment_proof_url.trim()) {
+        throw new Error('Payment receipt upload is required for paid events. Please upload your payment receipt screenshot or PDF.');
+      }
     }
 
     // Check duplicate or prior rejected application
@@ -494,7 +601,7 @@ export const EventService = {
           const updateQuery = `
             UPDATE event_registrations
             SET amount = $1, payment_status = $2, registration_status = $3,
-                transaction_id = $4, payment_proof_url = $5, registered_at = CURRENT_TIMESTAMP
+                transaction_id = $4, payment_proof_url = $5, rejection_reason = NULL, registered_at = CURRENT_TIMESTAMP
             WHERE id = $6
             RETURNING *;
           `;
@@ -507,8 +614,8 @@ export const EventService = {
           const insertReg = `
             INSERT INTO event_registrations (
               event_id, user_id, pass_code, amount, payment_status,
-              registration_status, transaction_id, payment_proof_url, registered_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP)
+              registration_status, transaction_id, payment_proof_url, rejection_reason, registered_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NULL, CURRENT_TIMESTAMP)
             RETURNING *;
           `;
           const regRes = await pool.query(insertReg, [
@@ -540,6 +647,7 @@ export const EventService = {
         existing.registration_status = registrationStatus;
         existing.transaction_id = transaction_id || '';
         existing.payment_proof_url = payment_proof_url || '';
+        existing.rejection_reason = '';
         existing.registered_at = new Date().toISOString();
         newReg = existing;
       } else {
@@ -553,6 +661,7 @@ export const EventService = {
           registration_status: registrationStatus,
           transaction_id: transaction_id || '',
           payment_proof_url: payment_proof_url || '',
+          rejection_reason: '',
           registered_at: new Date().toISOString()
         };
         inMemoryStore.eventRegistrations.unshift(newReg);
@@ -560,6 +669,10 @@ export const EventService = {
     } else if (!existing) {
       inMemoryStore.eventRegistrations.unshift(newReg);
     }
+
+    // Save registrations to backup disk file immediately
+    saveRegistrationsBackup();
+    saveRegistrationsToBackup(inMemoryStore.eventRegistrations);
 
     // Record payment if paid
     if (isPaidEvent && transaction_id) {
@@ -629,7 +742,8 @@ export const EventService = {
         const res = await pool.query(`
           UPDATE event_registrations
           SET registration_status = 'CONFIRMED',
-              payment_status = 'CONFIRMED'
+              payment_status = 'CONFIRMED',
+              rejection_reason = NULL
           WHERE id = $1
           RETURNING *;
         `, [numRegId]);
@@ -660,6 +774,7 @@ export const EventService = {
     if (memReg) {
       memReg.registration_status = 'CONFIRMED';
       memReg.payment_status = 'CONFIRMED';
+      memReg.rejection_reason = '';
       if (!reg) reg = memReg;
     }
 
@@ -684,7 +799,7 @@ export const EventService = {
         id: inMemoryStore.notifications.length + 1,
         user_id: Number(userId),
         title: 'Event Join Request Approved! 🎉',
-        message: `Your request to join "${targetEvent?.title || 'the event'}" has been approved! Your pass code is ${reg?.pass_code || memReg?.pass_code}.`,
+        message: `Your request to join "${targetEvent?.title || 'the event'}" has been approved! Your pass code is ${reg?.pass_code || memReg?.pass_code}. You are now authorized to attend this event.`,
         type: 'EVENT',
         is_read: false,
         created_at: new Date().toISOString()
@@ -704,6 +819,8 @@ export const EventService = {
     });
 
     saveEventsToBackup(inMemoryStore.events);
+    saveRegistrationsBackup();
+    saveRegistrationsToBackup(inMemoryStore.eventRegistrations);
     return reg || memReg;
   },
 
@@ -721,10 +838,11 @@ export const EventService = {
         const res = await pool.query(`
           UPDATE event_registrations
           SET registration_status = 'REJECTED',
-              payment_status = 'REJECTED'
-          WHERE id = $1
+              payment_status = 'REJECTED',
+              rejection_reason = $1
+          WHERE id = $2
           RETURNING *;
-        `, [numRegId]);
+        `, [rejectionReason || 'Registration request rejected by admin.', numRegId]);
 
         if (res.rows.length > 0) {
           reg = res.rows[0];
@@ -750,6 +868,7 @@ export const EventService = {
     if (memReg) {
       memReg.registration_status = 'REJECTED';
       memReg.payment_status = 'REJECTED';
+      memReg.rejection_reason = rejectionReason || 'Registration request rejected by admin.';
       if (!reg) reg = memReg;
     }
 
@@ -778,7 +897,7 @@ export const EventService = {
         id: inMemoryStore.notifications.length + 1,
         user_id: Number(userId),
         title: 'Event Join Request Update',
-        message: `Your request to join "${targetEvent?.title || 'the event'}" was rejected.${rejectionReason ? ` Reason: ${rejectionReason}` : ''}`,
+        message: `Your request to join "${targetEvent?.title || 'the event'}" was rejected.${rejectionReason ? ` Reason: ${rejectionReason}` : ''} Only approved members can attend this event.`,
         type: 'EVENT',
         is_read: false,
         created_at: new Date().toISOString()
@@ -798,7 +917,83 @@ export const EventService = {
     });
 
     saveEventsToBackup(inMemoryStore.events);
+    saveRegistrationsBackup();
+    saveRegistrationsToBackup(inMemoryStore.eventRegistrations);
     return reg || memReg;
+  },
+
+  /**
+   * Get all event registrations for a specific logged-in member
+   */
+  async getMyRegistrations(userId) {
+    await this.awaitInit();
+    const numUserId = Number(userId);
+    let list = [];
+
+    if (pool) {
+      try {
+        const res = await pool.query(`
+          SELECT 
+            r.*,
+            e.title AS event_title,
+            e.start_date AS event_date,
+            e.start_time AS event_time,
+            e.end_date AS event_end_date,
+            e.venue AS event_venue,
+            e.event_fee,
+            e.is_paid AS event_is_paid,
+            e.banner_url AS event_banner,
+            e.event_type,
+            e.status AS event_status
+          FROM event_registrations r
+          LEFT JOIN events e ON r.event_id = e.id
+          WHERE r.user_id = $1
+          ORDER BY r.registered_at DESC;
+        `, [numUserId]);
+
+        if (res.rows.length > 0) {
+          list = res.rows.map(r => ({
+            ...r,
+            id: Number(r.id),
+            event_id: Number(r.event_id),
+            user_id: Number(r.user_id),
+            amount: Number(r.amount || 0),
+            event_fee: Number(r.event_fee || 0),
+            event_title: r.event_title || 'Union Event',
+            event_date: r.event_date ? String(r.event_date).slice(0, 10) : '',
+            event_time: r.event_time || '10:00 AM',
+            event_venue: r.event_venue || 'Indore HQ',
+            event_banner: r.event_banner || '',
+            is_paid: Boolean(r.event_is_paid || r.amount > 0),
+            can_attend: r.registration_status === 'CONFIRMED'
+          }));
+        }
+      } catch (err) {
+        console.warn('⚠️ Error fetching member registrations from PostgreSQL:', err.message);
+      }
+    }
+
+    if (list.length === 0) {
+      const userRegs = inMemoryStore.eventRegistrations.filter(r => Number(r.user_id) === numUserId);
+      list = userRegs.map(r => {
+        const targetEvent = inMemoryStore.events.find(e => Number(e.id) === Number(r.event_id));
+        return {
+          ...r,
+          event_title: targetEvent?.title || 'Union Event',
+          event_date: targetEvent?.start_date ? String(targetEvent.start_date).slice(0, 10) : '',
+          event_time: targetEvent?.start_time || '10:00 AM',
+          event_venue: targetEvent?.venue || 'Indore HQ',
+          event_fee: Number(targetEvent?.event_fee || r.amount || 0),
+          is_paid: Boolean(targetEvent?.is_paid || r.amount > 0),
+          event_banner: targetEvent?.banner_url || '',
+          event_type: targetEvent?.event_type || 'GENERAL',
+          event_status: targetEvent?.status || 'REGISTRATION_OPEN',
+          can_attend: r.registration_status === 'CONFIRMED'
+        };
+      });
+    }
+
+    return list;
   },
 
   /**

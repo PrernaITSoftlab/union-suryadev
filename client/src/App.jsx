@@ -16,6 +16,8 @@ import BoardOfUnion from './pages/BoardOfUnion';
 import Orders from './pages/Orders';
 import Events from './pages/Events';
 import Notices from './pages/Notices';
+import Correspondence from './pages/Correspondence';
+import GroupChat from './pages/GroupChat';
 import Contact from './pages/Contact';
 import EnergyDepartment from './pages/EnergyDepartment';
 import JoinNow from './pages/JoinNow';
@@ -57,11 +59,16 @@ function AppContent() {
           <Route path="/board-of-union" element={<BoardOfUnion />} />
           <Route path="/orders" element={<Orders />} />
           <Route path="/events" element={<Events />} />
-          <Route path="/notices" element={<Notices />} />
+          <Route path="/correspondence" element={<Correspondence />} />
+          <Route path="/notices" element={<Correspondence />} />
           <Route path="/energy-department" element={<EnergyDepartment />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/join" element={<JoinNow />} />
           <Route path="/login" element={<Login />} />
+
+          {/* Real-time Union Group Chat */}
+          <Route path="/chat" element={<ProtectedMemberRoute><GroupChat /></ProtectedMemberRoute>} />
+          <Route path="/group-chat" element={<ProtectedMemberRoute><GroupChat /></ProtectedMemberRoute>} />
 
           {/* Member Protected Dashboard Route */}
           <Route path="/dashboard/*" element={<ProtectedMemberRoute><UserDashboard /></ProtectedMemberRoute>} />

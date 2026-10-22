@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Calendar, MapPin, Clock, Users, Shield, QrCode, Search, CheckCircle, AlertCircle, ArrowRight, X, History, FileText, CheckCircle2, Award, ExternalLink, Heart, MessageCircle, Share2, Sparkles } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Calendar, MapPin, Clock, Users, Shield, QrCode, Search, CheckCircle, AlertCircle, ArrowRight, X, History, FileText, CheckCircle2, Award, ExternalLink, Heart, MessageCircle, Share2, Sparkles, Upload, Printer, Ticket, FileCheck, Eye } from 'lucide-react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
@@ -10,14 +10,19 @@ export default function Events() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const receiptFileInputRef = useRef(null);
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [transactionId, setTransactionId] = useState('');
   const [paymentProofUrl, setPaymentProofUrl] = useState('');
+  const [receiptFileName, setReceiptFileName] = useState('');
+  const [receiptFileSize, setReceiptFileSize] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState(null);
+  const [attendeePassModalEvent, setAttendeePassModalEvent] = useState(null);
+  const [viewReceiptModal, setViewReceiptModal] = useState(null);
 
   // Social interactions state
   const [commentingEvent, setCommentingEvent] = useState(null);
@@ -161,16 +166,52 @@ export default function Events() {
     setSelectedEvent(evt);
     setTransactionId('');
     setPaymentProofUrl('');
+    setReceiptFileName('');
+    setReceiptFileSize('');
     setFeedback(null);
+  };
+
+  const handleReceiptFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      setFeedback({ error: 'Receipt file size must be less than 5MB.' });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPaymentProofUrl(reader.result);
+      setReceiptFileName(file.name);
+      setReceiptFileSize((file.size / 1024).toFixed(1) + ' KB');
+      setFeedback(null);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const removeReceipt = () => {
+    setPaymentProofUrl('');
+    setReceiptFileName('');
+    setReceiptFileSize('');
+    if (receiptFileInputRef.current) {
+      receiptFileInputRef.current.value = '';
+    }
   };
 
   const handleRegisterSubmit = async (e) => {
     e.preventDefault();
     if (!selectedEvent) return;
 
-    if (selectedEvent.is_paid && !transactionId) {
-      setFeedback({ error: 'Please enter the Transaction ID / UTR for paid registration.' });
-      return;
+    if (selectedEvent.is_paid) {
+      if (!transactionId.trim()) {
+        setFeedback({ error: 'Please enter the Payment Transaction ID / UTR number for paid registration.' });
+        return;
+      }
+      if (!paymentProofUrl) {
+        setFeedback({ error: 'Please upload your payment receipt screenshot or PDF. Paid events require receipt proof for admin verification.' });
+        return;
+      }
     }
 
     setSubmitting(true);
@@ -178,7 +219,7 @@ export default function Events() {
 
     try {
       const res = await api.post(`/events/${selectedEvent.id}/register`, {
-        transaction_id: transactionId,
+        transaction_id: transactionId.trim(),
         payment_proof_url: paymentProofUrl
       });
 
@@ -187,7 +228,7 @@ export default function Events() {
         fetchEvents();
         setTimeout(() => {
           setSelectedEvent(null);
-        }, 2000);
+        }, 2500);
       }
     } catch (err) {
       setFeedback({ error: err.response?.data?.message || 'Failed to submit event registration.' });
@@ -348,49 +389,78 @@ export default function Events() {
                       <div className="pt-2">
                         {isRegistered ? (
                           regStatus === 'CONFIRMED' ? (
-                            <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-bold flex items-center justify-between">
-                              <span className="flex items-center gap-1.5">
-                                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                                <div>
-                                  <span className="block leading-tight">Approved & Confirmed</span>
-                                  <span className="text-[10px] text-emerald-700 font-normal">Delegate pass ready</span>
-                                </div>
-                              </span>
-                              <span className="text-[11px] font-mono text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded border border-emerald-300 font-bold">
-                                {evt.user_registration.pass_code}
-                              </span>
-                            </div>
-                          ) : regStatus === 'REJECTED' ? (
-                            <div className="p-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900 text-xs font-bold flex items-center justify-between gap-2">
-                              <span className="flex items-center gap-1.5">
-                                <X className="w-4 h-4 text-rose-600 shrink-0" />
-                                <div>
-                                  <span className="block leading-tight">Request Rejected</span>
-                                  <span className="text-[10px] text-rose-600 font-normal">Contact admin or resubmit</span>
-                                </div>
-                              </span>
+                            <div className="space-y-2">
+                              <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-950 text-xs font-bold flex items-center justify-between">
+                                <span className="flex items-center gap-1.5">
+                                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                                  <div>
+                                    <span className="block leading-tight text-emerald-900">Approved Attendee • Pass Issued</span>
+                                    <span className="text-[10px] text-emerald-700 font-medium">Verified to attend at the venue</span>
+                                  </div>
+                                </span>
+                                <span className="text-[11px] font-mono text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded border border-emerald-300 font-bold">
+                                  {evt.user_registration.pass_code}
+                                </span>
+                              </div>
                               <button
                                 type="button"
-                                onClick={() => handleJoinClick(evt)}
-                                className="px-2.5 py-1 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-[11px] font-bold shrink-0 transition-colors shadow-sm"
+                                onClick={() => setAttendeePassModalEvent(evt)}
+                                className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold flex items-center justify-center gap-2 shadow-sm transition-colors"
                               >
-                                Re-Apply
+                                <Ticket className="w-4 h-4" />
+                                <span>View Official Attendee Pass</span>
                               </button>
                             </div>
-                          ) : (
-                            <div className="p-3 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-bold flex items-center justify-between">
-                              <span className="flex items-center gap-1.5">
-                                <Clock className="w-4 h-4 text-amber-600 shrink-0" />
-                                <div>
-                                  <span className="block leading-tight">Request Pending Approval</span>
-                                  <span className="text-[10px] text-amber-700 font-normal">Admin is reviewing your request</span>
-                                </div>
-                              </span>
-                              {evt.user_registration.pass_code && (
-                                <span className="text-[10px] font-mono text-amber-800 bg-amber-100/70 px-2 py-0.5 rounded border border-amber-300">
-                                  Ref: {evt.user_registration.pass_code}
+                          ) : regStatus === 'REJECTED' ? (
+                            <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-950 text-xs font-bold space-y-2">
+                              <div className="flex items-start justify-between gap-2">
+                                <span className="flex items-center gap-1.5">
+                                  <X className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                                  <div>
+                                    <span className="block leading-tight text-rose-900">Request Rejected • Cannot Attend</span>
+                                    <span className="text-[10px] text-rose-600 font-medium block">
+                                      {evt.user_registration?.rejection_reason
+                                        ? `Reason: ${evt.user_registration.rejection_reason}`
+                                        : 'Admin reviewed and declined this request.'}
+                                    </span>
+                                  </div>
                                 </span>
-                              )}
+                              </div>
+                              <div className="flex items-center justify-between pt-1 border-t border-rose-200">
+                                <span className="text-[10px] text-rose-700 font-medium">Only approved members can attend</span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleJoinClick(evt)}
+                                  className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-[11px] font-bold shrink-0 transition-colors shadow-sm"
+                                >
+                                  Re-Apply with New Receipt
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-950 text-xs font-bold space-y-1.5">
+                              <div className="flex items-center justify-between">
+                                <span className="flex items-center gap-1.5">
+                                  <Clock className="w-4 h-4 text-amber-600 shrink-0" />
+                                  <div>
+                                    <span className="block leading-tight text-amber-900">Join Request Pending Approval</span>
+                                    <span className="text-[10px] text-amber-700 font-medium">
+                                      {evt.is_paid ? 'Admin is reviewing your UTR & receipt' : 'Admin is reviewing your join request'}
+                                    </span>
+                                  </div>
+                                </span>
+                                {evt.user_registration.pass_code && (
+                                  <span className="text-[10px] font-mono text-amber-800 bg-amber-100/70 px-2 py-0.5 rounded border border-amber-300">
+                                    Ref: {evt.user_registration.pass_code}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-[10px] font-medium text-amber-800 bg-amber-100/60 p-1.5 rounded-lg border border-amber-200 flex items-center justify-between">
+                                <span>⚠️ Only approved members can attend this event.</span>
+                                {evt.user_registration.transaction_id && (
+                                  <span className="font-mono font-bold text-slate-700">UTR: {evt.user_registration.transaction_id}</span>
+                                )}
+                              </div>
                             </div>
                           )
                         ) : (
@@ -594,31 +664,266 @@ export default function Events() {
 
                   <div>
                     <label className="block text-xs font-bold text-slate-700 mb-1">
-                      Payment Screenshot URL (Optional)
+                      Upload Payment Receipt / Screenshot <span className="text-red-500">*</span>
                     </label>
-                    <input
-                      type="url"
-                      placeholder="https://..."
-                      value={paymentProofUrl}
-                      onChange={(e) => setPaymentProofUrl(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-sky-500"
-                    />
+
+                    {!paymentProofUrl ? (
+                      <div
+                        onClick={() => receiptFileInputRef.current?.click()}
+                        className="border-2 border-dashed border-sky-300 hover:border-sky-500 rounded-2xl p-4 bg-sky-50/50 hover:bg-sky-50 text-center cursor-pointer transition-colors space-y-2"
+                      >
+                        <div className="w-10 h-10 mx-auto rounded-full bg-sky-100 flex items-center justify-center text-sky-600">
+                          <Upload className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-slate-800">
+                            Click to upload payment receipt
+                          </p>
+                          <p className="text-[11px] text-slate-500">
+                            PNG, JPG, WEBP, or PDF (Max 5MB)
+                          </p>
+                        </div>
+                        <input
+                          ref={receiptFileInputRef}
+                          type="file"
+                          accept="image/*,application/pdf"
+                          onChange={handleReceiptFileChange}
+                          className="hidden"
+                        />
+                      </div>
+                    ) : (
+                      <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3 overflow-hidden">
+                          {paymentProofUrl.startsWith('data:image') || paymentProofUrl.startsWith('http') ? (
+                            <img
+                              src={paymentProofUrl}
+                              alt="Receipt Thumbnail"
+                              className="w-12 h-12 object-cover rounded-xl border border-slate-200 shrink-0 cursor-pointer hover:opacity-90"
+                              onClick={() => setViewReceiptModal(paymentProofUrl)}
+                            />
+                          ) : (
+                            <div
+                              onClick={() => setViewReceiptModal(paymentProofUrl)}
+                              className="w-12 h-12 rounded-xl bg-sky-100 border border-sky-200 flex items-center justify-center text-sky-700 font-bold text-xs shrink-0 cursor-pointer"
+                            >
+                              PDF
+                            </div>
+                          )}
+                          <div className="truncate">
+                            <p className="text-xs font-bold text-slate-900 truncate">
+                              {receiptFileName || 'Payment Receipt Uploaded'}
+                            </p>
+                            <p className="text-[11px] text-emerald-600 font-bold flex items-center gap-1">
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              <span>{receiptFileSize || 'Ready for review'}</span>
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => setViewReceiptModal(paymentProofUrl)}
+                            className="p-1.5 text-slate-500 hover:text-sky-700 hover:bg-slate-200 rounded-lg text-xs"
+                            title="Preview Receipt"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={removeReceipt}
+                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg text-xs"
+                            title="Remove Receipt"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="mt-1 flex items-center justify-between text-[11px]">
+                      <span className="text-slate-500">Official receipt required for admin approval.</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const url = prompt('Enter receipt image direct URL (optional):', paymentProofUrl.startsWith('http') ? paymentProofUrl : '');
+                          if (url !== null && url.trim()) {
+                            setPaymentProofUrl(url.trim());
+                            setReceiptFileName('Online Receipt Image');
+                          }
+                        }}
+                        className="text-sky-700 hover:text-sky-800 font-bold underline"
+                      >
+                        Paste URL
+                      </button>
+                    </div>
                   </div>
                 </>
               ) : (
                 <div className="p-4 rounded-2xl bg-sky-50 border border-sky-200 text-xs text-sky-900 font-semibold leading-relaxed">
-                  This event is free for union members. Once you submit your join request, the admin team will review and issue your delegate pass code.
+                  This event is free for union members. Once you submit your join request, the admin team will review and approve your attendance.
                 </div>
               )}
 
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full py-3.5 rounded-xl font-bold text-xs bg-sky-600 hover:bg-sky-500 text-white transition-colors shadow-md"
+                className="w-full py-3.5 rounded-xl font-bold text-xs bg-sky-600 hover:bg-sky-500 text-white transition-colors shadow-md flex items-center justify-center gap-2"
               >
-                {submitting ? 'Submitting Join Request...' : 'Submit Join Request'}
+                {submitting ? 'Submitting Join Request...' : (selectedEvent.is_paid ? 'Submit Join Request (With Receipt)' : 'Submit Join Request')}
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Official Union Attendee Pass Modal */}
+      {attendeePassModalEvent && (
+        <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-200 rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl p-6 sm:p-8 space-y-6 relative animate-in zoom-in-95">
+            <button
+              onClick={() => setAttendeePassModalEvent(null)}
+              className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Pass Header */}
+            <div className="text-center border-b border-slate-100 pb-4 space-y-1">
+              <span className="inline-block px-3 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-extrabold uppercase tracking-widest border border-emerald-300">
+                Official Delegate Entry Pass
+              </span>
+              <h3 className="text-xl font-black text-slate-900 tracking-tight">MPVMAVAKS Union Assembly</h3>
+              <p className="text-xs text-slate-500">M.P. Electricity Board Commissioned Employees Union</p>
+            </div>
+
+            {/* Pass Ticket Body */}
+            <div className="p-5 rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-sky-950 text-white space-y-4 shadow-xl border border-sky-800/40 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-sky-500/10 rounded-full blur-2xl pointer-events-none" />
+
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <span className="text-[10px] font-mono text-sky-300 font-bold uppercase tracking-wider block">Program / Event</span>
+                  <h4 className="text-base font-extrabold text-white leading-snug mt-0.5">{attendeePassModalEvent.title}</h4>
+                </div>
+                <div className="px-2.5 py-1 rounded-xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 text-[10px] font-bold shrink-0">
+                  APPROVED ATTENDEE
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 text-xs pt-2 border-t border-slate-700/60">
+                <div>
+                  <span className="text-[10px] text-slate-400 block font-medium">Delegate Member</span>
+                  <span className="font-bold text-white block truncate">{user?.profile?.full_name || user?.email}</span>
+                  <span className="text-[10px] font-mono text-amber-400">{user?.member_id || `ID: ${user?.id}`}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-400 block font-medium">Discom Circle</span>
+                  <span className="font-bold text-white block truncate">{user?.profile?.circle || 'Indore Region'}</span>
+                  <span className="text-[10px] text-slate-300 truncate block">{user?.profile?.designation || 'Member'}</span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 text-xs pt-2 border-t border-slate-700/60">
+                <div>
+                  <span className="text-[10px] text-slate-400 block font-medium">Date & Time</span>
+                  <span className="font-bold text-white block">{attendeePassModalEvent.start_date}</span>
+                  <span className="text-[10px] text-slate-300 block">{attendeePassModalEvent.start_time}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-400 block font-medium">Assembly Venue</span>
+                  <span className="font-bold text-white block truncate">{attendeePassModalEvent.venue}</span>
+                  <span className="text-[10px] text-emerald-400 font-semibold block">Entry: Gate Verified</span>
+                </div>
+              </div>
+
+              {/* Pass Code Barcode simulation */}
+              <div className="p-3 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-between gap-3">
+                <div className="space-y-0.5">
+                  <span className="text-[9px] uppercase tracking-wider text-slate-300 font-bold block">Verification Pass Code</span>
+                  <span className="font-mono text-sm sm:text-base font-black tracking-widest text-amber-300 block">
+                    {attendeePassModalEvent.user_registration?.pass_code || 'PASS-CONFIRMED'}
+                  </span>
+                </div>
+                <div className="w-12 h-12 bg-white rounded-lg p-1 shrink-0 flex items-center justify-center">
+                  <QrCode className="w-10 h-10 text-slate-900" />
+                </div>
+              </div>
+
+              <div className="text-center text-[10px] text-slate-400 pt-1">
+                Notice: Non-transferable digital pass. Only approved members with valid identity card can attend.
+              </div>
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex items-center justify-between gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold flex items-center gap-1.5 transition-colors border border-slate-200"
+              >
+                <Printer className="w-4 h-4 text-slate-600" />
+                <span>Print / Save Pass</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setAttendeePassModalEvent(null)}
+                className="px-6 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition-colors shadow-sm"
+              >
+                Close Pass
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Receipt Preview Modal */}
+      {viewReceiptModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-200 rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl animate-in zoom-in-95">
+            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+              <h3 className="text-base font-extrabold text-slate-900">Payment Receipt Preview</h3>
+              <button onClick={() => setViewReceiptModal(null)} className="text-slate-400 hover:text-slate-700">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="max-h-[60vh] overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 flex items-center justify-center min-h-[220px]">
+              {viewReceiptModal.startsWith('data:application/pdf') ? (
+                <iframe
+                  src={viewReceiptModal}
+                  title="Receipt Document"
+                  className="w-full h-80 rounded-xl"
+                />
+              ) : (
+                <img
+                  src={viewReceiptModal}
+                  alt="Receipt Preview"
+                  className="w-full h-full max-h-[55vh] object-contain"
+                />
+              )}
+            </div>
+
+            <div className="flex items-center justify-between pt-2">
+              <a
+                href={viewReceiptModal}
+                target="_blank"
+                rel="noreferrer"
+                className="text-xs font-bold text-sky-700 hover:underline flex items-center gap-1"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                <span>Open in Full Tab</span>
+              </a>
+
+              <button
+                type="button"
+                onClick={() => setViewReceiptModal(null)}
+                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold"
+              >
+                Close Preview
+              </button>
+            </div>
           </div>
         </div>
       )}

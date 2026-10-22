@@ -59,13 +59,13 @@ export default function Notices() {
           <div>
             <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-sky-100 border border-sky-300 text-sky-900 text-xs font-bold uppercase tracking-wider mb-2 shadow-sm">
               <Bell className="w-3.5 h-3.5 text-sky-700" />
-              <span>Notices & Strike Bulletins • सूचनाएं</span>
+              <span>Correspondence & Official Letters • पत्राचार</span>
             </div>
             <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-              Union Notices, Agitation Bulletins & Press Releases
+              Union Correspondence, Agitation Bulletins & Official Letters
             </h1>
             <p className="text-xs sm:text-sm text-slate-600 font-medium mt-1">
-              Official press notes, emergency strike alerts, charter of demands, and zonal notifications.
+              Official union representations, management correspondence, charter of demands, and state notifications.
             </p>
           </div>
 
@@ -73,7 +73,7 @@ export default function Notices() {
             onClick={() => window.print()}
             className="px-4 py-2.5 rounded-xl bg-white border border-slate-300 hover:bg-slate-100 text-slate-800 text-xs font-bold flex items-center gap-2 shadow-sm shrink-0"
           >
-            <Printer className="w-4 h-4 text-sky-600" /> Print Notices Page
+            <Printer className="w-4 h-4 text-sky-600" /> Print Correspondence Page
           </button>
         </div>
 

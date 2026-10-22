@@ -4,6 +4,8 @@ import { loadEnv } from 'vite';
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
+  const rawTarget = env.VITE_API_URL || env.VITE_BACKEND_URL || 'http://127.0.0.1:5000';
+  const target = rawTarget.startsWith('http') ? rawTarget.replace(/\/api\/?$/, '') : 'http://127.0.0.1:5000';
 
   return {
     plugins: [react()],
@@ -11,10 +13,11 @@ export default defineConfig(({ mode }) => {
       port: 3000,
       proxy: {
         '/api': {
-          target: (env.VITE_API_URL || 'http://127.0.0.1:5000').replace(/\/api\/?$/, ''),
+          target: target,
           changeOrigin: true,
           secure: false
         }
       }
     }
-}})
+  };
+});

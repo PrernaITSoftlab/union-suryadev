@@ -138,8 +138,8 @@ export default function Home() {
                 </h2>
                 <p className="text-xs text-slate-500 font-medium mt-1">{t('Latest notifications, gazette orders, and strike bulletins')}</p>
               </div>
-              <Link to="/events" className="text-xs font-bold text-sky-700 hover:underline flex items-center gap-1">
-                <span>{t('View All Notices')}</span>
+              <Link to="/correspondence" className="text-xs font-bold text-sky-700 hover:underline flex items-center gap-1">
+                <span>{t('View All Correspondence')}</span>
                 <ChevronRight className="w-4 h-4" />
               </Link>
             </div>

@@ -1,0 +1,270 @@
+{
+  "groups": [
+    {
+      "id": 1,
+      "name": "MPVMAVAKS Central Executive Union (प्रांतीय कार्यसमिति)",
+      "description": "Official executive committee channel for state delegates, circulars, and statewide coordination.",
+      "avatar_url": "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=400&q=80",
+      "created_by": 1,
+      "category": "EXECUTIVE",
+      "circle": "All Circles",
+      "is_private": false,
+      "created_at": "2026-10-01T09:00:00.000Z",
+      "updated_at": "2026-10-22T10:57:56.709Z"
+    },
+    {
+      "id": 2,
+      "name": "Indore Circle Power Engineers & Linemen Forum",
+      "description": "Malwa & Nimar zone technical maintenance, sub-station operations, and grievance discussion.",
+      "avatar_url": "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=400&q=80",
+      "created_by": 1,
+      "category": "DISTRICT",
+      "circle": "Indore City Circle",
+      "is_private": false,
+      "created_at": "2026-10-02T10:30:00.000Z"
+    },
+    {
+      "id": 3,
+      "name": "High-Voltage PTW & Line Safety Forum",
+      "description": "33kV/11kV field safety, permit-to-work guidelines, and accident prevention support.",
+      "avatar_url": "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=400&q=80",
+      "created_by": 2,
+      "category": "SAFETY",
+      "circle": "All Circles",
+      "is_private": false,
+      "created_at": "2026-10-05T14:00:00.000Z"
+    },
+    {
+      "id": 4,
+      "name": "Old Pension Scheme (OPS) & Pay Scale Advocacy",
+      "description": "Statewide OPS restoration updates, memorandum representations, and welfare agitations.",
+      "avatar_url": "https://images.unsplash.com/photo-1577962917302-cd874c4e31d2?auto=format&fit=crop&w=400&q=80",
+      "created_by": 1,
+      "category": "WELFARE",
+      "circle": "All Circles",
+      "is_private": false,
+      "created_at": "2026-10-08T11:15:00.000Z"
+    },
+    {
+      "id": 5,
+      "name": "Indore O&M Substation Group 1792666676714",
+      "description": "Test substation discussion group",
+      "avatar_url": "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=400&q=80",
+      "created_by": 1,
+      "category": "DISTRICT",
+      "circle": "Indore O&M Circle",
+      "is_private": false,
+      "created_at": "2026-10-22T10:57:56.716Z",
+      "updated_at": "2026-10-22T10:57:56.716Z"
+    }
+  ],
+  "members": [
+    {
+      "id": 1,
+      "group_id": 1,
+      "user_id": 1,
+      "role": "ADMIN",
+      "joined_at": "2026-10-01T09:00:00.000Z",
+      "last_read_at": "2026-10-22T10:57:56.709Z"
+    },
+    {
+      "id": 2,
+      "group_id": 1,
+      "user_id": 2,
+      "role": "MEMBER",
+      "joined_at": "2026-10-01T09:05:00.000Z"
+    },
+    {
+      "id": 3,
+      "group_id": 1,
+      "user_id": 3,
+      "role": "MEMBER",
+      "joined_at": "2026-10-01T09:10:00.000Z"
+    },
+    {
+      "id": 4,
+      "group_id": 1,
+      "user_id": 4,
+      "role": "ADMIN",
+      "joined_at": "2026-10-01T09:15:00.000Z"
+    },
+    {
+      "id": 5,
+      "group_id": 1,
+      "user_id": 5,
+      "role": "ADMIN",
+      "joined_at": "2026-10-01T09:20:00.000Z"
+    },
+    {
+      "id": 6,
+      "group_id": 2,
+      "user_id": 1,
+      "role": "ADMIN",
+      "joined_at": "2026-10-02T10:30:00.000Z"
+    },
+    {
+      "id": 7,
+      "group_id": 2,
+      "user_id": 2,
+      "role": "MEMBER",
+      "joined_at": "2026-10-02T10:35:00.000Z"
+    },
+    {
+      "id": 8,
+      "group_id": 2,
+      "user_id": 3,
+      "role": "MEMBER",
+      "joined_at": "2026-10-02T10:40:00.000Z"
+    },
+    {
+      "id": 9,
+      "group_id": 3,
+      "user_id": 2,
+      "role": "ADMIN",
+      "joined_at": "2026-10-05T14:00:00.000Z"
+    },
+    {
+      "id": 10,
+      "group_id": 3,
+      "user_id": 1,
+      "role": "MEMBER",
+      "joined_at": "2026-10-05T14:05:00.000Z"
+    },
+    {
+      "id": 11,
+      "group_id": 3,
+      "user_id": 3,
+      "role": "MEMBER",
+      "joined_at": "2026-10-05T14:10:00.000Z"
+    },
+    {
+      "id": 12,
+      "group_id": 4,
+      "user_id": 1,
+      "role": "ADMIN",
+      "joined_at": "2026-10-08T11:15:00.000Z"
+    },
+    {
+      "id": 13,
+      "group_id": 4,
+      "user_id": 2,
+      "role": "MEMBER",
+      "joined_at": "2026-10-08T11:20:00.000Z"
+    },
+    {
+      "id": 14,
+      "group_id": 4,
+      "user_id": 4,
+      "role": "MEMBER",
+      "joined_at": "2026-10-08T11:25:00.000Z"
+    },
+    {
+      "id": 15,
+      "group_id": 5,
+      "user_id": 1,
+      "role": "ADMIN",
+      "joined_at": "2026-10-22T10:57:56.785Z",
+      "last_read_at": "2026-10-22T10:57:56.785Z"
+    },
+    {
+      "id": 16,
+      "group_id": 5,
+      "user_id": 2,
+      "role": "MEMBER",
+      "joined_at": "2026-10-22T10:57:57.341Z",
+      "last_read_at": "2026-10-22T10:57:57.341Z"
+    },
+    {
+      "id": 17,
+      "group_id": 5,
+      "user_id": 3,
+      "role": "MEMBER",
+      "joined_at": "2026-10-22T10:57:57.412Z",
+      "last_read_at": "2026-10-22T10:57:57.412Z"
+    }
+  ],
+  "messages": [
+    {
+      "id": 1,
+      "group_id": 1,
+      "sender_id": 1,
+      "message_text": "Welcome delegates and executives to the official MPVMAVAKS Central Executive Union channel. All circulars, state delegation agendas, and official correspondence will be coordinated here.",
+      "is_system": false,
+      "created_at": "2026-10-18T10:00:00.000Z"
+    },
+    {
+      "id": 2,
+      "group_id": 1,
+      "sender_id": 2,
+      "message_text": "Namaskar General Secretary Ji. The Indore Circle delegation representation for 7th Pay DA arrears and PTW insurance has been finalized for the upcoming convention.",
+      "is_system": false,
+      "created_at": "2026-10-18T10:15:00.000Z"
+    },
+    {
+      "id": 3,
+      "group_id": 1,
+      "sender_id": 4,
+      "message_text": "Excellent. Central office has also submitted the formal reminder to the Energy Secretary. All circle delegates are requested to confirm their attendance.",
+      "is_system": false,
+      "created_at": "2026-10-18T11:00:00.000Z"
+    },
+    {
+      "id": 4,
+      "group_id": 2,
+      "sender_id": 1,
+      "message_text": "Welcome to the Indore Circle forum. All sub-station maintenance and lineman safety issues can be posted here for immediate union action.",
+      "is_system": false,
+      "created_at": "2026-10-19T09:30:00.000Z"
+    },
+    {
+      "id": 5,
+      "group_id": 2,
+      "sender_id": 3,
+      "message_text": "Polo Ground division staff have reported shortages of Class-4 tested insulating gloves. We need replacement kits before the festive maintenance drive.",
+      "is_system": false,
+      "created_at": "2026-10-19T09:45:00.000Z"
+    },
+    {
+      "id": 6,
+      "group_id": 2,
+      "sender_id": 2,
+      "message_text": "Noted Er. Mahendra. Union executive team has already drafted the requisition letter to CE (O&M) Indore. Will share the receipt number shortly.",
+      "is_system": false,
+      "created_at": "2026-10-19T10:10:00.000Z"
+    },
+    {
+      "id": 7,
+      "group_id": 3,
+      "sender_id": 2,
+      "message_text": "High-Voltage PTW (Permit-to-Work) Safety Forum initialized. Zero tolerance for working on live 33kV/11kV lines without certified earthing discharge rods.",
+      "is_system": false,
+      "created_at": "2026-10-20T08:00:00.000Z"
+    },
+    {
+      "id": 8,
+      "group_id": 3,
+      "sender_id": 1,
+      "message_text": "Safety guidelines circular has been published under Correspondence & Orders. Every shift engineer must verify PTW before authorizing line climbing.",
+      "is_system": false,
+      "created_at": "2026-10-20T08:30:00.000Z"
+    },
+    {
+      "id": 1,
+      "group_id": 1,
+      "sender_id": 1,
+      "message_text": "Automated test message at 4:27:56 PM",
+      "attachment_url": null,
+      "attachment_type": null,
+      "is_system": false,
+      "created_at": "2026-10-22T10:57:56.639Z"
+    },
+    {
+      "id": 9,
+      "group_id": 5,
+      "sender_id": 1,
+      "message_text": "🎉 Er. Rajesh Sharma (SE & Gen. Sec.) created the group \"Indore O&M Substation Group 1792666676714\"",
+      "is_system": true,
+      "created_at": "2026-10-22T10:57:57.485Z"
+    }
+  ]
+}

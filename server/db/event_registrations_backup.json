@@ -1,0 +1,15 @@
+[
+  {
+    "id": 4,
+    "event_id": 17,
+    "user_id": 1,
+    "pass_code": "PASS-MAK-2674",
+    "amount": 0,
+    "payment_status": "CONFIRMED",
+    "registration_status": "CONFIRMED",
+    "transaction_id": "",
+    "payment_proof_url": "",
+    "registered_at": "2026-10-22T11:56:54.416Z",
+    "rejection_reason": null
+  }
+]

@@ -94,11 +94,11 @@ export default function Orders() {
   };
 
   const categories = [
-    { id: 'All', labelEn: 'All Orders & Notices', labelHi: 'सभी आदेश एवं सूचनाएं' },
+    { id: 'All', labelEn: 'All Orders & Correspondence', labelHi: 'सभी आदेश एवं पत्राचार' },
     { id: 'Govt. Circulars', labelEn: 'Govt. Circulars', labelHi: 'शासकीय परिपत्र' },
     { id: 'SC/ST Circulars', labelEn: 'SC/ST Circulars', labelHi: 'अजा/अजजा परिपत्र' },
     { id: 'Normal Circulars', labelEn: 'Normal Circulars', labelHi: 'सामान्य परिपत्र' },
-    { id: 'Notices', labelEn: 'Notices & Directives', labelHi: 'सूचनाएं व निर्देश' },
+    { id: 'Notices', labelEn: 'Correspondence & Directives', labelHi: 'पत्राचार व निर्देश' },
     { id: 'Safety Directives', labelEn: 'Safety & PTW Rules', labelHi: 'सुरक्षा नियमावली' }
   ];
 
@@ -127,12 +127,12 @@ export default function Orders() {
             <span>{isHindi ? 'शासकीय आदेश व परिपत्र' : 'Official Orders & Circulars'}</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-            {isHindi ? 'शासकीय आदेश एवं सूचनाएं निर्देशिका' : 'Government Orders & Notices Directory'}
+            {isHindi ? 'शासकीय आदेश एवं पत्राचार निर्देशिका' : 'Government Orders & Correspondence Directory'}
           </h1>
           <p className="text-xs sm:text-sm text-slate-600 font-medium">
             {isHindi 
-              ? 'आदेश अथवा परिपत्र का पीडीएफ देखने के लिए नीचे दी गई लिंक पर क्लिक करें।' 
-              : 'Click on any notice link below to view the official PDF document.'}
+              ? 'आदेश अथवा पत्राचार का पीडीएफ देखने के लिए नीचे दी गई लिंक पर क्लिक करें।' 
+              : 'Click on any order or correspondence link below to view the official PDF document.'}
           </p>
         </div>
 

@@ -73,7 +73,7 @@ export default function Login({ defaultAdmin = false }) {
           </h2>
           <p className="text-xs text-slate-600 font-medium">
             {isAdminMode
-              ? 'Authenticate with secure Admin ID / Email to manage Notices, Photos & System'
+              ? 'Authenticate with secure Admin ID / Email to manage Correspondence, Photos & System'
               : 'Sign in with your Member ID or registered email to access Member Portal'}
           </p>
         </div>

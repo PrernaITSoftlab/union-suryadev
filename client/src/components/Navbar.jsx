@@ -5,7 +5,8 @@ import { useNotification } from '../context/NotificationContext';
 import { useLanguage } from '../context/LanguageContext';
 import {
   Shield, Menu, X, Bell, User, LogOut, ChevronDown, CheckCircle2,
-  FileText, Calendar, Users, Home, Info, PhoneCall, UserPlus, LogIn, LayoutDashboard, Settings, Languages, CreditCard
+  FileText, Calendar, Users, Home, Info, PhoneCall, UserPlus, LogIn, LayoutDashboard, Settings, Languages, CreditCard,
+  MessageSquare
 } from 'lucide-react';
 
 export default function Navbar() {
@@ -170,10 +171,17 @@ export default function Navbar() {
               {t('Events')}
             </Link>
             <Link
-              to="/notices"
-              className={`px-1.5 xl:px-2.5 py-1.5 rounded-xl text-[11px] xl:text-xs 2xl:text-sm font-semibold transition-colors whitespace-nowrap shrink-0 ${isActive('/notices') ? 'bg-sky-50 text-sky-700 border border-sky-200' : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'}`}
+              to="/correspondence"
+              className={`px-1.5 xl:px-2.5 py-1.5 rounded-xl text-[11px] xl:text-xs 2xl:text-sm font-semibold transition-colors whitespace-nowrap shrink-0 ${isActive('/correspondence') || isActive('/notices') ? 'bg-sky-50 text-sky-700 border border-sky-200' : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'}`}
             >
-              {t('Notices')}
+              {t('Correspondence')}
+            </Link>
+            <Link
+              to="/chat"
+              className={`px-1.5 xl:px-2.5 py-1.5 rounded-xl text-[11px] xl:text-xs 2xl:text-sm font-semibold transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 ${isActive('/chat') || isActive('/group-chat') ? 'bg-sky-50 text-sky-700 border border-sky-200 font-bold' : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'}`}
+            >
+              <MessageSquare className="w-3.5 h-3.5 text-sky-600 shrink-0" />
+              <span>{t('Group Chat')}</span>
             </Link>
             <div
               className="relative"
@@ -534,11 +542,19 @@ export default function Navbar() {
             {t('Events')}
           </Link>
           <Link
-            to="/notices"
+            to="/correspondence"
             onClick={() => setMobileMenuOpen(false)}
             className="block px-3 py-2 rounded-lg text-base font-semibold text-slate-800 hover:bg-slate-100"
           >
-            {t('Notices')}
+            {t('Correspondence')}
+          </Link>
+          <Link
+            to="/chat"
+            onClick={() => setMobileMenuOpen(false)}
+            className="block px-3 py-2 rounded-lg text-base font-semibold text-sky-700 hover:bg-sky-50 flex items-center gap-2"
+          >
+            <MessageSquare className="w-4 h-4 text-sky-600" />
+            <span>{t('Group Chat')}</span>
           </Link>
           <div className="space-y-1">
             <Link

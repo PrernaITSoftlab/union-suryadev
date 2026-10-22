@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
-import { Calendar, Plus, Trash2, Users, Download, ArrowLeft, X, CheckCircle2 } from 'lucide-react';
+import { Calendar, Plus, Trash2, Users, Download, ArrowLeft, X, CheckCircle2, RefreshCw, Eye, ExternalLink, AlertCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const AdminEvents = () => {
@@ -9,6 +9,9 @@ const AdminEvents = () => {
   const [createModal, setCreateModal] = useState(false);
   const [attendeesModalEvent, setAttendeesModalEvent] = useState(null);
   const [attendeesList, setAttendeesList] = useState([]);
+  const [viewReceiptUrl, setViewReceiptUrl] = useState(null);
+  const [rejectAttendeeModal, setRejectAttendeeModal] = useState(null);
+  const [rejectReason, setRejectReason] = useState('');
 
   // Create form state
   const [newEvent, setNewEvent] = useState({
@@ -48,6 +51,7 @@ const AdminEvents = () => {
 
   const handleCreateEvent = async (e) => {
     e.preventDefault();
+    if (submitting) return;
     setSubmitting(true);
     try {
       const payload = {
@@ -96,7 +100,7 @@ const AdminEvents = () => {
     try {
       const res = await api.put(`/admin/events/registrations/${regId}/approve`);
       if (res.data.success) {
-        setAttendeesList(prev => prev.map(a => a.id === regId ? { ...a, registration_status: 'CONFIRMED' } : a));
+        setAttendeesList(prev => prev.map(a => (a.id === regId || a.registration_id === regId) ? { ...a, registration_status: 'CONFIRMED' } : a));
         fetchEvents();
       }
     } catch (err) {
@@ -104,11 +108,18 @@ const AdminEvents = () => {
     }
   };
 
-  const handleRejectAttendee = async (regId) => {
+  const handleConfirmRejectAttendee = async (e) => {
+    e?.preventDefault();
+    if (!rejectAttendeeModal) return;
+    const regId = rejectAttendeeModal.id || rejectAttendeeModal.registration_id;
     try {
-      const res = await api.put(`/admin/events/registrations/${regId}/reject`);
+      const res = await api.put(`/admin/events/registrations/${regId}/reject`, {
+        rejection_reason: rejectReason || 'Join request rejected by admin.'
+      });
       if (res.data.success) {
-        setAttendeesList(prev => prev.map(a => a.id === regId ? { ...a, registration_status: 'REJECTED' } : a));
+        setAttendeesList(prev => prev.map(a => (a.id === regId || a.registration_id === regId) ? { ...a, registration_status: 'REJECTED', rejection_reason: rejectReason } : a));
+        setRejectAttendeeModal(null);
+        setRejectReason('');
         fetchEvents();
       }
     } catch (err) {
@@ -312,17 +323,19 @@ const AdminEvents = () => {
               <div className="pt-4 border-t border-slate-100 flex justify-end gap-3">
                 <button
                   type="button"
+                  disabled={submitting}
                   onClick={() => setCreateModal(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition-colors"
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed text-slate-700 font-bold transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold shadow-md transition-colors"
+                  className="px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed text-white font-extrabold shadow-md transition-colors flex items-center justify-center gap-2"
                 >
-                  {submitting ? 'Creating...' : 'Publish Event'}
+                  {submitting && <RefreshCw className="w-4 h-4 animate-spin text-white" />}
+                  <span>{submitting ? 'Publishing Event...' : 'Publish Event'}</span>
                 </button>
               </div>
             </form>
@@ -388,6 +401,25 @@ const AdminEvents = () => {
                         {a.pass_code && <span className="font-mono text-emerald-700 font-semibold">Pass: {a.pass_code}</span>}
                         {a.transaction_id && <span className="font-mono text-blue-700">UTR: {a.transaction_id}</span>}
                       </div>
+
+                      {a.payment_proof_url && (
+                        <div className="pt-1">
+                          <button
+                            type="button"
+                            onClick={() => setViewReceiptUrl(a.payment_proof_url)}
+                            className="px-2 py-0.5 rounded-lg bg-sky-50 text-sky-800 border border-sky-200 hover:bg-sky-100 font-bold text-[10px] inline-flex items-center gap-1 transition-colors"
+                          >
+                            <Eye className="w-3 h-3 text-sky-600" />
+                            <span>View Payment Receipt</span>
+                          </button>
+                        </div>
+                      )}
+
+                      {status === 'REJECTED' && a.rejection_reason && (
+                        <p className="text-[11px] text-rose-700 bg-rose-50 px-2 py-0.5 rounded border border-rose-200 mt-1">
+                          Reason: {a.rejection_reason}
+                        </p>
+                      )}
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
@@ -401,7 +433,10 @@ const AdminEvents = () => {
                       )}
                       {status !== 'REJECTED' && (
                         <button
-                          onClick={() => handleRejectAttendee(regId)}
+                          onClick={() => {
+                            setRejectAttendeeModal(a);
+                            setRejectReason('');
+                          }}
                           className="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-xs transition-colors flex items-center gap-1"
                         >
                           <X className="w-3.5 h-3.5" /> Reject
@@ -419,6 +454,106 @@ const AdminEvents = () => {
                 className="px-5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-colors shadow-sm"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* REJECT ATTENDEE MODAL */}
+      {rejectAttendeeModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-200 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl animate-in zoom-in-95">
+            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+              <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
+                <AlertCircle className="w-5 h-5 text-rose-600" />
+                <span>Reject Attendee Join Request</span>
+              </h3>
+              <button onClick={() => setRejectAttendeeModal(null)} className="text-slate-400 hover:text-slate-700">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-600">
+              Reject join request for <strong>{rejectAttendeeModal.member_name || rejectAttendeeModal.user?.profile?.full_name || 'Member'}</strong>?
+            </p>
+
+            <form onSubmit={handleConfirmRejectAttendee} className="space-y-4 text-xs">
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Rejection Reason / Remarks</label>
+                <textarea
+                  rows={3}
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  placeholder="e.g. Unverified payment receipt or delegate quota full."
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-slate-900 focus:outline-none focus:border-rose-500 font-sans"
+                />
+              </div>
+
+              <div className="flex items-center gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setRejectAttendeeModal(null)}
+                  className="flex-1 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-extrabold shadow-md"
+                >
+                  Confirm Rejection
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* RECEIPT PREVIEW MODAL */}
+      {viewReceiptUrl && (
+        <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-200 rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl animate-in zoom-in-95">
+            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+              <h3 className="text-base font-extrabold text-slate-900">Payment Receipt Preview</h3>
+              <button onClick={() => setViewReceiptUrl(null)} className="text-slate-400 hover:text-slate-700">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="max-h-[60vh] overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 flex items-center justify-center min-h-[220px]">
+              {viewReceiptUrl.startsWith('data:application/pdf') || viewReceiptUrl.toLowerCase().endsWith('.pdf') ? (
+                <iframe
+                  src={viewReceiptUrl}
+                  title="Receipt Document"
+                  className="w-full h-80 rounded-xl"
+                />
+              ) : (
+                <img
+                  src={viewReceiptUrl}
+                  alt="Receipt Preview"
+                  className="w-full h-full max-h-[55vh] object-contain"
+                />
+              )}
+            </div>
+
+            <div className="flex items-center justify-between pt-2">
+              <a
+                href={viewReceiptUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="text-xs font-bold text-sky-700 hover:underline flex items-center gap-1"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                <span>Open in Full Tab</span>
+              </a>
+
+              <button
+                type="button"
+                onClick={() => setViewReceiptUrl(null)}
+                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold"
+              >
+                Close Preview
               </button>
             </div>
           </div>

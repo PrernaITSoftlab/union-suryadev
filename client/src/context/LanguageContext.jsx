@@ -5,8 +5,9 @@ const LanguageContext = createContext();
 export const translations = {
   // Navigation & General
   "Home": { en: "Home", hi: "मुख्य पृष्ठ" },
-  "About Us": { en: "About Us", hi: "हमारे बारे में" },
-  "Notices": { en: "Notices", hi: "सूचनाएं" },
+  "Notices": { en: "Correspondence", hi: "पत्राचार" },
+  "Correspondence": { en: "Correspondence", hi: "पत्राचार" },
+  "Group Chat": { en: "Group Chat", hi: "ग्रुप संवाद" },
   "Order": { en: "Order", hi: "आदेश" },
   "Board of Union": { en: "Board of Union", hi: "संघ मंडल" },
   "Energy Department": { en: "Energy Department", hi: "ऊर्जा विभाग" },
@@ -63,7 +64,8 @@ export const translations = {
     en: "Latest notifications, gazette orders, and strike bulletins",
     hi: "नवीनतम सूचनाएं, राजपत्र आदेश और हड़ताल बुलेटिन"
   },
-  "View All Notices": { en: "View All Notices", hi: "सभी सूचनाएं देखें" },
+  "View All Notices": { en: "View All Correspondence", hi: "सभी पत्राचार देखें" },
+  "View All Correspondence": { en: "View All Correspondence", hi: "सभी पत्राचार देखें" },
   "Why Join Us": { en: "Why Join Us", hi: "हमसे क्यों जुड़ें" },
   "Protecting Every Lineman, Engineer & Staff Member": {
     en: "Protecting Every Lineman, Engineer & Staff Member",
@@ -153,16 +155,17 @@ export const translations = {
   "Union Executive Leadership": { en: "Union Executive Leadership", hi: "संघ का कार्यकारी नेतृत्व" },
 
   // Events Page
-  "Union Events, Notices & Agitations": { en: "Union Events, Notices & Agitations", hi: "संघ के कार्यक्रम, सूचनाएं और आंदोलन" },
+  "Union Events, Notices & Agitations": { en: "Union Events, Correspondence & Agitations", hi: "संघ के कार्यक्रम, पत्राचार और आंदोलन" },
   "Stay informed on strike calls, gazette notifications, safety rallies, and zonal delegate conventions.": {
     en: "Stay informed on strike calls, gazette notifications, safety rallies, and zonal delegate conventions.",
     hi: "हड़ताल की घोषणाओं, राजपत्र अधिसूचनाओं, सुरक्षा रैलियों और ज़ोनल प्रतिनिधि सम्मेलनों से अवगत रहें।"
   },
-  "All Notices": { en: "All Notices", hi: "सभी सूचनाएं" },
+  "All Notices": { en: "All Correspondence", hi: "समस्त पत्राचार" },
+  "All Correspondence": { en: "All Correspondence", hi: "समस्त पत्राचार" },
   "Strike Agitation": { en: "Strike Agitation", hi: "हड़ताल आंदोलन" },
   "General Notice": { en: "General Notice", hi: "सामान्य सूचना" },
   "Gazette Order": { en: "Gazette Order", hi: "राजपत्र आदेश" },
-  "Search notices & events...": { en: "Search notices & events...", hi: "सूचनाएं और कार्यक्रम खोजें..." },
+  "Search notices & events...": { en: "Search correspondence & events...", hi: "पत्राचार और कार्यक्रम खोजें..." },
   "Register for Event": { en: "Register for Event", hi: "कार्यक्रम के लिए पंजीकरण करें" },
 
   // Contact Page

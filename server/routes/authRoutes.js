@@ -17,18 +17,28 @@ router.post('/login', async (req, res, next) => {
     }
 
     const inputClean = email.trim().toLowerCase();
-    const phoneDigits = email.replace(/\D/g, '');
+    const cleanNoHyphen = inputClean.replace(/[^a-z0-9]/gi, '');
+    const numDigits = inputClean.replace(/\D/g, '');
+    const phoneDigits = numDigits;
 
     let user = inMemoryStore.users.find(u => {
       if (!u) return false;
       const uEmail = (u.email || '').toLowerCase();
       const uMemberId = (u.member_id || '').toLowerCase();
+      const uMemberIdNoHyphen = uMemberId.replace(/[^a-z0-9]/gi, '');
       const uPhone = ((u.profile && u.profile.phone) || '').replace(/\D/g, '');
       const uWhatsapp = ((u.profile && u.profile.whatsapp) || '').replace(/\D/g, '');
 
+      const isMemberIdMatch = uMemberId && (
+        uMemberId === inputClean ||
+        uMemberIdNoHyphen === cleanNoHyphen ||
+        (numDigits && uMemberId.endsWith(numDigits) && (cleanNoHyphen.includes('mp') || cleanNoHyphen.includes('union'))) ||
+        (uMemberId.replace('mpvmavaks', 'mpavaks') === inputClean.replace('mpvmavaks', 'mpavaks'))
+      );
+
       return (
         uEmail === inputClean ||
-        uMemberId === inputClean ||
+        isMemberIdMatch ||
         (phoneDigits.length >= 10 && (uPhone.endsWith(phoneDigits) || uWhatsapp.endsWith(phoneDigits))) ||
         (inputClean === 'admin' && u.role === 'admin') ||
         (inputClean === 'admin@gmail.com' && u.role === 'admin') ||
@@ -51,8 +61,10 @@ router.post('/login', async (req, res, next) => {
                  p.is_public, p.contact_privacy
           FROM users u
           LEFT JOIN member_profiles p ON u.id = p.user_id
-          WHERE LOWER(u.email) = $1 OR LOWER(u.member_id) = $1
-        `, [inputClean]);
+          WHERE LOWER(u.email) = $1 
+             OR LOWER(u.member_id) = $1
+             OR REPLACE(LOWER(u.member_id), '-', '') = $2
+        `, [inputClean, cleanNoHyphen]);
 
         if (dbRes && dbRes.rows && dbRes.rows.length > 0) {
           const r = dbRes.rows[0];

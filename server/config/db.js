@@ -25,6 +25,28 @@ const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.join(__dirname, '../.env') });
 
 const USERS_BACKUP_FILE = path.join(__dirname, '../db/users_backup.json');
+const EVENTS_BACKUP_FILE = path.join(__dirname, '../db/events_backup.json');
+const REGISTRATIONS_BACKUP_FILE = path.join(__dirname, '../db/event_registrations_backup.json');
+
+const loadInitialEvents = () => {
+  try {
+    if (fs.existsSync(EVENTS_BACKUP_FILE)) {
+      const data = JSON.parse(fs.readFileSync(EVENTS_BACKUP_FILE, 'utf-8'));
+      if (Array.isArray(data)) return data;
+    }
+  } catch (_) {}
+  return [...INITIAL_EVENTS];
+};
+
+const loadInitialRegistrations = () => {
+  try {
+    if (fs.existsSync(REGISTRATIONS_BACKUP_FILE)) {
+      const data = JSON.parse(fs.readFileSync(REGISTRATIONS_BACKUP_FILE, 'utf-8'));
+      if (Array.isArray(data) && data.length > 0) return data;
+    }
+  } catch (_) {}
+  return [...INITIAL_EVENT_REGISTRATIONS];
+};
 
 const { Pool } = pg;
 
@@ -36,8 +58,8 @@ export const inMemoryStore = {
   systemSettings: { ...INITIAL_SYSTEM_SETTINGS },
   users: [...INITIAL_USERS],
   membershipApplications: [...INITIAL_MEMBERSHIP_APPLICATIONS],
-  events: [...INITIAL_EVENTS],
-  eventRegistrations: [...INITIAL_EVENT_REGISTRATIONS],
+  events: loadInitialEvents(),
+  eventRegistrations: loadInitialRegistrations(),
   payments: [...INITIAL_PAYMENTS],
   announcements: [...INITIAL_ANNOUNCEMENTS],
   notifications: [...INITIAL_NOTIFICATIONS],
@@ -46,6 +68,9 @@ export const inMemoryStore = {
   contactSubmissions: [...INITIAL_CONTACT_SUBMISSIONS],
   eventLikes: [...INITIAL_EVENT_LIKES],
   eventComments: [...INITIAL_EVENT_COMMENTS],
+  chatGroups: [],
+  chatGroupMembers: [],
+  chatMessages: [],
   auditLogs: [
     {
       id: 1,
@@ -66,6 +91,15 @@ export const saveUsersBackup = () => {
     fs.writeFileSync(USERS_BACKUP_FILE, JSON.stringify(inMemoryStore.users, null, 2), 'utf-8');
   } catch (err) {
     console.warn('⚠️ Could not save users_backup.json:', err.message);
+  }
+};
+
+// Save event registrations to local persistent storage (event_registrations_backup.json)
+export const saveRegistrationsBackup = () => {
+  try {
+    fs.writeFileSync(REGISTRATIONS_BACKUP_FILE, JSON.stringify(inMemoryStore.eventRegistrations, null, 2), 'utf-8');
+  } catch (err) {
+    console.warn('⚠️ Could not save event_registrations_backup.json:', err.message);
   }
 };
 
