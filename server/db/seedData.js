@@ -70,7 +70,7 @@ export const INITIAL_USERS = [
     email: "member@mpvmavaksunion.org",
     role: "user",
     status: "active",
-    member_id: "UNION-IND-104",
+    member_id: "MPAVAKS-0001",
     password_hash: "$2a$10$emVn1lVyurmFdl1nPO7SnOnsb7fzzmsZyHBT3TyDbPqjnkiKDASPK", // member123
 
     profile: {
@@ -105,7 +105,7 @@ export const INITIAL_USERS = [
     email: "vikram.patel@mpvmavaksunion.org",
     role: "user",
     status: "active",
-    member_id: "UNION-UJJ-209",
+    member_id: "MPAVAKS-0002",
     password_hash: "$2a$10$emVn1lVyurmFdl1nPO7SnOnsb7fzzmsZyHBT3TyDbPqjnkiKDASPK", // member123
 
     profile: {
@@ -140,7 +140,7 @@ export const INITIAL_USERS = [
     email: "amit.joshi@mpvmavaksunion.org",
     role: "user",
     status: "active",
-    member_id: "UNION-DEW-312",
+    member_id: "MPAVAKS-0003",
     password_hash: "$2a$10$emVn1lVyurmFdl1nPO7SnOnsb7fzzmsZyHBT3TyDbPqjnkiKDASPK", // member123
 
     profile: {

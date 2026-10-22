@@ -43,7 +43,7 @@
     "password_hash": "$2a$10$emVn1lVyurmFdl1nPO7SnOnsb7fzzmsZyHBT3TyDbPqjnkiKDASPK",
     "role": "user",
     "status": "active",
-    "member_id": "UNION-IND-104",
+    "member_id": "MPAVAKS-0001",
     "profile": {
       "id": 2,
       "user_id": 2,
@@ -81,7 +81,7 @@
     "password_hash": "$2a$10$emVn1lVyurmFdl1nPO7SnOnsb7fzzmsZyHBT3TyDbPqjnkiKDASPK",
     "role": "user",
     "status": "active",
-    "member_id": "UNION-UJJ-209",
+    "member_id": "MPAVAKS-0002",
     "profile": {
       "id": 3,
       "user_id": 3,
@@ -119,7 +119,7 @@
     "password_hash": "$2a$10$emVn1lVyurmFdl1nPO7SnOnsb7fzzmsZyHBT3TyDbPqjnkiKDASPK",
     "role": "user",
     "status": "active",
-    "member_id": "UNION-DEW-312",
+    "member_id": "MPAVAKS-0003",
     "profile": {
       "id": 4,
       "user_id": 4,

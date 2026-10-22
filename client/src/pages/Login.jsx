@@ -36,7 +36,16 @@ export default function Login({ defaultAdmin = false }) {
       if (!err.response) {
         setError('Cannot reach API backend server. Please verify the backend server is running on port 5000.');
       } else {
-        setError(err.response?.data?.message || 'Invalid login credentials. Please check your credentials and password.');
+        const msg = err.response.data?.message;
+        if (msg) {
+          setError(msg);
+        } else if (err.response.status === 404) {
+          setError('Backend endpoint not found (404). Please ensure backend is running and accessible.');
+        } else if (err.response.status >= 500) {
+          setError(`Server error (${err.response.status}). Please check server logs.`);
+        } else {
+          setError('Invalid login credentials. Please check your credentials and password.');
+        }
       }
     } finally {
       setLoading(false);
@@ -119,7 +128,7 @@ export default function Login({ defaultAdmin = false }) {
               <input
                 type="text"
                 required
-                placeholder={isAdminMode ? "UNION-ADMIN-001 or admin@mpvmavaksunion.org" : "UNION-IND-104 or member@mpvmavaksunion.org"}
+                placeholder={isAdminMode ? "UNION-ADMIN-001 or admin@mpvmavaksunion.org" : "MPAVAKS-0001 or member@mpvmavaksunion.org"}
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
                 className="w-full bg-slate-50 border border-slate-300 rounded-xl pl-10 pr-4 py-3 text-xs text-slate-900 focus:outline-none focus:border-sky-500 font-medium"

@@ -2,6 +2,7 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import { inMemoryStore, query, saveUsersBackup } from '../config/db.js';
 import { authenticateToken, requireAdmin } from '../middleware/authMiddleware.js';
+import { getNextMemberId } from '../utils/memberIdHelper.js';
 
 const router = express.Router();
 
@@ -12,6 +13,7 @@ router.get('/', (req, res) => {
     success: true,
     members: activeUsers.map(u => ({
       id: u.id,
+      member_id: u.member_id,
       employee_id: u.member_id,
       email: u.email,
       role: u.role,
@@ -155,10 +157,72 @@ router.post('/admin/create', authenticateToken, requireAdmin, async (req, res, n
     const salt = await bcrypt.genSalt(10);
     const password_hash = await bcrypt.hash(initialPassword, salt);
 
-    const generatedMemberId = member_id || `UNION-${(city || 'IND').substring(0, 3).toUpperCase()}-${Math.floor(100 + Math.random() * 900)}`;
+    let generatedMemberId = member_id ? String(member_id).trim() : null;
+    if (!generatedMemberId || generatedMemberId.toUpperCase().startsWith('UNION-')) {
+      generatedMemberId = await getNextMemberId(inMemoryStore, query);
+    } else {
+      const idExists = inMemoryStore.users.some(u => u.member_id && u.member_id.toLowerCase() === generatedMemberId.toLowerCase());
+      if (idExists) {
+        return res.status(400).json({ success: false, message: `Member ID ${generatedMemberId} is already in use.` });
+      }
+    }
+
+    let newUserId = inMemoryStore.users.length > 0 ? Math.max(...inMemoryStore.users.map(u => u.id || 0)) + 1 : 1;
+
+    // Persist new user permanently into Neon PostgreSQL database
+    try {
+      const userRes = await query(`
+        INSERT INTO users (email, password_hash, role, status, member_id, created_at, updated_at)
+        VALUES ($1, $2, $3, 'active', $4, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        RETURNING id
+      `, [email.trim().toLowerCase(), password_hash, role || 'user', generatedMemberId]);
+
+      if (userRes && userRes.rows && userRes.rows[0]) {
+        newUserId = userRes.rows[0].id;
+      }
+
+      await query(`
+        INSERT INTO member_profiles (
+          user_id, full_name, father_husband_name, dob, gender, avatar_url, phone, whatsapp,
+          address, city, district, state, pin_code, occupation, company, designation,
+          circle, union_designation, bio, emergency_contact, identity_doc_url, additional_doc_url, joining_date, is_public
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, true)
+        ON CONFLICT (user_id) DO UPDATE SET
+          full_name = EXCLUDED.full_name,
+          designation = EXCLUDED.designation,
+          circle = EXCLUDED.circle,
+          union_designation = EXCLUDED.union_designation
+      `, [
+        newUserId,
+        full_name.trim(),
+        father_husband_name || '',
+        dob || null,
+        gender || 'Male',
+        avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=400&q=80',
+        phone || '',
+        whatsapp || phone || '',
+        address || '',
+        city || 'Indore',
+        district || 'Indore',
+        state || 'Madhya Pradesh',
+        pin_code || '452001',
+        occupation || 'Discom Service',
+        company || 'MP West Zone Electricity Discom',
+        designation || 'Staff Member',
+        circle || 'Indore Circle',
+        union_designation || 'Union Member',
+        bio || `Member of MPVMAVAKS Union (${circle || 'Indore'}).`,
+        emergency_contact || '',
+        identity_doc_url || '',
+        additional_doc_url || '',
+        new Date().toISOString().split('T')[0]
+      ]);
+    } catch (dbErr) {
+      console.warn('⚠️ Could not insert user to PostgreSQL in admin/create:', dbErr.message);
+    }
 
     const newUser = {
-      id: inMemoryStore.users.length + 1,
+      id: newUserId,
       email: email.trim().toLowerCase(),
       password_hash,
       role: role || 'user',
@@ -166,8 +230,8 @@ router.post('/admin/create', authenticateToken, requireAdmin, async (req, res, n
       member_id: generatedMemberId,
       created_at: new Date().toISOString(),
       profile: {
-        id: inMemoryStore.users.length + 1,
-        user_id: inMemoryStore.users.length + 1,
+        id: newUserId,
+        user_id: newUserId,
         full_name: full_name.trim(),
         father_husband_name: father_husband_name || '',
         dob: dob || '',
@@ -196,6 +260,7 @@ router.post('/admin/create', authenticateToken, requireAdmin, async (req, res, n
     };
 
     inMemoryStore.users.unshift(newUser);
+    saveUsersBackup();
 
     // If linked to a membership application, mark application APPROVED & VERIFIED
     if (application_id) {
@@ -309,7 +374,14 @@ router.put('/profile/update', authenticateToken, async (req, res) => {
       if (req.body.designation) user.profile.designation = req.body.designation;
       if (req.body.circle) user.profile.circle = req.body.circle;
       if (req.body.union_designation) user.profile.union_designation = req.body.union_designation;
-      if (req.body.member_id) user.member_id = req.body.member_id;
+      if (req.body.member_id) {
+        user.member_id = req.body.member_id;
+        try {
+          await query(`UPDATE users SET member_id = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`, [req.body.member_id, userIdToEdit]);
+        } catch (dbErr) {
+          console.warn('⚠️ Could not update member_id in users table:', dbErr.message);
+        }
+      }
     }
 
     // Persist to Neon PostgreSQL Database

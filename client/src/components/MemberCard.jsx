@@ -13,7 +13,7 @@ import { urlToBase64, generateMemberQrCode, getBarcodePattern } from '../utils/m
 /**
  * High-definition SVG Barcode component
  */
-const BarcodeSvg = ({ value = 'UNION-IND-104', height = 36 }) => {
+const BarcodeSvg = ({ value = 'MPAVAKS-0001', height = 36 }) => {
   const bars = useMemo(() => getBarcodePattern(value), [value]);
   let currentX = 10;
   const barElements = [];
@@ -124,7 +124,7 @@ export default function MemberCard({
   const profile = effectiveUser?.profile || {};
 
   // Core Member Information
-  const memberId = effectiveUser?.member_id || 'UNION-IND-104';
+  const memberId = effectiveUser?.member_id || 'MPAVAKS-0001';
   const fullName = profile.full_name || 'Er. Sunita Chouhan';
   const unionDesignation = profile.union_designation || 'Union Zonal Executive Member';
   const designation = profile.designation || profile.occupation || 'Superintending Engineer (SE)';

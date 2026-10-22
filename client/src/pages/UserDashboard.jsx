@@ -209,7 +209,7 @@ export default function UserDashboard() {
               </div>
               <p className="text-xs text-amber-800 font-extrabold mt-0.5">{user?.profile?.union_designation || 'Union Member'} • {user?.profile?.designation}</p>
               <div className="flex items-center justify-center sm:justify-start gap-4 text-xs font-mono text-slate-600 mt-2 font-medium">
-                <span>Member ID: <strong className="text-slate-900 font-extrabold">{user?.member_id || 'UNION-IND-104'}</strong></span>
+                <span>Member ID: <strong className="text-slate-900 font-extrabold">{user?.member_id || 'MPAVAKS-0001'}</strong></span>
                 <span>•</span>
                 <span>Circle: <strong className="text-slate-900 font-extrabold">{user?.profile?.circle || 'Indore'}</strong></span>
               </div>

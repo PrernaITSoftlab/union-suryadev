@@ -1,7 +1,8 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
-import { inMemoryStore } from '../config/db.js';
+import { inMemoryStore, query, saveUsersBackup } from '../config/db.js';
 import { authenticateToken, requireAdmin } from '../middleware/authMiddleware.js';
+import { getNextMemberId } from '../utils/memberIdHelper.js';
 
 const router = express.Router();
 
@@ -233,16 +234,14 @@ router.put('/:id/status', authenticateToken, requireAdmin, (req, res) => {
 });
 
 // 6. Pre-fill Create User Form from Application (Admin)
-router.get('/:id/prefill-user', authenticateToken, requireAdmin, (req, res) => {
+router.get('/:id/prefill-user', authenticateToken, requireAdmin, async (req, res) => {
   const app = inMemoryStore.membershipApplications.find(a => a.id === Number(req.params.id));
   if (!app) {
     return res.status(404).json({ success: false, message: 'Application not found.' });
   }
 
-  // Generate suggested Member ID
-  const circleCode = (app.city || 'IND').substring(0, 3).toUpperCase();
-  const randomNum = Math.floor(100 + Math.random() * 900);
-  const suggestedMemberId = `UNION-${circleCode}-${randomNum}`;
+  // Generate suggested sequential Member ID (MPAVAKS-XXXX)
+  const suggestedMemberId = await getNextMemberId(inMemoryStore, query);
 
   const prefilled = {
     application_id: app.id,
@@ -296,19 +295,65 @@ router.post('/:id/approve-and-generate', authenticateToken, requireAdmin, async 
       });
     }
 
-    // Generate Unique Member ID and Temporary Password
-    const rawCode = (app.district_name || app.city || 'IND').replace(/[^a-zA-Z]/g, '');
-    const cityCode = (rawCode.length >= 3 ? rawCode : 'IND').substring(0, 3).toUpperCase();
-    const randIdNum = Math.floor(100 + Math.random() * 900);
-    const generatedMemberId = `UNION-${cityCode}-${randIdNum}`;
+    // Generate Unique Sequential Member ID (MPAVAKS-XXXX) and Temporary Password
+    const generatedMemberId = await getNextMemberId(inMemoryStore, query);
     
     const tempPassword = `MPVMAVAKS@${Math.floor(1000 + Math.random() * 9000)}`;
     const salt = await bcrypt.genSalt(10);
     const password_hash = await bcrypt.hash(tempPassword, salt);
 
+    let newUserId = inMemoryStore.users.length > 0 ? Math.max(...inMemoryStore.users.map(u => u.id || 0)) + 1 : 1;
+
+    // Persist new user permanently into Neon PostgreSQL database
+    try {
+      const userRes = await query(`
+        INSERT INTO users (email, password_hash, role, status, member_id, created_at, updated_at)
+        VALUES ($1, $2, 'user', 'active', $3, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        RETURNING id
+      `, [app.email.trim().toLowerCase(), password_hash, generatedMemberId]);
+
+      if (userRes && userRes.rows && userRes.rows[0]) {
+        newUserId = userRes.rows[0].id;
+      }
+
+      await query(`
+        INSERT INTO member_profiles (
+          user_id, full_name, father_husband_name, phone, whatsapp, address,
+          city, district, state, pin_code, occupation, company, designation,
+          circle, union_designation, bio, emergency_contact, joining_date, is_public
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, true)
+        ON CONFLICT (user_id) DO UPDATE SET
+          full_name = EXCLUDED.full_name,
+          designation = EXCLUDED.designation,
+          circle = EXCLUDED.circle,
+          union_designation = EXCLUDED.union_designation
+      `, [
+        newUserId,
+        app.full_name,
+        app.father_name || app.father_husband_name || '',
+        app.whatsapp_mobile || app.mobile || app.cug_mobile || '',
+        app.whatsapp_mobile || app.mobile || '',
+        app.address || '',
+        app.city || app.district_name || 'Indore',
+        app.district_name || app.district || 'Indore',
+        app.state || 'Madhya Pradesh',
+        app.pin_code || '452001',
+        app.occupation || 'Discom Service',
+        app.company_name || app.company || 'MP West Zone Electricity Discom',
+        app.post_name || app.designation || 'Staff Member',
+        app.circle_name || `${app.district_name || 'Indore'} Circle`,
+        app.union_post || 'Union Member',
+        `Member of MPVMAVAKS Union (${app.district_name || 'Indore'}).`,
+        app.emergency_contact || '',
+        new Date().toISOString().split('T')[0]
+      ]);
+    } catch (dbErr) {
+      console.warn('⚠️ Could not insert user to PostgreSQL in approve-and-generate:', dbErr.message);
+    }
+
     // Create Active User Account
     const newUser = {
-      id: inMemoryStore.users.length + 1,
+      id: newUserId,
       email: app.email.trim().toLowerCase(),
       password_hash,
       role: 'user',
@@ -316,8 +361,8 @@ router.post('/:id/approve-and-generate', authenticateToken, requireAdmin, async 
       member_id: generatedMemberId,
       created_at: new Date().toISOString(),
       profile: {
-        id: inMemoryStore.users.length + 1,
-        user_id: inMemoryStore.users.length + 1,
+        id: newUserId,
+        user_id: newUserId,
         full_name: app.full_name,
         father_husband_name: app.father_name || app.father_husband_name || '',
         phone: app.whatsapp_mobile || app.mobile || app.cug_mobile || '',
@@ -340,6 +385,7 @@ router.post('/:id/approve-and-generate', authenticateToken, requireAdmin, async 
     };
 
     inMemoryStore.users.unshift(newUser);
+    saveUsersBackup();
 
     // Update Application Status & Store Credentials Details
     app.application_status = 'APPROVED';

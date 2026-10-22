@@ -19,7 +19,7 @@ router.post('/login', async (req, res, next) => {
     const inputClean = email.trim().toLowerCase();
     const phoneDigits = email.replace(/\D/g, '');
 
-    const user = inMemoryStore.users.find(u => {
+    let user = inMemoryStore.users.find(u => {
       if (!u) return false;
       const uEmail = (u.email || '').toLowerCase();
       const uMemberId = (u.member_id || '').toLowerCase();
@@ -38,6 +38,64 @@ router.post('/login', async (req, res, next) => {
         (inputClean === 'sunita.chouhan@mpvmavaksunion.org' && u.id === 2)
       );
     });
+
+    if (!user) {
+      // Check PostgreSQL database fallback
+      try {
+        const dbRes = await query(`
+          SELECT u.id, u.email, u.password_hash, u.role, u.status, u.member_id,
+                 p.id as profile_id, p.full_name, p.father_husband_name, p.dob, p.gender,
+                 p.avatar_url, p.phone, p.whatsapp, p.address, p.city, p.district, p.state,
+                 p.pin_code, p.occupation, p.company, p.designation, p.circle,
+                 p.union_designation, p.bio, p.emergency_contact, p.joining_date,
+                 p.is_public, p.contact_privacy
+          FROM users u
+          LEFT JOIN member_profiles p ON u.id = p.user_id
+          WHERE LOWER(u.email) = $1 OR LOWER(u.member_id) = $1
+        `, [inputClean]);
+
+        if (dbRes && dbRes.rows && dbRes.rows.length > 0) {
+          const r = dbRes.rows[0];
+          user = {
+            id: r.id,
+            email: r.email,
+            password_hash: r.password_hash,
+            role: r.role,
+            status: r.status,
+            member_id: r.member_id,
+            profile: {
+              id: r.profile_id || r.id,
+              user_id: r.id,
+              full_name: r.full_name,
+              father_husband_name: r.father_husband_name,
+              dob: r.dob,
+              gender: r.gender,
+              avatar_url: r.avatar_url,
+              phone: r.phone,
+              whatsapp: r.whatsapp,
+              address: r.address,
+              city: r.city,
+              district: r.district,
+              state: r.state,
+              pin_code: r.pin_code,
+              occupation: r.occupation,
+              company: r.company,
+              designation: r.designation,
+              circle: r.circle,
+              union_designation: r.union_designation,
+              bio: r.bio,
+              emergency_contact: r.emergency_contact,
+              joining_date: r.joining_date,
+              is_public: r.is_public,
+              contact_privacy: r.contact_privacy
+            }
+          };
+          inMemoryStore.users.push(user);
+        }
+      } catch (dbErr) {
+        console.warn('⚠️ DB lookup fallback in login failed:', dbErr.message);
+      }
+    }
 
     if (!user) {
       return res.status(401).json({ success: false, message: 'Invalid login credentials. Please check Member ID/Email or Admin ID/Email.' });

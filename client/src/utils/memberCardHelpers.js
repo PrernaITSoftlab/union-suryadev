@@ -70,7 +70,7 @@ export async function generateMemberQrCode(memberData) {
  * Deterministically generates Code128-style barcode pattern from text.
  */
 export function getBarcodePattern(text) {
-  const safeText = String(text || 'UNION-001').toUpperCase();
+  const safeText = String(text || 'MPAVAKS-0001').toUpperCase();
   const bars = [];
   
   // Start pattern
