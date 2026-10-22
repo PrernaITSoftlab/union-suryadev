@@ -131,6 +131,7 @@ CREATE TABLE IF NOT EXISTS events (
     registration_end_date DATE,
     is_paid BOOLEAN DEFAULT false,
     event_fee DECIMAL(10, 2) DEFAULT 0.00,
+    requires_approval BOOLEAN DEFAULT true,
     payment_qr_url TEXT,
     payment_instructions TEXT,
     whatsapp_contact VARCHAR(50),
@@ -163,7 +164,7 @@ CREATE TABLE IF NOT EXISTS event_registrations (
     user_id INT REFERENCES users (id) ON DELETE CASCADE,
     pass_code VARCHAR(100) UNIQUE,
     amount DECIMAL(10, 2) DEFAULT 0.00,
-    payment_status VARCHAR(50) DEFAULT 'CONFIRMED' CHECK (
+    payment_status VARCHAR(50) DEFAULT 'PENDING' CHECK (
         payment_status IN (
             'PENDING',
             'PAYMENT_PENDING',
@@ -172,10 +173,11 @@ CREATE TABLE IF NOT EXISTS event_registrations (
             'CANCELLED'
         )
     ),
-    registration_status VARCHAR(50) DEFAULT 'CONFIRMED' CHECK (
+    registration_status VARCHAR(50) DEFAULT 'PENDING' CHECK (
         registration_status IN (
             'PENDING',
             'CONFIRMED',
+            'REJECTED',
             'CANCELLED',
             'ATTENDED'
         )

@@ -347,19 +347,58 @@ export default function Events() {
                       {/* Join / Status Action */}
                       <div className="pt-2">
                         {isRegistered ? (
-                          <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-bold flex items-center justify-between">
-                            <span className="flex items-center gap-1.5">
-                              <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                              <span>Registered ({regStatus})</span>
-                            </span>
-                            <span className="text-[10px] font-mono text-emerald-700">{evt.user_registration.pass_code}</span>
-                          </div>
+                          regStatus === 'CONFIRMED' ? (
+                            <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-bold flex items-center justify-between">
+                              <span className="flex items-center gap-1.5">
+                                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                                <div>
+                                  <span className="block leading-tight">Approved & Confirmed</span>
+                                  <span className="text-[10px] text-emerald-700 font-normal">Delegate pass ready</span>
+                                </div>
+                              </span>
+                              <span className="text-[11px] font-mono text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded border border-emerald-300 font-bold">
+                                {evt.user_registration.pass_code}
+                              </span>
+                            </div>
+                          ) : regStatus === 'REJECTED' ? (
+                            <div className="p-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900 text-xs font-bold flex items-center justify-between gap-2">
+                              <span className="flex items-center gap-1.5">
+                                <X className="w-4 h-4 text-rose-600 shrink-0" />
+                                <div>
+                                  <span className="block leading-tight">Request Rejected</span>
+                                  <span className="text-[10px] text-rose-600 font-normal">Contact admin or resubmit</span>
+                                </div>
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => handleJoinClick(evt)}
+                                className="px-2.5 py-1 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-[11px] font-bold shrink-0 transition-colors shadow-sm"
+                              >
+                                Re-Apply
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="p-3 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-bold flex items-center justify-between">
+                              <span className="flex items-center gap-1.5">
+                                <Clock className="w-4 h-4 text-amber-600 shrink-0" />
+                                <div>
+                                  <span className="block leading-tight">Request Pending Approval</span>
+                                  <span className="text-[10px] text-amber-700 font-normal">Admin is reviewing your request</span>
+                                </div>
+                              </span>
+                              {evt.user_registration.pass_code && (
+                                <span className="text-[10px] font-mono text-amber-800 bg-amber-100/70 px-2 py-0.5 rounded border border-amber-300">
+                                  Ref: {evt.user_registration.pass_code}
+                                </span>
+                              )}
+                            </div>
+                          )
                         ) : (
                           <button
                             onClick={() => handleJoinClick(evt)}
                             className="w-full py-3 rounded-xl font-bold text-xs bg-sky-600 hover:bg-sky-500 text-white transition-colors flex items-center justify-center gap-2 shadow-md"
                           >
-                            <span>{evt.is_paid ? `Register for Event (₹${evt.event_fee})` : 'Join Event (Free)'}</span>
+                            <span>{evt.is_paid ? `Request to Join (₹${evt.event_fee})` : 'Request to Join (Free Entry)'}</span>
                             <ArrowRight className="w-4 h-4" />
                           </button>
                         )}
@@ -501,8 +540,8 @@ export default function Events() {
             </button>
 
             <div className="border-b border-slate-100 pb-4">
-              <span className="text-xs font-bold text-sky-700 uppercase tracking-wider">Event Registration</span>
-              <h3 className="text-lg font-bold text-slate-900 mt-1">{selectedEvent.title}</h3>
+              <span className="text-xs font-bold text-sky-700 uppercase tracking-wider">Event Participation</span>
+              <h3 className="text-lg font-bold text-slate-900 mt-1">Request to Join: {selectedEvent.title}</h3>
               <p className="text-xs text-slate-500">{selectedEvent.venue} • {selectedEvent.start_date}</p>
             </div>
 
@@ -525,7 +564,7 @@ export default function Events() {
                 <>
                   <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-slate-700">Registration Fee Amount:</span>
+                      <span className="text-xs font-bold text-slate-700">Event Joining Charges:</span>
                       <span className="text-lg font-extrabold text-sky-700">₹{selectedEvent.event_fee}</span>
                     </div>
 
@@ -535,7 +574,7 @@ export default function Events() {
                     </div>
 
                     <p className="text-[11px] text-slate-600 leading-relaxed text-center font-medium">
-                      {selectedEvent.payment_instructions}
+                      {selectedEvent.payment_instructions || 'Please complete the payment and enter the UTR/Transaction ID below for admin verification.'}
                     </p>
                   </div>
 
@@ -567,8 +606,8 @@ export default function Events() {
                   </div>
                 </>
               ) : (
-                <div className="p-4 rounded-2xl bg-sky-50 border border-sky-200 text-xs text-sky-900 font-semibold">
-                  This event is free for all registered Union members. Click confirm below to claim your delegate pass.
+                <div className="p-4 rounded-2xl bg-sky-50 border border-sky-200 text-xs text-sky-900 font-semibold leading-relaxed">
+                  This event is free for union members. Once you submit your join request, the admin team will review and issue your delegate pass code.
                 </div>
               )}
 
@@ -577,7 +616,7 @@ export default function Events() {
                 disabled={submitting}
                 className="w-full py-3.5 rounded-xl font-bold text-xs bg-sky-600 hover:bg-sky-500 text-white transition-colors shadow-md"
               >
-                {submitting ? 'Submitting Registration...' : 'Confirm Event Registration'}
+                {submitting ? 'Submitting Join Request...' : 'Submit Join Request'}
               </button>
             </form>
           </div>

@@ -197,7 +197,7 @@ export const EventService = {
       title, description, banner_url, event_type, start_date, end_date,
       start_time, end_time, venue, address, capacity, registration_start_date,
       registration_end_date, is_paid, event_fee, payment_qr_url, payment_instructions,
-      whatsapp_contact, visibility, status
+      whatsapp_contact, visibility, status, requires_approval
     } = data;
 
     const defaultQr = inMemoryStore.systemSettings?.default_event_qr_url || "/images/payment-qr.png";
@@ -205,6 +205,9 @@ export const EventService = {
     const finalEndDate = formatDbDate(end_date) || finalStartDate;
     const finalRegStart = formatDbDate(registration_start_date) || finalStartDate;
     const finalRegEnd = formatDbDate(registration_end_date) || finalStartDate;
+    const finalFee = Number(event_fee) || 0;
+    const finalIsPaid = Boolean(is_paid) || finalFee > 0;
+    const finalRequiresApproval = requires_approval !== undefined ? Boolean(requires_approval) : true;
 
     let createdEvent = null;
 
@@ -216,13 +219,13 @@ export const EventService = {
             start_time, end_time, venue, address, capacity, registered_count,
             registration_start_date, registration_end_date, is_paid, event_fee,
             payment_qr_url, payment_instructions, whatsapp_contact, visibility,
-            status, created_by, created_at, updated_at
+            status, requires_approval, created_by, created_at, updated_at
           ) VALUES (
             $1, $2, $3, $4, $5, $6,
             $7, $8, $9, $10, $11, $12,
             $13, $14, $15, $16,
             $17, $18, $19, $20,
-            $21, $22, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+            $21, $22, $23, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
           ) RETURNING *;
         `;
 
@@ -241,13 +244,14 @@ export const EventService = {
           0,
           finalRegStart,
           finalRegEnd,
-          Boolean(is_paid),
-          is_paid ? Number(event_fee) : 0,
+          finalIsPaid,
+          finalFee,
           payment_qr_url || defaultQr,
           payment_instructions || 'Pay fee using QR code and submit UTR number.',
           whatsapp_contact || inMemoryStore.systemSettings?.payment_whatsapp_number || '+91 94249 44041',
           visibility || 'PUBLIC',
           status || 'REGISTRATION_OPEN',
+          finalRequiresApproval,
           userId || 1
         ];
 
@@ -278,8 +282,9 @@ export const EventService = {
         registered_count: 0,
         registration_start_date: finalRegStart,
         registration_end_date: finalRegEnd,
-        is_paid: Boolean(is_paid),
-        event_fee: is_paid ? Number(event_fee) : 0,
+        is_paid: finalIsPaid,
+        event_fee: finalFee,
+        requires_approval: finalRequiresApproval,
         payment_qr_url: payment_qr_url || defaultQr,
         payment_instructions: payment_instructions || 'Pay fee using QR code and submit UTR number.',
         whatsapp_contact: whatsapp_contact || inMemoryStore.systemSettings?.payment_whatsapp_number || '+91 94249 44041',
@@ -330,8 +335,9 @@ export const EventService = {
         const capacity = updates.capacity !== undefined ? Number(updates.capacity) : curr.capacity;
         const registration_start_date = formatDbDate(updates.registration_start_date !== undefined ? updates.registration_start_date : curr.registration_start_date) || start_date;
         const registration_end_date = formatDbDate(updates.registration_end_date !== undefined ? updates.registration_end_date : curr.registration_end_date) || start_date;
-        const is_paid = updates.is_paid !== undefined ? Boolean(updates.is_paid) : curr.is_paid;
-        const event_fee = updates.event_fee !== undefined ? Number(updates.event_fee) : curr.event_fee;
+        const event_fee = updates.event_fee !== undefined ? Number(updates.event_fee) : Number(curr.event_fee || 0);
+        const is_paid = updates.is_paid !== undefined ? Boolean(updates.is_paid) : (event_fee > 0 ? true : Boolean(curr.is_paid));
+        const requires_approval = updates.requires_approval !== undefined ? Boolean(updates.requires_approval) : (curr.requires_approval !== undefined ? Boolean(curr.requires_approval) : true);
         const payment_qr_url = updates.payment_qr_url !== undefined ? updates.payment_qr_url : curr.payment_qr_url;
         const payment_instructions = updates.payment_instructions !== undefined ? updates.payment_instructions : curr.payment_instructions;
         const whatsapp_contact = updates.whatsapp_contact !== undefined ? updates.whatsapp_contact : curr.whatsapp_contact;
@@ -360,8 +366,9 @@ export const EventService = {
             whatsapp_contact = $18,
             visibility = $19,
             status = $20,
+            requires_approval = $21,
             updated_at = CURRENT_TIMESTAMP
-          WHERE id = $21
+          WHERE id = $22
           RETURNING *;
         `;
 
@@ -369,7 +376,7 @@ export const EventService = {
           title, description, banner_url, event_type, start_date, end_date,
           start_time, end_time, venue, address, capacity, registration_start_date,
           registration_end_date, is_paid, event_fee, payment_qr_url, payment_instructions,
-          whatsapp_contact, visibility, status, numId
+          whatsapp_contact, visibility, status, requires_approval, numId
         ]);
 
         if (res.rows.length > 0) {
@@ -386,7 +393,12 @@ export const EventService = {
       if (updatedEvent) {
         inMemoryStore.events[memIndex] = updatedEvent;
       } else {
+        const finalFee = updates.event_fee !== undefined ? Number(updates.event_fee) : Number(inMemoryStore.events[memIndex].event_fee || 0);
+        const finalPaid = updates.is_paid !== undefined ? Boolean(updates.is_paid) : (finalFee > 0);
         Object.assign(inMemoryStore.events[memIndex], updates, {
+          event_fee: finalFee,
+          is_paid: finalPaid,
+          requires_approval: updates.requires_approval !== undefined ? Boolean(updates.requires_approval) : (inMemoryStore.events[memIndex].requires_approval !== undefined ? inMemoryStore.events[memIndex].requires_approval : true),
           updated_at: new Date().toISOString(),
           visibility: updates.visibility || inMemoryStore.events[memIndex].visibility || 'PUBLIC'
         });
@@ -431,7 +443,7 @@ export const EventService = {
   },
 
   /**
-   * Register a user for an event
+   * Register a user for an event (Member submits a Join Request)
    */
   async registerForEvent(eventId, user, regData) {
     await this.awaitInit();
@@ -447,85 +459,110 @@ export const EventService = {
       throw new Error('Registrations are closed for this event.');
     }
 
-    // Check duplicate
+    const isPaidEvent = Boolean(event.is_paid && Number(event.event_fee) > 0);
+    const { transaction_id, payment_proof_url } = regData || {};
+
+    if (isPaidEvent && !transaction_id) {
+      throw new Error('Payment Transaction ID / UTR is required for paid events.');
+    }
+
+    // Check duplicate or prior rejected application
     const existing = await this.getUserRegistration(numEventId, userId);
     if (existing) {
-      const err = new Error('You have already registered for this event.');
-      err.existing = existing;
-      throw err;
-    }
-
-    const { transaction_id, payment_proof_url } = regData;
-    const pass_code = `PASS-${(event.title || 'EVT').substring(0, 3).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`;
-
-    let registrationStatus = 'CONFIRMED';
-    let paymentStatus = 'CONFIRMED';
-
-    if (event.is_paid && event.event_fee > 0) {
-      if (!transaction_id) {
-        throw new Error('Payment Transaction ID / UTR is required for paid events.');
+      if (existing.registration_status !== 'REJECTED' && existing.registration_status !== 'CANCELLED') {
+        const err = new Error(
+          existing.registration_status === 'PENDING'
+            ? 'Your join request for this event is already submitted and pending admin approval.'
+            : 'You have already joined this event.'
+        );
+        err.existing = existing;
+        throw err;
       }
-      registrationStatus = 'PENDING';
-      paymentStatus = 'PAYMENT_PENDING';
     }
+
+    const pass_code = existing?.pass_code || `PASS-${(event.title || 'EVT').substring(0, 3).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const registrationStatus = 'PENDING'; // Member requests to join -> admin will approve or reject
+    const paymentStatus = isPaidEvent ? 'PAYMENT_PENDING' : 'CONFIRMED';
+    const amount = isPaidEvent ? Number(event.event_fee) : 0;
 
     let newReg = null;
 
     if (pool) {
       try {
-        const insertReg = `
-          INSERT INTO event_registrations (
-            event_id, user_id, pass_code, amount, payment_status,
-            registration_status, transaction_id, payment_proof_url, registered_at
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP)
-          RETURNING *;
-        `;
-        const regRes = await pool.query(insertReg, [
-          numEventId, userId, pass_code, event.event_fee || 0,
-          paymentStatus, registrationStatus, transaction_id || '',
-          payment_proof_url || ''
-        ]);
+        if (existing) {
+          // Update existing rejected/cancelled registration back to PENDING
+          const updateQuery = `
+            UPDATE event_registrations
+            SET amount = $1, payment_status = $2, registration_status = $3,
+                transaction_id = $4, payment_proof_url = $5, registered_at = CURRENT_TIMESTAMP
+            WHERE id = $6
+            RETURNING *;
+          `;
+          const res = await pool.query(updateQuery, [
+            amount, paymentStatus, registrationStatus,
+            transaction_id || '', payment_proof_url || '', existing.id
+          ]);
+          if (res.rows.length > 0) newReg = res.rows[0];
+        } else {
+          const insertReg = `
+            INSERT INTO event_registrations (
+              event_id, user_id, pass_code, amount, payment_status,
+              registration_status, transaction_id, payment_proof_url, registered_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CURRENT_TIMESTAMP)
+            RETURNING *;
+          `;
+          const regRes = await pool.query(insertReg, [
+            numEventId, userId, pass_code, amount,
+            paymentStatus, registrationStatus, transaction_id || '',
+            payment_proof_url || ''
+          ]);
 
-        if (regRes.rows.length > 0) {
-          newReg = regRes.rows[0];
+          if (regRes.rows.length > 0) {
+            newReg = regRes.rows[0];
+          }
+        }
+
+        if (newReg) {
           newReg.id = Number(newReg.id);
           newReg.event_id = Number(newReg.event_id);
           newReg.user_id = Number(newReg.user_id);
           newReg.amount = Number(newReg.amount || 0);
         }
-
-        // Increment registered_count in DB
-        await pool.query('UPDATE events SET registered_count = registered_count + 1 WHERE id = $1', [numEventId]);
       } catch (dbErr) {
-        console.error('❌ Error inserting registration into PostgreSQL:', dbErr.message);
+        console.error('❌ Error saving registration to PostgreSQL:', dbErr.message);
       }
     }
 
     if (!newReg) {
-      newReg = {
-        id: inMemoryStore.eventRegistrations.length + 1,
-        event_id: numEventId,
-        user_id: userId,
-        pass_code,
-        amount: event.event_fee || 0,
-        payment_status: paymentStatus,
-        registration_status: registrationStatus,
-        transaction_id: transaction_id || '',
-        payment_proof_url: payment_proof_url || '',
-        registered_at: new Date().toISOString()
-      };
-    }
-
-    // Update inMemoryStore
-    inMemoryStore.eventRegistrations.unshift(newReg);
-    if (event) {
-      event.registered_count = (event.registered_count || 0) + 1;
-      const memEvt = inMemoryStore.events.find(e => e.id === numEventId);
-      if (memEvt) memEvt.registered_count = event.registered_count;
+      if (existing) {
+        existing.amount = amount;
+        existing.payment_status = paymentStatus;
+        existing.registration_status = registrationStatus;
+        existing.transaction_id = transaction_id || '';
+        existing.payment_proof_url = payment_proof_url || '';
+        existing.registered_at = new Date().toISOString();
+        newReg = existing;
+      } else {
+        newReg = {
+          id: inMemoryStore.eventRegistrations.length + 1,
+          event_id: numEventId,
+          user_id: userId,
+          pass_code,
+          amount,
+          payment_status: paymentStatus,
+          registration_status: registrationStatus,
+          transaction_id: transaction_id || '',
+          payment_proof_url: payment_proof_url || '',
+          registered_at: new Date().toISOString()
+        };
+        inMemoryStore.eventRegistrations.unshift(newReg);
+      }
+    } else if (!existing) {
+      inMemoryStore.eventRegistrations.unshift(newReg);
     }
 
     // Record payment if paid
-    if (event.is_paid && transaction_id) {
+    if (isPaidEvent && transaction_id) {
       const paymentItem = {
         id: inMemoryStore.payments.length + 1,
         user_id: userId,
@@ -563,8 +600,205 @@ export const EventService = {
       inMemoryStore.payments.unshift(paymentItem);
     }
 
+    // Notify Administrator of new Join Request
+    inMemoryStore.notifications.unshift({
+      id: inMemoryStore.notifications.length + 1,
+      user_id: 1,
+      title: 'New Event Join Request',
+      message: `${user?.profile?.full_name || user?.email || 'A union member'} submitted a request to join "${event.title}".`,
+      type: 'EVENT',
+      is_read: false,
+      created_at: new Date().toISOString()
+    });
+
     saveEventsToBackup(inMemoryStore.events);
     return newReg;
+  },
+
+  /**
+   * Admin Approve Event Join Request
+   */
+  async approveRegistration(registrationId, adminUser) {
+    await this.awaitInit();
+    const numRegId = Number(registrationId);
+
+    let reg = null;
+
+    if (pool) {
+      try {
+        const res = await pool.query(`
+          UPDATE event_registrations
+          SET registration_status = 'CONFIRMED',
+              payment_status = 'CONFIRMED'
+          WHERE id = $1
+          RETURNING *;
+        `, [numRegId]);
+
+        if (res.rows.length > 0) {
+          reg = res.rows[0];
+          reg.id = Number(reg.id);
+          reg.event_id = Number(reg.event_id);
+          reg.user_id = Number(reg.user_id);
+
+          // Update event registered_count in DB
+          await pool.query('UPDATE events SET registered_count = registered_count + 1 WHERE id = $1', [reg.event_id]);
+          
+          // Also update payment record if exists
+          await pool.query(`
+            UPDATE payments 
+            SET status = 'VERIFIED', verified_by = $1, verified_at = CURRENT_TIMESTAMP
+            WHERE event_registration_id = $2
+          `, [adminUser?.id || 1, numRegId]);
+        }
+      } catch (err) {
+        console.error('❌ Error approving registration in PostgreSQL:', err.message);
+      }
+    }
+
+    // Update in-memory store
+    const memReg = inMemoryStore.eventRegistrations.find(r => r.id === numRegId);
+    if (memReg) {
+      memReg.registration_status = 'CONFIRMED';
+      memReg.payment_status = 'CONFIRMED';
+      if (!reg) reg = memReg;
+    }
+
+    const eventId = reg?.event_id || memReg?.event_id;
+    const targetEvent = inMemoryStore.events.find(e => e.id === Number(eventId));
+    if (targetEvent) {
+      targetEvent.registered_count = (targetEvent.registered_count || 0) + 1;
+    }
+
+    // Update payment in memory if exists
+    const memPayment = inMemoryStore.payments.find(p => p.event_registration_id === numRegId);
+    if (memPayment) {
+      memPayment.status = 'VERIFIED';
+      memPayment.verified_by = adminUser?.id || 1;
+      memPayment.verified_at = new Date().toISOString();
+    }
+
+    // Send member notification
+    const userId = reg?.user_id || memReg?.user_id;
+    if (userId) {
+      inMemoryStore.notifications.unshift({
+        id: inMemoryStore.notifications.length + 1,
+        user_id: Number(userId),
+        title: 'Event Join Request Approved! 🎉',
+        message: `Your request to join "${targetEvent?.title || 'the event'}" has been approved! Your pass code is ${reg?.pass_code || memReg?.pass_code}.`,
+        type: 'EVENT',
+        is_read: false,
+        created_at: new Date().toISOString()
+      });
+    }
+
+    // Add Audit Log
+    inMemoryStore.auditLogs.unshift({
+      id: inMemoryStore.auditLogs.length + 1,
+      action: 'EVENT_REGISTRATION_APPROVED',
+      actor_id: adminUser?.id || 1,
+      actor_name: adminUser?.profile?.full_name || 'Admin',
+      entity_type: 'EVENT_REGISTRATION',
+      entity_id: String(numRegId),
+      details: `Approved join request for event "${targetEvent?.title || 'Event'}" (Pass: ${reg?.pass_code || memReg?.pass_code})`,
+      created_at: new Date().toISOString()
+    });
+
+    saveEventsToBackup(inMemoryStore.events);
+    return reg || memReg;
+  },
+
+  /**
+   * Admin Reject Event Join Request
+   */
+  async rejectRegistration(registrationId, adminUser, rejectionReason = '') {
+    await this.awaitInit();
+    const numRegId = Number(registrationId);
+
+    let reg = null;
+
+    if (pool) {
+      try {
+        const res = await pool.query(`
+          UPDATE event_registrations
+          SET registration_status = 'REJECTED',
+              payment_status = 'REJECTED'
+          WHERE id = $1
+          RETURNING *;
+        `, [numRegId]);
+
+        if (res.rows.length > 0) {
+          reg = res.rows[0];
+          reg.id = Number(reg.id);
+          reg.event_id = Number(reg.event_id);
+          reg.user_id = Number(reg.user_id);
+
+          // Update payment record if exists
+          await pool.query(`
+            UPDATE payments 
+            SET status = 'REJECTED', remarks = $1
+            WHERE event_registration_id = $2
+          `, [rejectionReason || 'Registration request rejected by admin.', numRegId]);
+        }
+      } catch (err) {
+        console.error('❌ Error rejecting registration in PostgreSQL:', err.message);
+      }
+    }
+
+    // Update in-memory store
+    const memReg = inMemoryStore.eventRegistrations.find(r => r.id === numRegId);
+    const wasConfirmed = memReg?.registration_status === 'CONFIRMED';
+    if (memReg) {
+      memReg.registration_status = 'REJECTED';
+      memReg.payment_status = 'REJECTED';
+      if (!reg) reg = memReg;
+    }
+
+    const eventId = reg?.event_id || memReg?.event_id;
+    const targetEvent = inMemoryStore.events.find(e => e.id === Number(eventId));
+    if (targetEvent && wasConfirmed && targetEvent.registered_count > 0) {
+      targetEvent.registered_count -= 1;
+      if (pool) {
+        try {
+          await pool.query('UPDATE events SET registered_count = GREATEST(0, registered_count - 1) WHERE id = $1', [targetEvent.id]);
+        } catch (_) {}
+      }
+    }
+
+    // Update payment in memory if exists
+    const memPayment = inMemoryStore.payments.find(p => p.event_registration_id === numRegId);
+    if (memPayment) {
+      memPayment.status = 'REJECTED';
+      memPayment.remarks = rejectionReason || 'Registration request rejected by admin.';
+    }
+
+    // Send member notification
+    const userId = reg?.user_id || memReg?.user_id;
+    if (userId) {
+      inMemoryStore.notifications.unshift({
+        id: inMemoryStore.notifications.length + 1,
+        user_id: Number(userId),
+        title: 'Event Join Request Update',
+        message: `Your request to join "${targetEvent?.title || 'the event'}" was rejected.${rejectionReason ? ` Reason: ${rejectionReason}` : ''}`,
+        type: 'EVENT',
+        is_read: false,
+        created_at: new Date().toISOString()
+      });
+    }
+
+    // Add Audit Log
+    inMemoryStore.auditLogs.unshift({
+      id: inMemoryStore.auditLogs.length + 1,
+      action: 'EVENT_REGISTRATION_REJECTED',
+      actor_id: adminUser?.id || 1,
+      actor_name: adminUser?.profile?.full_name || 'Admin',
+      entity_type: 'EVENT_REGISTRATION',
+      entity_id: String(numRegId),
+      details: `Rejected join request for event "${targetEvent?.title || 'Event'}". ${rejectionReason ? `Reason: ${rejectionReason}` : ''}`,
+      created_at: new Date().toISOString()
+    });
+
+    saveEventsToBackup(inMemoryStore.events);
+    return reg || memReg;
   },
 
   /**
@@ -601,38 +835,62 @@ export const EventService = {
   },
 
   /**
-   * Get all admin event registrations
+   * Get all admin event registrations / join requests with member enrichment
    */
-  async getAdminRegistrations() {
+  async getAdminRegistrations(eventId = null) {
     await this.awaitInit();
+
+    let list = [];
 
     if (pool) {
       try {
-        const queryText = `
+        let queryText = `
           SELECT 
             r.*,
             e.title AS event_title,
+            e.start_date AS event_date,
+            e.venue AS event_venue,
+            e.event_fee,
+            e.is_paid AS event_is_paid,
             mp.full_name AS member_name,
             u.email AS member_email,
-            mp.phone AS member_phone
+            u.member_id AS employee_id,
+            mp.phone AS member_phone,
+            mp.avatar_url AS member_avatar,
+            mp.circle AS member_circle,
+            mp.designation AS member_designation
           FROM event_registrations r
           LEFT JOIN events e ON r.event_id = e.id
           LEFT JOIN users u ON r.user_id = u.id
           LEFT JOIN member_profiles mp ON u.id = mp.user_id
-          ORDER BY r.registered_at DESC;
         `;
-        const res = await pool.query(queryText);
+        const params = [];
+        if (eventId) {
+          params.push(Number(eventId));
+          queryText += ` WHERE r.event_id = $${params.length}`;
+        }
+        queryText += ' ORDER BY r.registered_at DESC;';
+
+        const res = await pool.query(queryText, params);
         if (res.rows.length > 0) {
-          return res.rows.map(r => ({
+          list = res.rows.map(r => ({
             ...r,
             id: Number(r.id),
             event_id: Number(r.event_id),
             user_id: Number(r.user_id),
             amount: Number(r.amount || 0),
             event_title: r.event_title || 'Union Event',
+            event_date: r.event_date ? String(r.event_date).slice(0, 10) : '',
+            event_venue: r.event_venue || 'Indore HQ',
+            event_fee: Number(r.event_fee || 0),
+            is_paid: Boolean(r.event_is_paid || r.amount > 0),
             member_name: r.member_name || 'Union Member',
             member_email: r.member_email || '',
-            member_phone: r.member_phone || ''
+            member_phone: r.member_phone || '',
+            member_avatar: r.member_avatar || '',
+            employee_id: r.employee_id || `MEM-${r.user_id}`,
+            member_circle: r.member_circle || 'Indore Circle',
+            member_designation: r.member_designation || 'Member'
           }));
         }
       } catch (err) {
@@ -640,17 +898,33 @@ export const EventService = {
       }
     }
 
-    return inMemoryStore.eventRegistrations.map(r => {
-      const targetEvent = inMemoryStore.events.find(e => e.id === r.event_id);
-      const targetUser = inMemoryStore.users.find(u => u.id === r.user_id);
-      return {
-        ...r,
-        event_title: targetEvent?.title || 'Union Event',
-        member_name: targetUser?.profile?.full_name || 'Union Member',
-        member_email: targetUser?.email || '',
-        member_phone: targetUser?.profile?.phone || ''
-      };
-    });
+    if (list.length === 0) {
+      let regs = [...inMemoryStore.eventRegistrations];
+      if (eventId) {
+        regs = regs.filter(r => r.event_id === Number(eventId));
+      }
+      list = regs.map(r => {
+        const targetEvent = inMemoryStore.events.find(e => e.id === r.event_id);
+        const targetUser = inMemoryStore.users.find(u => u.id === r.user_id);
+        return {
+          ...r,
+          event_title: targetEvent?.title || 'Union Event',
+          event_date: targetEvent?.start_date ? String(targetEvent.start_date).slice(0, 10) : '',
+          event_venue: targetEvent?.venue || 'Indore HQ',
+          event_fee: Number(targetEvent?.event_fee || r.amount || 0),
+          is_paid: Boolean(targetEvent?.is_paid || r.amount > 0),
+          member_name: targetUser?.profile?.full_name || 'Union Member',
+          member_email: targetUser?.email || '',
+          member_phone: targetUser?.profile?.phone || '',
+          member_avatar: targetUser?.profile?.avatar_url || '',
+          employee_id: targetUser?.member_id || `MEM-${r.user_id}`,
+          member_circle: targetUser?.profile?.circle || 'Indore Circle',
+          member_designation: targetUser?.profile?.designation || 'Member'
+        };
+      });
+    }
+
+    return list;
   },
 
   /**

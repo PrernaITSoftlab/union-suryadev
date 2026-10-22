@@ -68,10 +68,14 @@ export async function ensureEventsSchemaAndSeed() {
         ALTER TABLE events DROP CONSTRAINT IF EXISTS events_status_check;
         ALTER TABLE events ADD CONSTRAINT events_status_check 
           CHECK (status IN ('DRAFT', 'PUBLISHED', 'REGISTRATION_OPEN', 'REGISTRATION_CLOSED', 'COMPLETED', 'CANCELLED', 'UPCOMING'));
+        ALTER TABLE events ADD COLUMN IF NOT EXISTS requires_approval BOOLEAN DEFAULT true;
+        ALTER TABLE event_registrations DROP CONSTRAINT IF EXISTS event_registrations_registration_status_check;
+        ALTER TABLE event_registrations ADD CONSTRAINT event_registrations_registration_status_check 
+          CHECK (registration_status IN ('PENDING', 'CONFIRMED', 'REJECTED', 'CANCELLED', 'ATTENDED'));
       `);
-      console.log('✅ PostgreSQL events_status_check constraint updated to support UPCOMING.');
+      console.log('✅ PostgreSQL events constraints & columns verified.');
     } catch (conErr) {
-      console.warn('⚠️ Notice on events_status_check update:', conErr.message);
+      console.warn('⚠️ Notice on events constraints update:', conErr.message);
     }
 
     // 2. Check if events table has records
@@ -238,13 +242,15 @@ export function formatDbDate(val) {
 
 export function normalizeEventRow(row) {
   if (!row) return null;
+  const fee = Number(row.event_fee || row.fee_amount || 0);
   return {
     ...row,
     id: Number(row.id),
     capacity: Number(row.capacity || 0),
     registered_count: Number(row.registered_count || 0),
-    event_fee: Number(row.event_fee || 0),
-    is_paid: Boolean(row.is_paid),
+    event_fee: fee,
+    fee_amount: fee,
+    is_paid: Boolean(row.is_paid || fee > 0),
     likes_count: Number(row.likes_count || 0),
     comments_count: Number(row.comments_count || 0),
     is_liked: Boolean(row.is_liked),
@@ -253,6 +259,7 @@ export function normalizeEventRow(row) {
     registration_start_date: formatDbDate(row.registration_start_date) || formatDbDate(row.start_date) || '',
     registration_end_date: formatDbDate(row.registration_end_date) || formatDbDate(row.start_date) || '',
     visibility: row.visibility || 'PUBLIC',
+    requires_approval: row.requires_approval !== undefined ? Boolean(row.requires_approval) : true,
     status: row.status || 'REGISTRATION_OPEN'
   };
 }

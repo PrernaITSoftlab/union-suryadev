@@ -5,7 +5,8 @@ import { useNotification } from '../context/NotificationContext';
 import api from '../services/api';
 import {
   User, Users, Calendar, AlertTriangle, FileText, Send, Bell, CreditCard,
-  CheckCircle, Clock, Search, Upload, Download, Eye, Plus, ShieldCheck, Lock, Edit3, X, Share2, Camera
+  CheckCircle, Clock, Search, Upload, Download, Eye, Plus, ShieldCheck, Lock, Edit3, X, Share2, Camera,
+  ArrowRight, MapPin
 } from 'lucide-react';
 import MemberCard from '../components/MemberCard';
 import ProfilePhotoUploader from '../components/ProfilePhotoUploader';
@@ -588,29 +589,97 @@ export default function UserDashboard() {
         {/* TAB 4: EVENTS */}
         {activeTab === 'events' && (
           <div className="space-y-6">
-            <h2 className="text-xl font-bold text-slate-900">Events & Registered Passes</h2>
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-slate-900">Events & Join Requests</h2>
+                <p className="text-xs text-slate-500 font-medium">Track your delegate pass approvals and join union conventions</p>
+              </div>
+              <button
+                onClick={() => navigate('/events')}
+                className="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition-colors"
+              >
+                <span>Browse All Events</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {events.map(evt => {
                 const isReg = Boolean(evt.user_registration);
+                const regStatus = (evt.user_registration?.registration_status || '').toUpperCase();
                 return (
-                  <div key={evt.id} className="bg-white border border-slate-200 rounded-3xl p-6 space-y-4 flex flex-col justify-between shadow-sm">
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-xs font-bold text-amber-800">
-                        <span>{evt.event_type}</span>
-                        <span className="text-slate-500 font-mono">{evt.start_date}</span>
+                  <div key={evt.id} className="bg-white border border-slate-200 rounded-3xl p-6 space-y-4 flex flex-col justify-between shadow-sm hover:border-slate-300 transition-colors">
+                    <div className="space-y-2.5">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-bold text-amber-800 uppercase tracking-wider">{evt.event_type}</span>
+                        <div className="flex items-center gap-2">
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                            Number(evt.event_fee) > 0
+                              ? 'bg-amber-50 text-amber-800 border-amber-200'
+                              : 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                          }`}>
+                            {Number(evt.event_fee) > 0 ? `₹${evt.event_fee}` : 'Free Entry'}
+                          </span>
+                          <span className="text-slate-500 font-mono text-[11px]">{evt.start_date}</span>
+                        </div>
                       </div>
-                      <h3 className="font-bold text-base text-slate-900">{evt.title}</h3>
-                      <p className="text-xs text-slate-600">{evt.venue}</p>
+                      <h3 className="font-bold text-base text-slate-900 leading-snug">{evt.title}</h3>
+                      <p className="text-xs text-slate-600 flex items-center gap-1.5">
+                        <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                        <span className="truncate">{evt.venue}</span>
+                      </p>
                     </div>
 
                     <div className="pt-3 border-t border-slate-100">
                       {isReg ? (
-                        <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-mono flex items-center justify-between font-bold">
-                          <span>Pass: {evt.user_registration.pass_code}</span>
-                          <span>{evt.user_registration.registration_status}</span>
-                        </div>
+                        regStatus === 'CONFIRMED' ? (
+                          <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-950 text-xs flex items-center justify-between font-bold">
+                            <span className="flex items-center gap-1.5">
+                              <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+                              <span>Pass Approved:</span>
+                              <span className="font-mono text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded border border-emerald-300">
+                                {evt.user_registration.pass_code}
+                              </span>
+                            </span>
+                            <span className="text-[10px] uppercase font-bold text-emerald-700">Confirmed</span>
+                          </div>
+                        ) : regStatus === 'REJECTED' ? (
+                          <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-950 text-xs flex items-center justify-between font-bold">
+                            <span className="flex items-center gap-1.5">
+                              <X className="w-4 h-4 text-rose-600 shrink-0" />
+                              <span>Request Rejected</span>
+                            </span>
+                            <button
+                              onClick={() => navigate(`/events?id=${evt.id}`)}
+                              className="px-2.5 py-1 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-[11px] font-bold transition-colors"
+                            >
+                              Re-Apply
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-950 text-xs flex items-center justify-between font-bold">
+                            <span className="flex items-center gap-1.5">
+                              <Clock className="w-4 h-4 text-amber-600 shrink-0" />
+                              <span>Request Pending Approval</span>
+                            </span>
+                            {evt.user_registration.pass_code && (
+                              <span className="text-[10px] font-mono text-amber-800 bg-amber-100 px-1.5 py-0.5 rounded border border-amber-300">
+                                Ref: {evt.user_registration.pass_code}
+                              </span>
+                            )}
+                          </div>
+                        )
                       ) : (
-                        <span className="text-xs text-slate-500 font-medium">Not registered. Browse Events page to join.</span>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-slate-500 font-medium">Not registered yet</span>
+                          <button
+                            onClick={() => navigate(`/events?id=${evt.id}`)}
+                            className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-colors shadow-sm flex items-center gap-1"
+                          >
+                            <span>{Number(evt.event_fee) > 0 ? `Request to Join (₹${evt.event_fee})` : 'Request to Join (Free)'}</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       )}
                     </div>
                   </div>

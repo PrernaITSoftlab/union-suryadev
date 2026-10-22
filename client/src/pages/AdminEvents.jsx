@@ -21,7 +21,10 @@ const AdminEvents = () => {
     description: '',
     capacity: 100,
     speaker_name: 'Aarav Suyradev & Executive Panel',
-    speaker_title: 'Community Founder'
+    speaker_title: 'Community Founder',
+    event_fee: '',
+    is_paid: false,
+    requires_approval: true
   });
   const [submitting, setSubmitting] = useState(false);
 
@@ -47,9 +50,15 @@ const AdminEvents = () => {
     e.preventDefault();
     setSubmitting(true);
     try {
-      const res = await api.post('/admin/events', newEvent);
+      const payload = {
+        ...newEvent,
+        event_fee: Number(newEvent.event_fee) || 0,
+        is_paid: Number(newEvent.event_fee) > 0
+      };
+      const res = await api.post('/admin/events', payload);
       if (res.data.success) {
         setCreateModal(false);
+        setNewEvent(prev => ({ ...prev, title: '', description: '', event_fee: '', is_paid: false }));
         await fetchEvents();
       }
     } catch (err) {
@@ -80,6 +89,30 @@ const AdminEvents = () => {
       }
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const handleApproveAttendee = async (regId) => {
+    try {
+      const res = await api.put(`/admin/events/registrations/${regId}/approve`);
+      if (res.data.success) {
+        setAttendeesList(prev => prev.map(a => a.id === regId ? { ...a, registration_status: 'CONFIRMED' } : a));
+        fetchEvents();
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to approve attendee');
+    }
+  };
+
+  const handleRejectAttendee = async (regId) => {
+    try {
+      const res = await api.put(`/admin/events/registrations/${regId}/reject`);
+      if (res.data.success) {
+        setAttendeesList(prev => prev.map(a => a.id === regId ? { ...a, registration_status: 'REJECTED' } : a));
+        fetchEvents();
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to reject attendee');
     }
   };
 
@@ -212,6 +245,58 @@ const AdminEvents = () => {
                 </div>
               </div>
 
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="font-bold text-slate-700 block mb-1">Joining Charges / Fee (₹)</label>
+                  <div className="relative">
+                    <span className="absolute left-3.5 top-2.5 text-slate-400 font-bold text-sm">₹</span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="1"
+                      placeholder="0 for Free"
+                      value={newEvent.event_fee ?? ''}
+                      onFocus={(e) => {
+                        if (e.target.value === '0') e.target.select();
+                      }}
+                      onChange={(e) => {
+                        let val = e.target.value;
+                        if (val.length > 1 && /^0\d+/.test(val)) {
+                          val = val.replace(/^0+/, '') || '0';
+                          e.target.value = val;
+                        }
+                        const fee = val === '' ? '' : Math.max(0, Number(val));
+                        setNewEvent({
+                          ...newEvent,
+                          event_fee: val === '' ? '' : (isNaN(fee) ? 0 : fee),
+                          is_paid: Number(fee) > 0
+                        });
+                      }}
+                      className="w-full pl-8 pr-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-300 text-slate-900 font-semibold focus:bg-white focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all"
+                    />
+                  </div>
+                  <p className="text-[11px] text-slate-500 mt-1">
+                    {Number(newEvent.event_fee) > 0 ? `Paid Event (₹${newEvent.event_fee} per attendee)` : 'Free entry for all members'}
+                  </p>
+                </div>
+
+                <div className="flex flex-col justify-center">
+                  <label className="font-bold text-slate-700 block mb-1">Approval Workflow</label>
+                  <label className="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-300 cursor-pointer hover:bg-slate-100 transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={newEvent.requires_approval}
+                      onChange={(e) => setNewEvent({ ...newEvent, requires_approval: e.target.checked })}
+                      className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
+                    />
+                    <div>
+                      <span className="text-xs font-bold text-slate-800 block">Require Admin Approval</span>
+                      <span className="text-[10px] text-slate-500 block">Admin must approve each request to issue pass</span>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
               <div>
                 <label className="font-bold text-slate-700 block mb-1">Description</label>
                 <textarea
@@ -245,10 +330,10 @@ const AdminEvents = () => {
         </div>
       )}
 
-      {/* View Attendees Modal */}
+      {/* View Attendees & Join Requests Modal */}
       {attendeesModalEvent && (
         <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white max-w-lg w-full rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xl relative animate-in fade-in zoom-in-95 duration-200">
+          <div className="bg-white max-w-2xl w-full rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xl relative animate-in fade-in zoom-in-95 duration-200">
             <button
               onClick={() => setAttendeesModalEvent(null)}
               className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 p-1 rounded-lg transition-colors"
@@ -256,27 +341,82 @@ const AdminEvents = () => {
               <X className="w-5 h-5" />
             </button>
 
-            <h3 className="text-lg font-bold text-slate-900 mb-1">Registered Attendees</h3>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-lg font-bold text-slate-900">Member Join Requests & Attendees</h3>
+              <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${
+                Number(attendeesModalEvent.event_fee) > 0
+                  ? 'bg-amber-50 text-amber-700 border-amber-200'
+                  : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+              }`}>
+                {Number(attendeesModalEvent.event_fee) > 0 ? `Fee: ₹${attendeesModalEvent.event_fee}` : 'Free Entry'}
+              </span>
+            </div>
             <p className="text-xs text-blue-700 font-bold mb-4">{attendeesModalEvent.title}</p>
 
-            <div className="max-h-60 overflow-y-auto space-y-2 mb-4">
+            <div className="max-h-96 overflow-y-auto space-y-2.5 mb-5 pr-1">
               {attendeesList.length === 0 ? (
-                <p className="text-xs text-slate-500 py-6 text-center">No member registrations recorded yet.</p>
-              ) : attendeesList.map((a) => (
-                <div key={a.registration_id} className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
-                  <div>
-                    <div className="font-bold text-slate-900">{a.user?.profile?.full_name || 'Member'}</div>
-                    <div className="text-[10px] text-slate-500">{a.user?.email}</div>
+                <p className="text-xs text-slate-500 py-8 text-center bg-slate-50 rounded-2xl border border-slate-200">
+                  No member join requests recorded for this event yet.
+                </p>
+              ) : attendeesList.map((a) => {
+                const regId = a.id || a.registration_id;
+                const status = (a.registration_status || 'PENDING').toUpperCase();
+                return (
+                  <div key={regId} className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-bold text-slate-900">{a.member_name || a.user?.profile?.full_name || a.full_name || 'Member'}</span>
+                        {a.employee_id && (
+                          <span className="text-[10px] font-mono bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-semibold">
+                            ID: {a.employee_id}
+                          </span>
+                        )}
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                          status === 'CONFIRMED'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                            : status === 'REJECTED'
+                            ? 'bg-rose-50 text-rose-700 border-rose-200'
+                            : 'bg-amber-50 text-amber-700 border-amber-200'
+                        }`}>
+                          {status === 'CONFIRMED' ? 'Approved / Confirmed' : status === 'REJECTED' ? 'Rejected' : 'Pending Approval'}
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-slate-500 flex flex-wrap gap-x-3 gap-y-0.5">
+                        <span>{a.member_email || a.user?.email || 'No email'}</span>
+                        {a.member_phone && <span>Phone: {a.member_phone}</span>}
+                        {a.member_circle && <span>Circle: {a.member_circle}</span>}
+                        {a.pass_code && <span className="font-mono text-emerald-700 font-semibold">Pass: {a.pass_code}</span>}
+                        {a.transaction_id && <span className="font-mono text-blue-700">UTR: {a.transaction_id}</span>}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      {status !== 'CONFIRMED' && (
+                        <button
+                          onClick={() => handleApproveAttendee(regId)}
+                          className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition-colors flex items-center gap-1 shadow-sm"
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5" /> Approve
+                        </button>
+                      )}
+                      {status !== 'REJECTED' && (
+                        <button
+                          onClick={() => handleRejectAttendee(regId)}
+                          className="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-xs transition-colors flex items-center gap-1"
+                        >
+                          <X className="w-3.5 h-3.5" /> Reject
+                        </button>
+                      )}
+                    </div>
                   </div>
-                  <span className="text-[10px] font-mono text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">Confirmed</span>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
-            <div className="text-right">
+            <div className="text-right pt-3 border-t border-slate-100">
               <button
                 onClick={() => setAttendeesModalEvent(null)}
-                className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition-colors shadow-sm"
+                className="px-5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-colors shadow-sm"
               >
                 Close
               </button>

@@ -99,7 +99,7 @@ router.put('/admin/:id', authenticateToken, requireAdmin, async (req, res) => {
   }
 });
 
-// 5. Join Event / Event Registration (Authenticated Member)
+// 5. Join Event / Event Registration Request (Authenticated Member)
 router.post('/:id/register', authenticateToken, async (req, res) => {
   try {
     const registration = await EventService.registerForEvent(req.params.id, req.user, req.body);
@@ -108,8 +108,8 @@ router.post('/:id/register', authenticateToken, async (req, res) => {
     res.status(201).json({
       success: true,
       message: event?.is_paid
-        ? 'Event payment details submitted! Admin will verify your payment.'
-        : 'You have successfully joined this event!',
+        ? 'Event payment details submitted! Admin will verify your payment and approve your join request.'
+        : 'Your request to join this event has been submitted! Admin will review and approve your request.',
       registration
     });
   } catch (err) {
@@ -127,7 +127,8 @@ router.post('/:id/register', authenticateToken, async (req, res) => {
 // 6. Get Admin Event Registrations List
 router.get('/admin/registrations/list', authenticateToken, requireAdmin, async (req, res) => {
   try {
-    const registrations = await EventService.getAdminRegistrations();
+    const { event_id } = req.query;
+    const registrations = await EventService.getAdminRegistrations(event_id || null);
     res.json({
       success: true,
       registrations
@@ -135,6 +136,61 @@ router.get('/admin/registrations/list', authenticateToken, requireAdmin, async (
   } catch (err) {
     console.error('Error fetching registrations:', err);
     res.status(500).json({ success: false, message: 'Failed to fetch registrations.' });
+  }
+});
+
+// 6.1 Admin Approve Event Registration
+router.put('/admin/registrations/:id/approve', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const registration = await EventService.approveRegistration(req.params.id, req.user);
+    res.json({
+      success: true,
+      message: 'Member join request approved successfully!',
+      registration
+    });
+  } catch (err) {
+    console.error('Error approving registration:', err);
+    res.status(500).json({ success: false, message: err.message || 'Failed to approve registration.' });
+  }
+});
+
+// 6.2 Admin Reject Event Registration
+router.put('/admin/registrations/:id/reject', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { rejection_reason } = req.body || {};
+    const registration = await EventService.rejectRegistration(req.params.id, req.user, rejection_reason);
+    res.json({
+      success: true,
+      message: 'Member join request rejected.',
+      registration
+    });
+  } catch (err) {
+    console.error('Error rejecting registration:', err);
+    res.status(500).json({ success: false, message: err.message || 'Failed to reject registration.' });
+  }
+});
+
+// 6.3 Admin Set Registration Status (Generic Status Handler)
+router.put('/admin/registrations/:id/status', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { status, rejection_reason } = req.body || {};
+    let registration;
+    if (status === 'CONFIRMED' || status === 'APPROVED') {
+      registration = await EventService.approveRegistration(req.params.id, req.user);
+    } else if (status === 'REJECTED') {
+      registration = await EventService.rejectRegistration(req.params.id, req.user, rejection_reason);
+    } else {
+      return res.status(400).json({ success: false, message: 'Invalid status. Must be CONFIRMED or REJECTED.' });
+    }
+
+    res.json({
+      success: true,
+      message: `Registration status updated to ${status}.`,
+      registration
+    });
+  } catch (err) {
+    console.error('Error updating registration status:', err);
+    res.status(500).json({ success: false, message: err.message || 'Failed to update registration status.' });
   }
 });
 

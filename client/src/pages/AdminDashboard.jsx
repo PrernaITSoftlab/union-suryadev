@@ -49,6 +49,15 @@ export default function AdminDashboard() {
   const [rejectPaymentModal, setRejectPaymentModal] = useState(null);
   const [rejectReason, setRejectReason] = useState('');
 
+  // Event Join Requests State & Modals
+  const [selectedEventFilter, setSelectedEventFilter] = useState('all');
+  const [regStatusFilter, setRegStatusFilter] = useState('all');
+  const [regSearch, setRegSearch] = useState('');
+  const [rejectRegModal, setRejectRegModal] = useState(null);
+  const [rejectRegReason, setRejectRegReason] = useState('');
+  const [viewRegProofModal, setViewRegProofModal] = useState(null);
+  const [manageEventRequestsModal, setManageEventRequestsModal] = useState(null);
+
   // Orders / Notices Modals & Form
   const [createOrderModal, setCreateOrderModal] = useState(false);
   const [editOrderModal, setEditOrderModal] = useState(null);
@@ -73,8 +82,9 @@ export default function AdminDashboard() {
   const [eventForm, setEventForm] = useState({
     title: '', description: '', banner_url: '', event_type: 'GENERAL',
     start_date: '', end_date: '', start_time: '10:00 AM', venue: '',
-    capacity: 500, is_paid: false, event_fee: 0, payment_qr_url: '',
-    payment_instructions: '', visibility: 'PUBLIC', status: 'REGISTRATION_OPEN'
+    capacity: 500, is_paid: false, event_fee: '', payment_qr_url: '',
+    payment_instructions: '', visibility: 'PUBLIC', status: 'REGISTRATION_OPEN',
+    requires_approval: true
   });
 
   const [announceForm, setAnnounceForm] = useState({
@@ -413,15 +423,21 @@ export default function AdminDashboard() {
   const handleCreateEvent = async (e) => {
     e.preventDefault();
     try {
-      const res = await api.post('/events/admin/create', eventForm);
+      const payload = {
+        ...eventForm,
+        event_fee: Number(eventForm.event_fee) || 0,
+        is_paid: Number(eventForm.event_fee) > 0
+      };
+      const res = await api.post('/events/admin/create', payload);
       if (res.data.success) {
         setFeedback({ success: res.data.message });
         setCreateEventModal(false);
         setEventForm({
           title: '', description: '', banner_url: '', event_type: 'GENERAL',
           start_date: '', end_date: '', start_time: '10:00 AM', venue: '',
-          capacity: 500, is_paid: false, event_fee: 0, payment_qr_url: '',
-          payment_instructions: '', visibility: 'PUBLIC', status: 'REGISTRATION_OPEN'
+          capacity: 500, is_paid: false, event_fee: '', payment_qr_url: '',
+          payment_instructions: '', visibility: 'PUBLIC', status: 'REGISTRATION_OPEN',
+          requires_approval: true
         });
         fetchModuleData();
       }
@@ -434,7 +450,12 @@ export default function AdminDashboard() {
     e.preventDefault();
     if (!editEventModal) return;
     try {
-      const res = await api.put(`/events/admin/${editEventModal.id}`, eventForm);
+      const payload = {
+        ...eventForm,
+        event_fee: Number(eventForm.event_fee) || 0,
+        is_paid: Number(eventForm.event_fee) > 0
+      };
+      const res = await api.put(`/events/admin/${editEventModal.id}`, payload);
       if (res.data.success) {
         setFeedback({ success: res.data.message });
         setEditEventModal(null);
@@ -455,6 +476,49 @@ export default function AdminDashboard() {
       }
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to delete event.');
+    }
+  };
+
+  // Event Join Request Handlers
+  const handleApproveRegistration = async (regId) => {
+    try {
+      const res = await api.put(`/events/admin/registrations/${regId}/approve`);
+      if (res.data.success) {
+        setFeedback({ success: res.data.message || 'Member join request approved successfully!' });
+        setTimeout(() => setFeedback(null), 4000);
+        // Refresh event registrations
+        const regRes = await api.get('/events/admin/registrations/list');
+        if (regRes.data.success) setEventRegs(regRes.data.registrations);
+        // Refresh events list to reflect updated counts
+        const evRes = await api.get('/events/list');
+        if (evRes.data.success) setEvents(evRes.data.events);
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to approve join request.');
+    }
+  };
+
+  const handleConfirmRejectRegistration = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    if (!rejectRegModal) return;
+    try {
+      const res = await api.put(`/events/admin/registrations/${rejectRegModal.id}/reject`, {
+        rejection_reason: rejectRegReason
+      });
+      if (res.data.success) {
+        setFeedback({ success: res.data.message || 'Member join request rejected.' });
+        setTimeout(() => setFeedback(null), 4000);
+        setRejectRegModal(null);
+        setRejectRegReason('');
+        // Refresh event registrations
+        const regRes = await api.get('/events/admin/registrations/list');
+        if (regRes.data.success) setEventRegs(regRes.data.registrations);
+        // Refresh events list
+        const evRes = await api.get('/events/list');
+        if (evRes.data.success) setEvents(evRes.data.events);
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to reject join request.');
     }
   };
 
@@ -597,7 +661,12 @@ export default function AdminDashboard() {
             { id: 'applications', label: 'Membership Requests', icon: FileText },
             { id: 'members', label: 'Members', icon: Users },
             { id: 'events', label: 'Events & Agitations', icon: Calendar },
-            { id: 'registrations', label: 'Event Passes', icon: Award },
+            {
+              id: 'registrations',
+              label: 'Event Join Requests',
+              icon: Award,
+              badge: (eventRegs || []).filter(r => r.registration_status === 'PENDING').length
+            },
             { id: 'payments', label: 'Payments Verification', icon: CreditCard },
             { id: 'announcements', label: 'Announcements', icon: AlertTriangle },
             { id: 'contact', label: 'Contact Inquiries', icon: PhoneCall },
@@ -616,6 +685,11 @@ export default function AdminDashboard() {
               >
                 <Icon className="w-4 h-4 shrink-0" />
                 <span>{tab.label}</span>
+                {tab.badge > 0 && (
+                  <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-rose-600 text-white shadow-sm">
+                    {tab.badge}
+                  </span>
+                )}
               </button>
             );
           })}
@@ -1281,8 +1355,9 @@ export default function AdminDashboard() {
                   setEventForm({
                     title: '', description: '', banner_url: '', event_type: 'GENERAL',
                     start_date: new Date().toISOString().split('T')[0], end_date: '', start_time: '10:00 AM', venue: '',
-                    capacity: 500, is_paid: false, event_fee: 0, payment_qr_url: '',
-                    payment_instructions: '', visibility: 'PUBLIC', status: 'REGISTRATION_OPEN'
+                    capacity: 500, is_paid: false, event_fee: '', payment_qr_url: '',
+                    payment_instructions: '', visibility: 'PUBLIC', status: 'REGISTRATION_OPEN',
+                    requires_approval: true
                   });
                   setCreateEventModal(true);
                 }}
@@ -1294,74 +1369,431 @@ export default function AdminDashboard() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {events.map(e => (
-                <div key={e.id} className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm flex flex-col justify-between group hover:shadow-md transition-all">
-                  {e.banner_url && (
-                    <div className="h-40 overflow-hidden bg-slate-900 relative">
-                      <img src={e.banner_url} alt={e.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                      <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-slate-900/80 backdrop-blur-md text-white text-[10px] font-bold uppercase">
-                        {e.event_type}
-                      </div>
-                    </div>
-                  )}
-                  <div className="p-5 space-y-3 flex-1 flex flex-col justify-between">
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-sky-100 text-sky-800 uppercase">
-                          {e.event_type}
-                        </span>
-                        <span className="text-[11px] font-mono font-bold text-slate-500">{e.status}</span>
-                      </div>
-                      <h3 className="font-bold text-slate-900 text-base line-clamp-2">{e.title}</h3>
-                      <p className="text-xs text-slate-600 line-clamp-2">{e.description}</p>
-                      <div className="text-xs text-slate-500 font-medium">
-                        📍 <strong>{e.venue}</strong> • 📅 <span>{e.start_date ? String(e.start_date).slice(0, 10) : ''}</span>
-                      </div>
-                    </div>
+              {events.map(e => {
+                const pendingForThisEvent = (eventRegs || []).filter(r => r.event_id === e.id && r.registration_status === 'PENDING').length;
 
-                    <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                      <span className="font-mono font-bold text-sky-700">
-                        {e.is_paid ? `Fee: ₹${e.event_fee}` : 'FREE'} • {e.registered_count || 0} Registered
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => {
-                            setEditEventModal(e);
-                            setEventForm({
-                              title: e.title || '',
-                              description: e.description || '',
-                              banner_url: e.banner_url || '',
-                              event_type: e.event_type || 'GENERAL',
-                              start_date: e.start_date ? String(e.start_date).slice(0, 10) : '',
-                              end_date: e.end_date ? String(e.end_date).slice(0, 10) : '',
-                              start_time: e.start_time || '10:00 AM',
-                              venue: e.venue || '',
-                              capacity: e.capacity || 500,
-                              is_paid: Boolean(e.is_paid),
-                              event_fee: e.event_fee || 0,
-                              payment_qr_url: e.payment_qr_url || '',
-                              payment_instructions: e.payment_instructions || '',
-                              visibility: e.visibility || 'PUBLIC',
-                              status: e.status || 'REGISTRATION_OPEN'
-                            });
-                          }}
-                          className="p-1.5 rounded-lg bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200 transition-colors"
-                          title="Edit Event"
-                        >
-                          <Edit3 className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteEvent(e.id)}
-                          className="p-1.5 rounded-lg bg-red-50 text-red-700 hover:bg-red-100 border border-red-200 transition-colors"
-                          title="Delete Event"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                return (
+                  <div key={e.id} className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm flex flex-col justify-between group hover:shadow-md transition-all">
+                    {e.banner_url && (
+                      <div className="h-40 overflow-hidden bg-slate-900 relative">
+                        <img src={e.banner_url} alt={e.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                        <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-slate-900/80 backdrop-blur-md text-white text-[10px] font-bold uppercase">
+                          {e.event_type}
+                        </div>
+                        <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-slate-900/80 backdrop-blur-md text-white text-[10px] font-extrabold uppercase">
+                          {Number(e.event_fee) > 0 ? `₹${e.event_fee} Entry Fee` : 'Free Entry'}
+                        </div>
+                      </div>
+                    )}
+                    <div className="p-5 space-y-3 flex-1 flex flex-col justify-between">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-sky-100 text-sky-800 uppercase">
+                            {e.event_type}
+                          </span>
+                          <span className="text-[11px] font-mono font-bold text-slate-500">{e.status}</span>
+                        </div>
+                        <h3 className="font-bold text-slate-900 text-base line-clamp-2">{e.title}</h3>
+                        <p className="text-xs text-slate-600 line-clamp-2">{e.description}</p>
+                        <div className="text-xs text-slate-500 font-medium space-y-1">
+                          <div>📍 <strong>{e.venue}</strong> • 📅 <span>{e.start_date ? String(e.start_date).slice(0, 10) : ''}</span></div>
+                          <div className="text-[11px] text-slate-500">
+                            {e.requires_approval !== false ? '🛡️ Admin approval required to join' : '⚡ Instant delegate join'}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs gap-2 flex-wrap">
+                        <div>
+                          <span className="font-mono font-bold text-sky-700 block">
+                            {e.is_paid && Number(e.event_fee) > 0 ? `Charges: ₹${e.event_fee}` : 'Charges: FREE'}
+                          </span>
+                          <span className="text-[11px] text-slate-500">
+                            {e.registered_count || 0} Confirmed Attendees
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            onClick={() => {
+                              setSelectedEventFilter(String(e.id));
+                              setActiveModule('registrations');
+                            }}
+                            className={`px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 border transition-colors ${
+                              pendingForThisEvent > 0
+                                ? 'bg-amber-500 text-slate-950 border-amber-600 shadow-sm animate-pulse'
+                                : 'bg-sky-50 text-sky-700 hover:bg-sky-100 border-sky-200'
+                            }`}
+                            title="Manage Member Join Requests"
+                          >
+                            <UserCheck className="w-3.5 h-3.5" />
+                            <span>Requests</span>
+                            {pendingForThisEvent > 0 && (
+                              <span className="px-1 py-0.2 rounded-full text-[9px] bg-red-600 text-white font-black">
+                                {pendingForThisEvent}
+                              </span>
+                            )}
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              setEditEventModal(e);
+                              setEventForm({
+                                title: e.title || '',
+                                description: e.description || '',
+                                banner_url: e.banner_url || '',
+                                event_type: e.event_type || 'GENERAL',
+                                start_date: e.start_date ? String(e.start_date).slice(0, 10) : '',
+                                end_date: e.end_date ? String(e.end_date).slice(0, 10) : '',
+                                start_time: e.start_time || '10:00 AM',
+                                venue: e.venue || '',
+                                capacity: e.capacity || 500,
+                                is_paid: Boolean(e.is_paid || Number(e.event_fee) > 0),
+                                event_fee: Number(e.event_fee || 0) > 0 ? Number(e.event_fee) : '',
+                                payment_qr_url: e.payment_qr_url || '',
+                                payment_instructions: e.payment_instructions || '',
+                                visibility: e.visibility || 'PUBLIC',
+                                status: e.status || 'REGISTRATION_OPEN',
+                                requires_approval: e.requires_approval !== undefined ? Boolean(e.requires_approval) : true
+                              });
+                            }}
+                            className="p-1.5 rounded-lg bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200 transition-colors"
+                            title="Edit Event"
+                          >
+                            <Edit3 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteEvent(e.id)}
+                            className="p-1.5 rounded-lg bg-red-50 text-red-700 hover:bg-red-100 border border-red-200 transition-colors"
+                            title="Delete Event"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* MODULE: EVENT JOIN REQUESTS & PASSES APPROVAL */}
+        {activeModule === 'registrations' && (
+          <div className="space-y-6">
+            <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
+                <div>
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-900 text-xs font-bold uppercase tracking-wider mb-2">
+                    <UserCheck className="w-3.5 h-3.5 text-amber-600" />
+                    <span>Member Event Participation Management</span>
+                  </div>
+                  <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900">
+                    Event Join Requests & Member Approvals
+                  </h2>
+                  <p className="text-xs text-slate-500 font-medium mt-1">
+                    Review member requests to attend union conventions, rallies, and workshops. Approve or reject delegate passes.
+                  </p>
                 </div>
-              ))}
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={async () => {
+                      setLoading(true);
+                      try {
+                        const res = await api.get('/events/admin/registrations/list');
+                        if (res.data.success) setEventRegs(res.data.registrations);
+                      } finally {
+                        setLoading(false);
+                      }
+                    }}
+                    className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center gap-1.5 border border-slate-200 transition-colors"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>Refresh</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Stats Counters */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+                  <span className="text-[11px] font-bold text-slate-500 block uppercase">Total Requests</span>
+                  <span className="text-2xl font-black text-slate-900">{eventRegs.length}</span>
+                </div>
+                <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 space-y-1">
+                  <span className="text-[11px] font-bold text-amber-700 block uppercase">Pending Approval</span>
+                  <span className="text-2xl font-black text-amber-800">
+                    {eventRegs.filter(r => (r.registration_status || 'PENDING') === 'PENDING').length}
+                  </span>
+                </div>
+                <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 space-y-1">
+                  <span className="text-[11px] font-bold text-emerald-700 block uppercase">Approved / Confirmed</span>
+                  <span className="text-2xl font-black text-emerald-800">
+                    {eventRegs.filter(r => r.registration_status === 'CONFIRMED').length}
+                  </span>
+                </div>
+                <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 space-y-1">
+                  <span className="text-[11px] font-bold text-rose-700 block uppercase">Rejected</span>
+                  <span className="text-2xl font-black text-rose-800">
+                    {eventRegs.filter(r => r.registration_status === 'REJECTED').length}
+                  </span>
+                </div>
+              </div>
+
+              {/* Filters & Search Toolbar */}
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="relative min-w-[200px] sm:min-w-[240px]">
+                    <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+                    <input
+                      type="text"
+                      placeholder="Search member, email, UTR, pass..."
+                      value={regSearch}
+                      onChange={(e) => setRegSearch(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-300 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-amber-500"
+                    />
+                  </div>
+
+                  {/* Filter by Event */}
+                  <select
+                    value={selectedEventFilter}
+                    onChange={(e) => setSelectedEventFilter(e.target.value)}
+                    className="bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-900 font-bold focus:outline-none focus:border-amber-500"
+                  >
+                    <option value="all">All Events ({events.length})</option>
+                    {events.map(evt => (
+                      <option key={evt.id} value={evt.id}>{evt.title}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Status Filter Pills */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {[
+                    { id: 'all', label: 'All' },
+                    { id: 'PENDING', label: 'Pending Approval' },
+                    { id: 'CONFIRMED', label: 'Approved' },
+                    { id: 'REJECTED', label: 'Rejected' }
+                  ].map(tab => {
+                    const active = regStatusFilter === tab.id;
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => setRegStatusFilter(tab.id)}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                          active
+                            ? 'bg-amber-500 text-slate-950 shadow-sm'
+                            : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                        }`}
+                      >
+                        {tab.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Join Requests Table */}
+              {(() => {
+                const filteredRegs = (eventRegs || []).filter(r => {
+                  if (selectedEventFilter !== 'all' && Number(r.event_id) !== Number(selectedEventFilter)) {
+                    return false;
+                  }
+                  if (regStatusFilter !== 'all' && (r.registration_status || 'PENDING').toUpperCase() !== regStatusFilter.toUpperCase()) {
+                    return false;
+                  }
+                  if (regSearch) {
+                    const q = regSearch.toLowerCase();
+                    const name = (r.member_name || '').toLowerCase();
+                    const email = (r.member_email || '').toLowerCase();
+                    const phone = (r.member_phone || '').toLowerCase();
+                    const pass = (r.pass_code || '').toLowerCase();
+                    const utr = (r.transaction_id || '').toLowerCase();
+                    const evtTitle = (r.event_title || '').toLowerCase();
+                    if (!name.includes(q) && !email.includes(q) && !phone.includes(q) && !pass.includes(q) && !utr.includes(q) && !evtTitle.includes(q)) {
+                      return false;
+                    }
+                  }
+                  return true;
+                });
+
+                if (filteredRegs.length === 0) {
+                  return (
+                    <div className="py-16 text-center bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
+                      <UserCheck className="w-10 h-10 text-slate-400 mx-auto" />
+                      <p className="text-sm font-bold text-slate-700">No event join requests found.</p>
+                      <p className="text-xs text-slate-500">
+                        {regStatusFilter !== 'all' ? `No requests with status "${regStatusFilter}".` : 'When members request to join an event, they will appear here for admin approval.'}
+                      </p>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="overflow-x-auto border border-slate-200 rounded-2xl shadow-sm">
+                    <table className="w-full text-left border-collapse text-xs">
+                      <thead>
+                        <tr className="bg-slate-100 border-b border-slate-200 text-slate-700 font-extrabold uppercase text-[10px] tracking-wider">
+                          <th className="p-3.5">Member Details</th>
+                          <th className="p-3.5">Event Information</th>
+                          <th className="p-3.5">Charges & Payment</th>
+                          <th className="p-3.5">Request Date & Pass</th>
+                          <th className="p-3.5">Status</th>
+                          <th className="p-3.5 text-right">Admin Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 bg-white">
+                        {filteredRegs.map(reg => {
+                          const isPending = (reg.registration_status || 'PENDING') === 'PENDING';
+                          const isConfirmed = reg.registration_status === 'CONFIRMED';
+                          const isRejected = reg.registration_status === 'REJECTED';
+                          const feeAmount = Number(reg.amount || reg.event_fee || 0);
+
+                          return (
+                            <tr key={reg.id} className="hover:bg-slate-50 transition-colors">
+                              {/* Member */}
+                              <td className="p-3.5">
+                                <div className="flex items-center gap-3">
+                                  <img
+                                    src={reg.member_avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80'}
+                                    alt={reg.member_name}
+                                    className="w-10 h-10 rounded-xl object-cover border border-slate-200 shrink-0"
+                                  />
+                                  <div>
+                                    <h4 className="font-bold text-slate-900 text-xs">{reg.member_name}</h4>
+                                    <p className="text-[11px] text-slate-500 font-mono">{reg.member_email || reg.member_phone}</p>
+                                    <p className="text-[10px] text-amber-800 font-semibold">{reg.employee_id || `ID: ${reg.user_id}`} • {reg.member_circle || 'Indore'}</p>
+                                  </div>
+                                </div>
+                              </td>
+
+                              {/* Event */}
+                              <td className="p-3.5 max-w-xs">
+                                <h5 className="font-bold text-slate-900 leading-snug line-clamp-2">{reg.event_title}</h5>
+                                <p className="text-[11px] text-slate-500 mt-0.5">📅 {reg.event_date || 'Upcoming'}</p>
+                                <p className="text-[10px] text-slate-400 truncate">📍 {reg.event_venue || 'Indore HQ'}</p>
+                              </td>
+
+                              {/* Charges & Payment */}
+                              <td className="p-3.5">
+                                <div className="space-y-1">
+                                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
+                                    feeAmount > 0 ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-slate-100 text-slate-700'
+                                  }`}>
+                                    {feeAmount > 0 ? `₹${feeAmount} Charges` : 'Free Entry'}
+                                  </span>
+
+                                  {reg.transaction_id && (
+                                    <div className="text-[11px] font-mono text-slate-700 font-bold">
+                                      UTR: {reg.transaction_id}
+                                    </div>
+                                  )}
+
+                                  {reg.payment_proof_url && (
+                                    <button
+                                      type="button"
+                                      onClick={() => setViewRegProofModal(reg)}
+                                      className="text-[10px] text-sky-700 hover:text-sky-800 font-bold underline flex items-center gap-1"
+                                    >
+                                      <Eye className="w-3 h-3" />
+                                      <span>View Receipt Proof</span>
+                                    </button>
+                                  )}
+                                </div>
+                              </td>
+
+                              {/* Pass Code & Date */}
+                              <td className="p-3.5">
+                                <div className="space-y-1">
+                                  <span className="font-mono text-xs font-bold text-sky-800 bg-sky-50 px-2 py-0.5 rounded border border-sky-200 inline-block">
+                                    {reg.pass_code}
+                                  </span>
+                                  <p className="text-[10px] text-slate-400 font-mono">
+                                    {reg.registered_at ? new Date(reg.registered_at).toLocaleDateString() : 'Recent'}
+                                  </p>
+                                </div>
+                              </td>
+
+                              {/* Status */}
+                              <td className="p-3.5">
+                                {isPending && (
+                                  <span className="px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-amber-100 text-amber-900 border border-amber-300 inline-flex items-center gap-1">
+                                    ⏳ Pending Approval
+                                  </span>
+                                )}
+                                {isConfirmed && (
+                                  <span className="px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-emerald-100 text-emerald-900 border border-emerald-300 inline-flex items-center gap-1">
+                                    <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Confirmed
+                                  </span>
+                                )}
+                                {isRejected && (
+                                  <span className="px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-rose-100 text-rose-900 border border-rose-300 inline-flex items-center gap-1">
+                                    ✕ Rejected
+                                  </span>
+                                )}
+                              </td>
+
+                              {/* Actions */}
+                              <td className="p-3.5 text-right">
+                                <div className="flex items-center justify-end gap-2">
+                                  {isPending && (
+                                    <>
+                                      <button
+                                        onClick={() => handleApproveRegistration(reg.id)}
+                                        className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs flex items-center gap-1 shadow-sm transition-all"
+                                        title="Approve Member Join Request"
+                                      >
+                                        <Check className="w-3.5 h-3.5" />
+                                        <span>Approve</span>
+                                      </button>
+                                      <button
+                                        onClick={() => {
+                                          setRejectRegModal(reg);
+                                          setRejectRegReason('');
+                                        }}
+                                        className="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-xs flex items-center gap-1 transition-all"
+                                        title="Reject Join Request"
+                                      >
+                                        <X className="w-3.5 h-3.5" />
+                                        <span>Reject</span>
+                                      </button>
+                                    </>
+                                  )}
+
+                                  {isConfirmed && (
+                                    <button
+                                      onClick={() => {
+                                        setRejectRegModal(reg);
+                                        setRejectRegReason('');
+                                      }}
+                                      className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-rose-50 hover:text-rose-700 text-slate-600 text-[11px] font-bold border border-slate-200 transition-colors"
+                                      title="Revoke / Reject"
+                                    >
+                                      Revoke
+                                    </button>
+                                  )}
+
+                                  {isRejected && (
+                                    <button
+                                      onClick={() => handleApproveRegistration(reg.id)}
+                                      className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-[11px] font-bold border border-emerald-200 transition-colors"
+                                      title="Re-approve Member"
+                                    >
+                                      Re-Approve
+                                    </button>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                );
+              })()}
             </div>
           </div>
         )}
@@ -1802,6 +2234,103 @@ export default function AdminDashboard() {
                     <option value="MEMBERS_ONLY">MEMBERS ONLY</option>
                   </select>
                 </div>
+              </div>
+
+              {/* Event Joining Charges & Approval Settings */}
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="block font-bold text-slate-800 text-xs">Event Joining Charges / Fee (₹) *</label>
+                    <p className="text-[11px] text-slate-500">Enter 0 for Free Event, or specify registration fee amount.</p>
+                  </div>
+                  <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase ${
+                    Number(eventForm.event_fee) > 0 ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                  }`}>
+                    {Number(eventForm.event_fee) > 0 ? `Charges: ₹${eventForm.event_fee}` : 'Free Entry'}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+                  <div className="relative">
+                    <span className="absolute left-3.5 top-2.5 text-slate-500 font-bold text-sm">₹</span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="1"
+                      placeholder="0 (Free Event)"
+                      value={eventForm.event_fee ?? ''}
+                      onFocus={(e) => {
+                        if (e.target.value === '0') e.target.select();
+                      }}
+                      onChange={(e) => {
+                        let val = e.target.value;
+                        // Strip leading zeros e.g. "0500" -> "500", but allow standalone "0"
+                        if (val.length > 1 && /^0\d+/.test(val)) {
+                          val = val.replace(/^0+/, '') || '0';
+                          e.target.value = val;
+                        }
+                        const fee = val === '' ? '' : Math.max(0, Number(val));
+                        setEventForm({
+                          ...eventForm,
+                          event_fee: val === '' ? '' : (isNaN(fee) ? 0 : fee),
+                          is_paid: Number(fee) > 0
+                        });
+                      }}
+                      className="w-full bg-white border border-slate-300 rounded-xl pl-8 pr-3 py-2 text-slate-900 font-bold focus:outline-none focus:border-sky-500"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <label className="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(eventForm.is_paid || Number(eventForm.event_fee) > 0)}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          setEventForm({
+                            ...eventForm,
+                            is_paid: checked,
+                            event_fee: checked && (!eventForm.event_fee || Number(eventForm.event_fee) === 0) ? 100 : (!checked ? '' : eventForm.event_fee)
+                          });
+                        }}
+                        className="rounded text-sky-600 focus:ring-sky-500 w-4 h-4"
+                      />
+                      <span>Paid Event (Requires fee)</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Member Join Request & Admin Approval Setting */}
+                <div className="pt-2 border-t border-slate-200/80 flex items-center justify-between">
+                  <div>
+                    <span className="font-bold text-slate-800 text-xs block">Require Admin Approval</span>
+                    <span className="text-[11px] text-slate-500">Members request to join, and admin can approve or reject each member.</span>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={eventForm.requires_approval !== false}
+                      onChange={(e) => setEventForm({ ...eventForm, requires_approval: e.target.checked })}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-600"></div>
+                  </label>
+                </div>
+
+                {Number(eventForm.event_fee) > 0 && (
+                  <div className="pt-2 border-t border-slate-200/80 space-y-2">
+                    <div>
+                      <label className="block font-bold text-slate-700 text-xs mb-1">Payment Instructions (Optional)</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Scan QR code and pay via UPI, submit UTR number."
+                        value={eventForm.payment_instructions || ''}
+                        onChange={(e) => setEventForm({ ...eventForm, payment_instructions: e.target.value })}
+                        className="w-full bg-white border border-slate-300 rounded-xl px-3 py-1.5 text-slate-900 text-xs"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Event Banner Image Upload */}
@@ -2589,6 +3118,101 @@ export default function AdminDashboard() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* REJECT EVENT REGISTRATION MODAL */}
+      {rejectRegModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-200 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl animate-in zoom-in-95">
+            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+              <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
+                <XCircle className="w-5 h-5 text-rose-600" />
+                <span>Reject Event Join Request</span>
+              </h3>
+              <button onClick={() => setRejectRegModal(null)} className="text-slate-400 hover:text-slate-700">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-600">
+              Are you sure you want to reject the join request from <strong>{rejectRegModal.member_name}</strong> for event <strong>{rejectRegModal.event_title}</strong>?
+            </p>
+
+            <form onSubmit={handleConfirmRejectRegistration} className="space-y-4 text-xs">
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Rejection Reason / Remarks (Optional)</label>
+                <textarea
+                  rows={3}
+                  value={rejectRegReason}
+                  onChange={(e) => setRejectRegReason(e.target.value)}
+                  placeholder="e.g. Quota full for this division, or unverified fee payment."
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-slate-900 focus:outline-none focus:border-rose-500 font-sans"
+                />
+              </div>
+
+              <div className="flex items-center gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setRejectRegModal(null)}
+                  className="flex-1 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-extrabold shadow-md"
+                >
+                  Confirm Rejection
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* VIEW REGISTRATION PAYMENT PROOF MODAL */}
+      {viewRegProofModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-white border border-slate-200 rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl animate-in zoom-in-95">
+            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+              <div>
+                <h3 className="text-base font-extrabold text-slate-900">Payment Screenshot Proof</h3>
+                <p className="text-xs text-slate-500">{viewRegProofModal.member_name} • UTR: {viewRegProofModal.transaction_id || 'N/A'}</p>
+              </div>
+              <button onClick={() => setViewRegProofModal(null)} className="text-slate-400 hover:text-slate-700">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="max-h-[60vh] overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 flex items-center justify-center">
+              <img
+                src={viewRegProofModal.payment_proof_url}
+                alt="Payment Receipt"
+                className="w-full h-full max-h-[55vh] object-contain"
+              />
+            </div>
+
+            <div className="flex items-center justify-between pt-2">
+              <a
+                href={viewRegProofModal.payment_proof_url}
+                target="_blank"
+                rel="noreferrer"
+                className="text-xs font-bold text-sky-700 hover:underline flex items-center gap-1"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                <span>Open Full Size</span>
+              </a>
+
+              <button
+                type="button"
+                onClick={() => setViewRegProofModal(null)}
+                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
