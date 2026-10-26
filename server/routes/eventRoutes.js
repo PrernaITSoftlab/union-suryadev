@@ -7,8 +7,9 @@ const router = express.Router();
 // 0. Get All Public & Active Events (Base Root Route)
 router.get('/', optionalAuth, async (req, res) => {
   try {
+    const isPublicOnly = req.query.isPublicOnly === 'true';
     const events = await EventService.getAllEvents({
-      isPublicOnly: !req.user,
+      isPublicOnly,
       userId: req.user?.id
     });
     res.json({ success: true, events });
@@ -22,11 +23,12 @@ router.get('/', optionalAuth, async (req, res) => {
 router.get('/list', optionalAuth, async (req, res) => {
   try {
     const { status, search, type } = req.query;
+    const isPublicOnly = req.query.isPublicOnly === 'true';
     const events = await EventService.getAllEvents({
       status,
       search,
       type,
-      isPublicOnly: !req.user,
+      isPublicOnly,
       userId: req.user?.id
     });
 

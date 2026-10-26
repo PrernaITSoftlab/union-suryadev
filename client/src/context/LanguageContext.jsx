@@ -102,11 +102,18 @@ export const translations = {
     hi: "एमपीडब्ल्यूजेड संघ के नेतृत्व द्वारा डिस्कॉम प्रबंधन के साथ जुड़ाव, कर्मचारी सम्मान उत्सव और विद्युत इंजीनियरों व लाइनमैनों के अधिकारों की वकालत के पल।"
   },
   "Upcoming Union Events & Conventions": { en: "Upcoming Union Events & Conventions", hi: "आगामी यूनियन कार्यक्रम और सम्मेलन" },
+  "Upcoming Union Programs & Events": { en: "Upcoming Union Programs & Events", hi: "आगामी यूनियन कार्यक्रम एवं अधिवेशन" },
+  "View Details": { en: "View Details", hi: "विवरण देखें" },
+  "Join Event": { en: "Join Event", hi: "कार्यक्रम में भाग लें" },
+  "Join Event Now": { en: "Join Event Now", hi: "कार्यक्रम में अभी शामिल हों" },
+  "Close": { en: "Close", hi: "बंद करें" },
   "Conventions, safety workshops, and zonal delegate meetings": {
     en: "Conventions, safety workshops, and zonal delegate meetings",
     hi: "सम्मेलन, सुरक्षा कार्यशालाएं और ज़ोनल प्रतिनिधि बैठकें"
   },
   "Browse All Events": { en: "Browse All Events", hi: "सभी कार्यक्रम देखें" },
+  "Browse All Programs": { en: "Browse All Programs", hi: "सभी कार्यक्रम देखें" },
+  "No Upcoming Programs Scheduled Right Now": { en: "No Upcoming Programs Scheduled Right Now", hi: "वर्तमान में कोई आगामी कार्यक्रम निर्धारित नहीं है" },
   "Discom HQ Notice": { en: "Discom HQ Notice", hi: "डिस्कॉम मुख्यालय सूचना" },
   "Active Union Notice": { en: "Active Union Notice", hi: "सक्रिय यूनियन सूचना" },
   "INDEFINITE STRIKE AGITATION": { en: "INDEFINITE STRIKE AGITATION", hi: "अनिश्चितकालीन हड़ताल आंदोलन" },

@@ -350,9 +350,17 @@ export function formatDbDate(val) {
 export function normalizeEventRow(row) {
   if (!row) return null;
   const fee = Number(row.event_fee || row.fee_amount || 0);
+  const startDate = formatDbDate(row.start_date || row.event_date || row.date) || '';
+  const endDate = formatDbDate(row.end_date || row.start_date || row.event_date) || startDate;
+  const startTime = row.start_time || row.event_time || row.time || '10:00 AM';
+  const endTime = row.end_time || row.event_time_end || '05:00 PM';
+  const venue = (row.venue || row.location || 'Union Central Office').trim();
+  const bannerUrl = row.banner_url || row.image || row.image_url || 'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=1200&q=80';
+
   return {
     ...row,
     id: Number(row.id),
+    title: row.title || 'Union Program',
     capacity: Number(row.capacity || 0),
     registered_count: Number(row.registered_count || 0),
     event_fee: fee,
@@ -361,10 +369,18 @@ export function normalizeEventRow(row) {
     likes_count: Number(row.likes_count || 0),
     comments_count: Number(row.comments_count || 0),
     is_liked: Boolean(row.is_liked),
-    start_date: formatDbDate(row.start_date) || '',
-    end_date: formatDbDate(row.end_date) || formatDbDate(row.start_date) || '',
-    registration_start_date: formatDbDate(row.registration_start_date) || formatDbDate(row.start_date) || '',
-    registration_end_date: formatDbDate(row.registration_end_date) || formatDbDate(row.start_date) || '',
+    start_date: startDate,
+    event_date: startDate,
+    end_date: endDate,
+    start_time: startTime,
+    event_time: startTime,
+    end_time: endTime,
+    venue: venue,
+    location: venue,
+    banner_url: bannerUrl,
+    image_url: bannerUrl,
+    registration_start_date: formatDbDate(row.registration_start_date) || startDate,
+    registration_end_date: formatDbDate(row.registration_end_date) || startDate,
     visibility: row.visibility || 'PUBLIC',
     requires_approval: row.requires_approval !== undefined ? Boolean(row.requires_approval) : true,
     status: row.status || 'REGISTRATION_OPEN'

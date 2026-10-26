@@ -59,7 +59,7 @@ export const EventService = {
         const params = [];
 
         if (isPublicOnly) {
-          queryText += ' AND (e.visibility IS NULL OR e.visibility = \'PUBLIC\')';
+          queryText += ' AND (e.visibility IS NULL OR TRIM(e.visibility) = \'\' OR UPPER(e.visibility) IN (\'PUBLIC\', \'ALL\', \'GENERAL\'))';
         }
 
         if (status) {
@@ -103,7 +103,7 @@ export const EventService = {
     }
 
     if (isPublicOnly) {
-      eventsList = eventsList.filter(e => !e.visibility || e.visibility === 'PUBLIC');
+      eventsList = eventsList.filter(e => !e.visibility || e.visibility.trim() === '' || ['PUBLIC', 'ALL', 'GENERAL'].includes(e.visibility.toUpperCase()));
     }
     if (status) {
       eventsList = eventsList.filter(e => e.status && e.status.toUpperCase() === status.toUpperCase());
@@ -208,17 +208,19 @@ export const EventService = {
     } = data;
 
     const defaultQr = inMemoryStore.systemSettings?.default_event_qr_url || "/images/payment-qr.png";
-    const finalStartDate = formatDbDate(start_date) || new Date().toISOString().split('T')[0];
-    const finalEndDate = formatDbDate(end_date) || finalStartDate;
-    const finalRegStart = formatDbDate(registration_start_date) || finalStartDate;
-    const finalRegEnd = formatDbDate(registration_end_date) || finalStartDate;
-    const finalFee = Number(event_fee) || 0;
+    const finalStartDate = formatDbDate(start_date || data.event_date || data.date) || new Date().toISOString().split('T')[0];
+    const finalEndDate = formatDbDate(end_date || data.event_date || start_date || data.date) || finalStartDate;
+    const finalStartTime = start_time || data.event_time || data.time || '10:00 AM';
+    const finalEndTime = end_time || data.event_time_end || data.end_time || '05:00 PM';
+    const finalFee = Number(event_fee !== undefined ? event_fee : (data.fee || 0)) || 0;
     const finalIsPaid = Boolean(is_paid) || finalFee > 0;
     const finalRequiresApproval = requires_approval !== undefined ? Boolean(requires_approval) : true;
+    const finalVenue = (venue || data.location || 'Union Central Office').trim();
+    const finalBanner = banner_url || data.image || data.image_url || 'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=1200&q=80';
 
     // Deduplication check: if an identical event was created in the last 10 seconds, return it
     const trimmedTitle = (title || '').trim();
-    const trimmedVenue = (venue || '').trim();
+    const trimmedVenue = finalVenue;
     const dedupKey = `${trimmedTitle.toLowerCase()}__${finalStartDate}__${trimmedVenue.toLowerCase()}`;
 
     // 1. If an identical event creation is already in-flight, await and return its result
@@ -283,14 +285,14 @@ export const EventService = {
           const values = [
             trimmedTitle,
             description || '',
-            banner_url || 'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=1200&q=80',
+            finalBanner,
             event_type || 'GENERAL',
             finalStartDate,
             finalEndDate,
-            start_time || '10:00 AM',
-            end_time || '05:00 PM',
-            trimmedVenue,
-            address || venue,
+            finalStartTime,
+            finalEndTime,
+            finalVenue,
+            address || finalVenue,
             Number(capacity) || 500,
             0,
             finalRegStart,
@@ -321,14 +323,18 @@ export const EventService = {
           id: (inMemoryStore.events.reduce((max, e) => Math.max(max, e.id || 0), 0)) + 1,
           title: trimmedTitle,
           description: description || '',
-          banner_url: banner_url || 'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=1200&q=80',
+          banner_url: finalBanner,
+          image_url: finalBanner,
           event_type: event_type || 'GENERAL',
           start_date: finalStartDate,
+          event_date: finalStartDate,
           end_date: finalEndDate,
-          start_time: start_time || '10:00 AM',
-          end_time: end_time || '05:00 PM',
-          venue: trimmedVenue,
-          address: address || venue,
+          start_time: finalStartTime,
+          event_time: finalStartTime,
+          end_time: finalEndTime,
+          venue: finalVenue,
+          location: finalVenue,
+          address: address || finalVenue,
           capacity: Number(capacity) || 500,
           registered_count: 0,
           registration_start_date: finalRegStart,

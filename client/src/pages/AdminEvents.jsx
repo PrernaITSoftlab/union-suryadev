@@ -56,6 +56,8 @@ const AdminEvents = () => {
     try {
       const payload = {
         ...newEvent,
+        start_date: newEvent.event_date,
+        start_time: newEvent.event_time,
         event_fee: Number(newEvent.event_fee) || 0,
         is_paid: Number(newEvent.event_fee) > 0
       };

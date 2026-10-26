@@ -65,11 +65,12 @@ const EventCard = ({ event, onOpenDetail }) => {
     }
   };
 
-  const formattedDate = new Date(event.event_date).toLocaleDateString('en-US', {
+  const rawDate = event.start_date || event.event_date;
+  const formattedDate = rawDate ? new Date(rawDate).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
     year: 'numeric'
-  });
+  }) : '';
 
   return (
     <div

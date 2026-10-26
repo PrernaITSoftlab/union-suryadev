@@ -1,15 +1,28 @@
 [
   {
-    "id": 4,
-    "event_id": 17,
+    "id": 7,
+    "event_id": 18,
     "user_id": 1,
-    "pass_code": "PASS-MAK-2674",
+    "pass_code": "PASS-UJJ-6884",
     "amount": 0,
     "payment_status": "CONFIRMED",
     "registration_status": "CONFIRMED",
     "transaction_id": "",
     "payment_proof_url": "",
-    "registered_at": "2026-10-22T11:56:54.416Z",
+    "registered_at": "2026-10-25T07:58:07.435Z",
+    "rejection_reason": null
+  },
+  {
+    "id": 6,
+    "event_id": 18,
+    "user_id": 3,
+    "pass_code": "PASS-UJJ-8045",
+    "amount": 0,
+    "payment_status": "CONFIRMED",
+    "registration_status": "CONFIRMED",
+    "transaction_id": "",
+    "payment_proof_url": "",
+    "registered_at": "2026-10-23T08:11:14.199Z",
     "rejection_reason": null
   }
 ]
