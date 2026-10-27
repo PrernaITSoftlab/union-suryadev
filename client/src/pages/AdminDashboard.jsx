@@ -179,7 +179,7 @@ export default function AdminDashboard() {
         const res = await api.get(`/members/admin/list${statusFilter !== 'all' ? `?status=${statusFilter}` : ''}`);
         if (res.data.success) setMembers(res.data.members);
       } else if (activeModule === 'events') {
-        const res = await api.get('/events/list');
+        const res = await api.get(`/events/list?_t=${Date.now()}`);
         if (res.data.success) setEvents(res.data.events);
       } else if (activeModule === 'registrations') {
         const res = await api.get('/events/admin/registrations/list');
@@ -477,18 +477,27 @@ export default function AdminDashboard() {
   };
 
   const handleDeleteEvent = async (eventId) => {
-    if (!window.confirm('Are you sure you want to delete this event?')) return;
+    if (!window.confirm('Are you sure you want to permanently delete this event? This action cannot be undone and will permanently remove it from the database.')) return;
     try {
-      const res = await api.delete(`/events/admin/${eventId}`);
-      if (res.data.success) {
-        setEvents(prev => prev.filter(e => e.id !== eventId));
-        setEventRegs(prev => prev.filter(r => r.event_id !== eventId));
-        setFeedback({ success: res.data.message || 'Event permanently deleted.' });
+      let res;
+      try {
+        res = await api.delete(`/events/${eventId}`);
+      } catch (err1) {
+        try {
+          res = await api.delete(`/events/admin/${eventId}`);
+        } catch (err2) {
+          res = await api.delete(`/admin/events/${eventId}`);
+        }
+      }
+      if (res?.data?.success) {
+        setEvents(prev => prev.filter(e => Number(e.id) !== Number(eventId)));
+        setEventRegs(prev => prev.filter(r => Number(r.event_id) !== Number(eventId)));
+        setFeedback({ success: res.data.message || 'Event permanently deleted from database.' });
         setTimeout(() => setFeedback(null), 4000);
-        fetchModuleData();
+        await fetchModuleData();
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to delete event.');
+      alert(err.response?.data?.message || 'Failed to delete event from database.');
     }
   };
 

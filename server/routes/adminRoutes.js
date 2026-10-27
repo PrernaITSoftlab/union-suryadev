@@ -73,6 +73,9 @@ router.put('/members/:id', authenticateToken, requireAdmin, (req, res) => {
 
 // 5. Admin Get Events (/api/admin/events)
 router.get('/events', authenticateToken, requireAdmin, async (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
   try {
     const events = await EventService.getAllEvents();
     res.json({ success: true, events });
@@ -94,8 +97,8 @@ router.post('/events', authenticateToken, requireAdmin, async (req, res) => {
 // 6. Admin Delete Event (/api/admin/events/:id)
 router.delete('/events/:id', authenticateToken, requireAdmin, async (req, res) => {
   try {
-    await EventService.deleteEvent(req.params.id);
-    res.json({ success: true, message: 'Event deleted successfully' });
+    const deleted = await EventService.deleteEvent(req.params.id);
+    res.json({ success: true, message: 'Event permanently deleted from database.', deleted });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message || 'Failed to delete event' });
   }

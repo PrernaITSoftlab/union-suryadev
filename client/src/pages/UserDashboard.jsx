@@ -109,8 +109,8 @@ export default function UserDashboard() {
       }
       if (activeTab === 'overview' || activeTab === 'profile' || activeTab === 'events') {
         const [evtRes, regRes] = await Promise.all([
-          api.get('/events/list'),
-          api.get('/events/my-registrations')
+          api.get(`/events/list?_t=${Date.now()}`),
+          api.get(`/events/my-registrations?_t=${Date.now()}`)
         ]);
         if (evtRes.data?.success) setEvents(evtRes.data.events);
         if (regRes.data?.success) setMyRegistrations(regRes.data.registrations);

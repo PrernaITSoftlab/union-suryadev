@@ -31,9 +31,11 @@ export default function Events() {
 
   const fetchEvents = async () => {
     try {
-      const res = await api.get(`/events/list${search ? `?search=${encodeURIComponent(search)}` : ''}`);
+      const sep = search ? '&' : '?';
+      const searchParam = search ? `?search=${encodeURIComponent(search)}` : '';
+      const res = await api.get(`/events/list${searchParam}${sep}_t=${Date.now()}`);
       if (res.data.success) {
-        setEvents(res.data.events);
+        setEvents(res.data.events || []);
       }
     } catch (err) {
       console.error('Failed to fetch events:', err);

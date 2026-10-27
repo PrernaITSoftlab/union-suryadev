@@ -86,7 +86,12 @@ export async function ensureEventsSchemaAndSeed() {
     if (diskRegs && diskRegs.length > 0) {
       inMemoryStore.eventRegistrations = diskRegs;
     }
-    return;
+    const backup = loadEventsFromBackup();
+    if (Array.isArray(backup)) {
+      inMemoryStore.events = [...backup];
+      return backup;
+    }
+    return inMemoryStore.events || [];
   }
 
   try {

@@ -217,6 +217,8 @@ export const EventService = {
     const finalRequiresApproval = requires_approval !== undefined ? Boolean(requires_approval) : true;
     const finalVenue = (venue || data.location || 'Union Central Office').trim();
     const finalBanner = banner_url || data.image || data.image_url || 'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=1200&q=80';
+    const finalRegStart = formatDbDate(registration_start_date || data.registration_start_date || start_date || data.event_date || data.date) || finalStartDate;
+    const finalRegEnd = formatDbDate(registration_end_date || data.registration_end_date || end_date || data.event_date || start_date || data.date) || finalEndDate;
 
     // Deduplication check: if an identical event was created in the last 10 seconds, return it
     const trimmedTitle = (title || '').trim();
@@ -487,21 +489,32 @@ export const EventService = {
   },
 
   /**
-   * Delete an event by ID permanently
+   * Delete an event by ID permanently from database and cache
    */
   async deleteEvent(id) {
     await this.awaitInit();
     const numId = Number(id);
+    if (!numId || isNaN(numId)) {
+      throw new Error(`Invalid event ID: ${id}`);
+    }
 
     let deletedEvent = null;
 
     if (pool) {
       try {
-        // Cascade delete child registrations, likes, comments to prevent any constraint failure
-        await pool.query('DELETE FROM event_registrations WHERE event_id = $1', [numId]);
+        // Disassociate any payments referencing registrations for this event to avoid FK constraint errors
+        await pool.query(
+          `UPDATE payments SET event_registration_id = NULL 
+           WHERE event_registration_id IN (SELECT id FROM event_registrations WHERE event_id = $1)`,
+          [numId]
+        );
+
+        // Cascade delete child likes, comments, and registrations
         await pool.query('DELETE FROM event_likes WHERE event_id = $1', [numId]);
         await pool.query('DELETE FROM event_comments WHERE event_id = $1', [numId]);
+        await pool.query('DELETE FROM event_registrations WHERE event_id = $1', [numId]);
 
+        // Permanently delete event from PostgreSQL
         const res = await pool.query('DELETE FROM events WHERE id = $1 RETURNING *', [numId]);
         if (res.rows.length > 0) {
           deletedEvent = normalizeEventRow(res.rows[0]);
@@ -512,20 +525,27 @@ export const EventService = {
       }
     }
 
-    // Remove from inMemoryStore events
+    // Always clean up inMemoryStore events
     const memIndex = inMemoryStore.events.findIndex(e => Number(e.id) === numId);
     if (memIndex !== -1) {
       const spliced = inMemoryStore.events.splice(memIndex, 1)[0];
       if (!deletedEvent) deletedEvent = spliced;
     }
-    inMemoryStore.events = inMemoryStore.events.filter(e => Number(e.id) !== numId);
+    inMemoryStore.events = (inMemoryStore.events || []).filter(e => Number(e.id) !== numId);
 
-    // Clean up in-memory registrations, likes, comments
+    // Clean up in-memory registrations, likes, comments, and payments
+    const targetRegIds = (inMemoryStore.eventRegistrations || [])
+      .filter(r => Number(r.event_id) === numId)
+      .map(r => Number(r.id));
+
     inMemoryStore.eventRegistrations = (inMemoryStore.eventRegistrations || []).filter(r => Number(r.event_id) !== numId);
     inMemoryStore.eventLikes = (inMemoryStore.eventLikes || []).filter(l => Number(l.event_id) !== numId);
     inMemoryStore.eventComments = (inMemoryStore.eventComments || []).filter(c => Number(c.event_id) !== numId);
+    inMemoryStore.payments = (inMemoryStore.payments || []).map(p =>
+      targetRegIds.includes(Number(p.event_registration_id)) ? { ...p, event_registration_id: null } : p
+    );
 
-    // If pool is connected, sync inMemoryStore.events with the current database state
+    // If pool is connected, re-sync inMemoryStore.events with the current database state
     if (pool) {
       try {
         const remaining = await pool.query(`
@@ -537,11 +557,14 @@ export const EventService = {
           ORDER BY e.start_date ASC, e.id ASC
         `);
         inMemoryStore.events = remaining.rows.map(normalizeEventRow);
-      } catch (_) {}
+      } catch (syncErr) {
+        console.warn('⚠️ Notice syncing remaining events after deletion:', syncErr.message);
+      }
     }
 
-    // Persist clean state to disk backup
+    // Persist clean state to disk backup immediately
     saveEventsToBackup(inMemoryStore.events);
+    saveRegistrationsToBackup(inMemoryStore.eventRegistrations);
     saveInteractionsToBackup({
       likes: inMemoryStore.eventLikes,
       comments: inMemoryStore.eventComments

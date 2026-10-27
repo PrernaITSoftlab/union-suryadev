@@ -41,8 +41,8 @@ const EventPayment = () => {
   const fetchEventsAndPayments = async () => {
     try {
       const [eventsRes, paymentsRes] = await Promise.all([
-        api.get('/events'),
-        api.get('/payments/event-payment/list')
+        api.get(`/events?_t=${Date.now()}`),
+        api.get(`/payments/event-payment/list?_t=${Date.now()}`)
       ]);
 
       if (eventsRes.data?.success) {

@@ -34,12 +34,12 @@ const AdminEvents = () => {
   const fetchEvents = async () => {
     setLoading(true);
     try {
-      const res = await api.get('/events');
+      const res = await api.get(`/events?_t=${Date.now()}`);
       if (res.data.success) {
         setEvents(res.data.events || []);
       }
     } catch (err) {
-      console.error(err);
+      console.error('Failed to fetch events:', err);
     } finally {
       setLoading(false);
     }
@@ -75,14 +75,24 @@ const AdminEvents = () => {
   };
 
   const handleDeleteEvent = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this event?')) return;
+    if (!window.confirm('Are you sure you want to permanently delete this event? This action cannot be undone and will permanently remove it from the database.')) return;
     try {
-      const res = await api.delete(`/admin/events/${id}`);
-      if (res.data.success) {
-        setEvents(prev => prev.filter(e => e.id !== id));
+      let res;
+      try {
+        res = await api.delete(`/events/${id}`);
+      } catch (err1) {
+        try {
+          res = await api.delete(`/admin/events/${id}`);
+        } catch (err2) {
+          res = await api.delete(`/events/admin/${id}`);
+        }
+      }
+      if (res?.data?.success) {
+        setEvents(prev => prev.filter(e => Number(e.id) !== Number(id)));
+        await fetchEvents();
       }
     } catch (err) {
-      alert('Delete failed');
+      alert(err.response?.data?.message || 'Failed to delete event from database.');
     }
   };
 

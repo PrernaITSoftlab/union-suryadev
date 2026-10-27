@@ -4,8 +4,16 @@ import { authenticateToken, requireAdmin, optionalAuth } from '../middleware/aut
 
 const router = express.Router();
 
+const setNoCacheHeaders = (res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('Surrogate-Control', 'no-store');
+};
+
 // 0. Get All Public & Active Events (Base Root Route)
 router.get('/', optionalAuth, async (req, res) => {
+  setNoCacheHeaders(res);
   try {
     const isPublicOnly = req.query.isPublicOnly === 'true';
     const events = await EventService.getAllEvents({
@@ -21,6 +29,7 @@ router.get('/', optionalAuth, async (req, res) => {
 
 // 1. Get All Events with filters (List Route)
 router.get('/list', optionalAuth, async (req, res) => {
+  setNoCacheHeaders(res);
   try {
     const { status, search, type } = req.query;
     const isPublicOnly = req.query.isPublicOnly === 'true';
@@ -58,6 +67,7 @@ router.get('/my-registrations', authenticateToken, async (req, res) => {
 
 // 2. Get Single Event Details
 router.get('/:id', optionalAuth, async (req, res) => {
+  setNoCacheHeaders(res);
   try {
     const event = await EventService.getEventById(req.params.id, req.user?.id);
     if (!event) {
@@ -210,8 +220,7 @@ router.put('/admin/registrations/:id/status', authenticateToken, requireAdmin, a
   }
 });
 
-// 7. Delete Event (Admin)
-router.delete('/admin/:id', authenticateToken, requireAdmin, async (req, res) => {
+const handleDeleteEventRoute = async (req, res) => {
   try {
     const deleted = await EventService.deleteEvent(req.params.id);
     if (!deleted) {
@@ -227,7 +236,11 @@ router.delete('/admin/:id', authenticateToken, requireAdmin, async (req, res) =>
     console.error('Error deleting event:', err);
     res.status(500).json({ success: false, message: err.message || 'Failed to delete event.' });
   }
-});
+};
+
+// 7. Delete Event (Admin) - both /events/admin/:id and /events/:id supported
+router.delete('/admin/:id', authenticateToken, requireAdmin, handleDeleteEventRoute);
+router.delete('/:id', authenticateToken, requireAdmin, handleDeleteEventRoute);
 
 // 8. Toggle Like on Event (Authenticated User)
 router.post('/:id/like', authenticateToken, async (req, res) => {

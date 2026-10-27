@@ -58,11 +58,11 @@ export default function Home() {
     setEventsLoading(true);
     setEventsError(null);
     try {
-      const res = await api.get('/events/list');
+      const res = await api.get(`/events/list?_t=${Date.now()}`);
       if (res.data?.success && Array.isArray(res.data.events)) {
         setEvents(res.data.events);
       } else {
-        const fallbackRes = await api.get('/events');
+        const fallbackRes = await api.get(`/events?_t=${Date.now()}`);
         if (fallbackRes.data?.success && Array.isArray(fallbackRes.data.events)) {
           setEvents(fallbackRes.data.events);
         } else {
@@ -72,7 +72,7 @@ export default function Home() {
     } catch (err) {
       console.warn('Error fetching upcoming events:', err);
       try {
-        const fallbackRes = await api.get('/events');
+        const fallbackRes = await api.get(`/events?_t=${Date.now()}`);
         if (fallbackRes.data?.success && Array.isArray(fallbackRes.data.events)) {
           setEvents(fallbackRes.data.events);
           setEventsError(null);
