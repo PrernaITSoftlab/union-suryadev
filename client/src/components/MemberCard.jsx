@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
-import { urlToBase64, generateMemberQrCode, getBarcodePattern } from '../utils/memberCardHelpers';
+import { urlToBase64, generateMemberQrCode, getBarcodePattern, formatMemberId } from '../utils/memberCardHelpers';
 
 /**
  * High-definition SVG Barcode component
@@ -124,7 +124,7 @@ export default function MemberCard({
   const profile = effectiveUser?.profile || {};
 
   // Core Member Information
-  const memberId = effectiveUser?.member_id || 'MPAVAKS-0002';
+  const memberId = formatMemberId(effectiveUser?.member_id, effectiveUser?.id || 2);
   const fullName = profile.full_name || 'Shri Vikramaditya Patel';
   const unionDesignation = profile.union_designation || 'Zonal Secretary (Ujjain Zone)';
   const designation = profile.designation || profile.occupation || 'Line Superintendent Grade-I';
@@ -414,7 +414,7 @@ export default function MemberCard({
           onClick={() => setIsFlipped(!isFlipped)}
         >
           <div
-            className="w-full transition-all duration-700 relative"
+            className="w-full transition-all duration-700 relative min-h-[255px] sm:min-h-0 sm:aspect-[85.6/54]"
             style={{
               transformStyle: 'preserve-3d',
               transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)'
@@ -423,7 +423,7 @@ export default function MemberCard({
 
             {/* ================= FRONT SIDE (Interactive Display) ================= */}
             <div
-              className={`w-full aspect-[85.6/54] rounded-2xl p-4 sm:p-5 flex flex-col justify-between relative overflow-hidden select-none shadow-xl transition-all ${
+              className={`w-full min-h-[255px] sm:min-h-0 sm:aspect-[85.6/54] rounded-2xl p-3 sm:p-4.5 flex flex-col justify-between relative overflow-hidden select-none shadow-xl transition-all ${
                 cardTheme === 'gold'
                   ? 'bg-gradient-to-br from-[#070B19] via-[#0F172A] to-[#1E293B] border-2 border-amber-500/70 text-white shadow-amber-500/10'
                   : 'bg-gradient-to-br from-[#EBF5FB] via-[#E1EFFF] to-[#D5E8FD] border-2 border-sky-400 text-slate-900 shadow-sky-500/10'
@@ -443,38 +443,38 @@ export default function MemberCard({
               <div className="absolute -inset-full bg-gradient-to-r from-transparent via-white/10 to-transparent rotate-45 pointer-events-none group-hover:translate-x-full transition-transform duration-1000" />
 
               {/* CARD HEADER */}
-              <div className={`relative z-10 flex items-start justify-between gap-3 border-b-2 pb-2 ${cardTheme === 'gold' ? 'border-amber-500/30' : 'border-sky-400/80'}`}>
-                <div className="flex items-center gap-2.5">
+              <div className={`relative z-10 flex items-start justify-between gap-2.5 sm:gap-3 border-b-2 pb-1.5 sm:pb-2 ${cardTheme === 'gold' ? 'border-amber-500/30' : 'border-sky-400/80'}`}>
+                <div className="flex items-center gap-2 sm:gap-2.5">
                   <img
                     src={logoBase64 || '/images/union-logo.png'}
                     alt="Union Logo"
-                    className={`w-9 h-9 sm:w-10 sm:h-10 object-contain rounded-full p-0.5 border-2 shrink-0 ${cardTheme === 'gold' ? 'bg-white/10 border-amber-400/60' : 'bg-white border-sky-600 shadow-xs'}`}
+                    className={`w-8 h-8 sm:w-10 sm:h-10 object-contain rounded-full p-0.5 border-2 shrink-0 ${cardTheme === 'gold' ? 'bg-white/10 border-amber-400/60' : 'bg-white border-sky-600 shadow-xs'}`}
                   />
                   <div>
-                    <h4 className={`text-[10px] sm:text-[11px] leading-tight uppercase tracking-tight font-black ${cardTheme === 'gold' ? 'text-amber-400' : 'text-[#0B2545]'}`}>
+                    <h4 className={`text-[9.5px] sm:text-[11px] leading-tight uppercase tracking-tight font-black ${cardTheme === 'gold' ? 'text-amber-400' : 'text-[#0B2545]'}`}>
                       म.प्र.वि.म. आरक्षित वर्ग अधिकारी / कर्मचारी संघ
                     </h4>
-                    <h5 className={`text-[11px] sm:text-[12px] leading-tight tracking-wider uppercase font-black ${cardTheme === 'gold' ? 'text-white' : 'text-[#1E3A8A]'}`}>
+                    <h5 className={`text-[10.5px] sm:text-[12px] leading-tight tracking-wider uppercase font-black ${cardTheme === 'gold' ? 'text-white' : 'text-[#1E3A8A]'}`}>
                       MP Electricity Department
                     </h5>
-                    <p className={`text-[8px] sm:text-[8.5px] font-mono tracking-wider font-bold ${cardTheme === 'gold' ? 'text-slate-300' : 'text-slate-700'}`}>
+                    <p className={`text-[7.5px] sm:text-[8.5px] font-mono tracking-wider font-bold ${cardTheme === 'gold' ? 'text-slate-300' : 'text-slate-700'}`}>
                       M.P. West Zone Electricity Distribution Co. • Regd. No. 4404
                     </p>
                   </div>
                 </div>
 
                 <div className="text-right shrink-0">
-                  <span className={`px-2 py-0.5 rounded-md text-[9px] sm:text-[10px] font-mono font-black tracking-widest uppercase block ${cardTheme === 'gold' ? 'bg-amber-500/20 border border-amber-500/40 text-amber-300' : 'bg-[#1E3A8A] text-white shadow-xs'}`}>
+                  <span className={`px-2 py-0.5 rounded-md text-[8.5px] sm:text-[10px] font-mono font-black tracking-widest uppercase block ${cardTheme === 'gold' ? 'bg-amber-500/20 border border-amber-500/40 text-amber-300' : 'bg-[#1E3A8A] text-white shadow-xs'}`}>
                     DIGITAL ID
                   </span>
-                  <span className={`text-[7.5px] font-mono block mt-0.5 font-bold ${cardTheme === 'gold' ? 'text-slate-400' : 'text-slate-600'}`}>
+                  <span className={`text-[7px] sm:text-[7.5px] font-mono block mt-0.5 font-bold ${cardTheme === 'gold' ? 'text-slate-400' : 'text-slate-600'}`}>
                     CR80 STANDARD
                   </span>
                 </div>
               </div>
 
               {/* CARD MAIN BODY */}
-              <div className="relative z-10 flex items-start gap-3.5 sm:gap-4 my-auto">
+              <div className="relative z-10 flex items-start gap-3 sm:gap-4 my-auto">
                 {/* Photo on left corner */}
                 <div className="shrink-0">
                   <div className="relative">
@@ -482,44 +482,52 @@ export default function MemberCard({
                       src={avatarBase64 || avatarUrl}
                       alt={fullName}
                       crossOrigin="anonymous"
-                      className={`w-20 h-24 sm:w-22 sm:h-26 rounded-xl object-cover border-2 shadow-md shrink-0 ${cardTheme === 'gold' ? 'border-amber-400 bg-slate-800' : 'border-blue-600 bg-white'}`}
-                      style={{ width: '88px', height: '104px', objectFit: 'cover' }}
+                      className={`w-[74px] h-[92px] sm:w-[84px] sm:h-[102px] rounded-xl object-cover border-2 shadow-md shrink-0 ${cardTheme === 'gold' ? 'border-amber-400 bg-slate-800' : 'border-blue-600 bg-white'}`}
+                      style={{ minWidth: '74px', objectFit: 'cover' }}
                     />
-                    <span className="absolute bottom-1 right-1 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full" title="Active Member" />
+                    <span className="absolute bottom-1 right-1 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full" title="Active Member" />
                   </div>
                 </div>
 
                 {/* Name, Post, office address, District, Mobile No. on right hand side */}
                 <div className="flex-1 min-w-0 space-y-1 pl-0.5">
                   <div>
-                    <h2 className={`text-base sm:text-lg font-black leading-tight truncate tracking-tight ${cardTheme === 'gold' ? 'text-white' : 'text-[#0A192F]'}`}>
+                    <h2 className={`text-[13.5px] sm:text-base font-black leading-tight tracking-tight ${cardTheme === 'gold' ? 'text-white' : 'text-[#0A192F]'}`}>
                       {fullName}
                     </h2>
-                    <p className={`text-[11px] sm:text-xs font-black truncate ${cardTheme === 'gold' ? 'text-amber-400' : 'text-blue-900'}`}>
+                    <p className={`text-[10px] sm:text-[11px] font-black leading-tight ${cardTheme === 'gold' ? 'text-amber-400' : 'text-blue-900'}`}>
                       {unionDesignation}
                     </p>
                   </div>
 
-                  <div className={`space-y-0.5 text-[10.5px] sm:text-[11px] ${cardTheme === 'gold' ? 'text-slate-200' : 'text-black'}`}>
-                    <div className="flex items-center gap-1.5 truncate">
-                      <Zap className={`w-3.5 h-3.5 shrink-0 stroke-[2.5] ${cardTheme === 'gold' ? 'text-amber-400' : 'text-blue-700'}`} />
-                      <span className={`font-black ${cardTheme === 'gold' ? 'text-amber-300' : 'text-blue-950'}`}>Post:</span>
-                      <span className="truncate font-extrabold">{post}</span>
+                  <div className={`space-y-0.5 text-[10px] sm:text-[11px] ${cardTheme === 'gold' ? 'text-slate-200' : 'text-black'}`}>
+                    <div className="flex items-start gap-1 sm:gap-1.5 leading-snug">
+                      <Zap className={`w-3.5 h-3.5 shrink-0 mt-0.5 stroke-[2.5] ${cardTheme === 'gold' ? 'text-amber-400' : 'text-blue-700'}`} />
+                      <div className="min-w-0 flex-1">
+                        <span className={`font-black mr-1 ${cardTheme === 'gold' ? 'text-amber-300' : 'text-blue-950'}`}>Post:</span>
+                        <span className="font-extrabold break-words">{post}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1.5 truncate">
-                      <Building className={`w-3.5 h-3.5 shrink-0 stroke-[2.5] ${cardTheme === 'gold' ? 'text-sky-400' : 'text-blue-700'}`} />
-                      <span className={`font-black ${cardTheme === 'gold' ? 'text-amber-300' : 'text-blue-950'}`}>Office:</span>
-                      <span className="truncate font-extrabold">{officeAddress}</span>
+                    <div className="flex items-start gap-1 sm:gap-1.5 leading-snug">
+                      <Building className={`w-3.5 h-3.5 shrink-0 mt-0.5 stroke-[2.5] ${cardTheme === 'gold' ? 'text-sky-400' : 'text-blue-700'}`} />
+                      <div className="min-w-0 flex-1">
+                        <span className={`font-black mr-1 ${cardTheme === 'gold' ? 'text-amber-300' : 'text-blue-950'}`}>Office:</span>
+                        <span className="font-extrabold break-words">{officeAddress}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1.5 truncate">
+                    <div className="flex items-center gap-1 sm:gap-1.5 leading-snug">
                       <MapPin className="w-3.5 h-3.5 text-emerald-700 shrink-0 stroke-[2.5]" />
-                      <span className={`font-black ${cardTheme === 'gold' ? 'text-amber-300' : 'text-blue-950'}`}>District:</span>
-                      <span className="truncate font-black">{district}</span>
+                      <div className="min-w-0 flex-1 flex items-center gap-1">
+                        <span className={`font-black ${cardTheme === 'gold' ? 'text-amber-300' : 'text-blue-950'}`}>District:</span>
+                        <span className="font-black truncate">{district}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1.5 truncate">
+                    <div className="flex items-center gap-1 sm:gap-1.5 leading-snug">
                       <Phone className={`w-3.5 h-3.5 shrink-0 stroke-[2.5] ${cardTheme === 'gold' ? 'text-slate-300' : 'text-blue-700'}`} />
-                      <span className={`font-black ${cardTheme === 'gold' ? 'text-amber-300' : 'text-blue-950'}`}>Mobile:</span>
-                      <span className="truncate font-mono font-black">{phone}</span>
+                      <div className="min-w-0 flex-1 flex items-center gap-1">
+                        <span className={`font-black ${cardTheme === 'gold' ? 'text-amber-300' : 'text-blue-950'}`}>Mobile:</span>
+                        <span className="font-mono font-black">{phone}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -531,30 +539,30 @@ export default function MemberCard({
                 <div className="space-y-0.5">
                   <div
                     onClick={handleCopyId}
-                    className={`px-2.5 py-1 rounded-md text-[10px] sm:text-[11px] font-mono font-black tracking-wider flex items-center gap-1.5 transition-colors cursor-copy shadow-sm ${
+                    className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-[9.5px] sm:text-[11px] font-mono font-black tracking-wider flex items-center gap-1.5 transition-colors cursor-copy shadow-sm ${
                       cardTheme === 'gold'
                         ? 'bg-slate-900 border border-amber-400/50 text-amber-300 hover:bg-slate-800'
                         : 'bg-[#0F172A] text-white hover:bg-slate-800'
                     }`}
                     title="Click to copy Member ID"
                   >
-                    <span className="text-amber-400 font-bold text-[9.5px]">ID NO:</span>
+                    <span className="text-amber-400 font-bold text-[9px] sm:text-[9.5px]">ID NO:</span>
                     <span className="text-white font-mono font-black tracking-wide">{memberId}</span>
                     {copiedId ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3 text-slate-300" />}
                   </div>
-                  <div className={`text-[9.5px] sm:text-[10px] font-mono font-bold block pl-0.5 ${cardTheme === 'gold' ? 'text-slate-300' : 'text-[#0F172A]'}`}>
+                  <div className={`text-[8.5px] sm:text-[10px] font-mono font-bold block pl-0.5 ${cardTheme === 'gold' ? 'text-slate-300' : 'text-[#0F172A]'}`}>
                     <span className="text-slate-700 font-bold">Issued on:</span> <span className="font-black text-black">{issuedOn}</span>
                   </div>
                 </div>
 
                 {/* Right Bottom: EMV Smart Chip, QR Code & Signature */}
-                <div className="flex items-center gap-2">
-                  <EmvChipSvg className="w-8 h-6 sm:w-9 sm:h-6.5 shrink-0" />
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <EmvChipSvg className="w-7 h-5 sm:w-8.5 sm:h-6 shrink-0" />
                   <div className="text-right">
-                    <span className={`text-[7.5px] font-mono block leading-tight font-bold ${cardTheme === 'gold' ? 'text-slate-300' : 'text-slate-700'}`}>
+                    <span className={`text-[7px] sm:text-[7.5px] font-mono block leading-tight font-bold ${cardTheme === 'gold' ? 'text-slate-300' : 'text-slate-700'}`}>
                       AUTH SIGN
                     </span>
-                    <span className={`text-[8.5px] font-serif italic block font-black ${cardTheme === 'gold' ? 'text-amber-300' : 'text-black'}`}>
+                    <span className={`text-[8px] sm:text-[8.5px] font-serif italic block font-black ${cardTheme === 'gold' ? 'text-amber-300' : 'text-black'}`}>
                       Rajesh Sharma
                     </span>
                   </div>
@@ -562,7 +570,7 @@ export default function MemberCard({
                     <img
                       src={qrDataUrl}
                       alt="Verification QR"
-                      className="w-8 h-8 sm:w-9 sm:h-9 bg-white p-0.5 rounded object-contain shrink-0 border-2 border-sky-400 shadow-xs"
+                      className="w-7 h-7 sm:w-8.5 sm:h-8.5 bg-white p-0.5 rounded object-contain shrink-0 border-2 border-sky-400 shadow-xs"
                     />
                   )}
                 </div>
@@ -571,7 +579,7 @@ export default function MemberCard({
 
             {/* ================= BACK SIDE (Interactive Display) ================= */}
             <div
-              className="w-full aspect-[85.6/54] rounded-2xl p-4 sm:p-5 text-slate-900 bg-white border-2 border-slate-300 flex flex-col justify-between select-none shadow-2xl absolute inset-0 overflow-hidden"
+              className="w-full min-h-[255px] sm:min-h-0 sm:aspect-[85.6/54] rounded-2xl p-3 sm:p-4.5 text-slate-900 bg-white border-2 border-slate-300 flex flex-col justify-between select-none shadow-2xl absolute inset-0 overflow-hidden"
               style={{
                 backfaceVisibility: 'hidden',
                 WebkitBackfaceVisibility: 'hidden',
@@ -579,7 +587,7 @@ export default function MemberCard({
               }}
             >
               {/* Magnetic Stripe */}
-              <div className="-mx-4 sm:-mx-5 -mt-4 sm:-mt-5 h-8 bg-slate-900 flex items-center justify-between px-4">
+              <div className="-mx-3 sm:-mx-4.5 -mt-3 sm:-mt-4.5 h-7 sm:h-8 bg-slate-900 flex items-center justify-between px-3 sm:px-4">
                 <span className="text-[8px] font-mono text-slate-400 tracking-widest">
                   MPVMAVAKS SECURE CARD TRACK
                 </span>
@@ -808,26 +816,34 @@ export default function MemberCard({
 
                   {/* Details on right hand side */}
                   <div className="flex-1 min-w-0 space-y-1 pl-1">
-                    <h2 className="text-[15px] font-black text-[#0A192F] truncate leading-tight tracking-tight">{fullName}</h2>
-                    <div className="text-[11px] flex items-center gap-1.5 truncate">
-                      <Zap className="w-3.5 h-3.5 text-blue-700 shrink-0 stroke-[2.5]" />
-                      <span className="text-blue-950 font-black">Post:</span>
-                      <span className="font-extrabold text-black truncate">{post}</span>
+                    <h2 className="text-[14px] font-black text-[#0A192F] leading-tight tracking-tight">{fullName}</h2>
+                    <div className="text-[10.5px] flex items-start gap-1 leading-snug">
+                      <Zap className="w-3.5 h-3.5 text-blue-700 shrink-0 mt-0.5 stroke-[2.5]" />
+                      <div className="min-w-0 flex-1">
+                        <span className="text-blue-950 font-black mr-1">Post:</span>
+                        <span className="font-extrabold text-black break-words">{post}</span>
+                      </div>
                     </div>
-                    <div className="text-[10.5px] flex items-center gap-1.5 truncate">
-                      <Building className="w-3.5 h-3.5 text-blue-700 shrink-0 stroke-[2.5]" />
-                      <span className="text-blue-950 font-black">Office:</span>
-                      <span className="font-extrabold text-black truncate">{officeAddress}</span>
+                    <div className="text-[10px] flex items-start gap-1 leading-snug">
+                      <Building className="w-3.5 h-3.5 text-blue-700 shrink-0 mt-0.5 stroke-[2.5]" />
+                      <div className="min-w-0 flex-1">
+                        <span className="text-blue-950 font-black mr-1">Office:</span>
+                        <span className="font-extrabold text-black break-words">{officeAddress}</span>
+                      </div>
                     </div>
-                    <div className="text-[10.5px] flex items-center gap-1.5 truncate">
+                    <div className="text-[10.5px] flex items-center gap-1 leading-snug">
                       <MapPin className="w-3.5 h-3.5 text-emerald-700 shrink-0 stroke-[2.5]" />
-                      <span className="text-blue-950 font-black">District:</span>
-                      <span className="font-black text-black truncate">{district}</span>
+                      <div className="min-w-0 flex-1 flex items-center gap-1">
+                        <span className="text-blue-950 font-black">District:</span>
+                        <span className="font-black text-black">{district}</span>
+                      </div>
                     </div>
-                    <div className="text-[11px] flex items-center gap-1.5 truncate">
+                    <div className="text-[10.5px] flex items-center gap-1 leading-snug">
                       <Phone className="w-3.5 h-3.5 text-blue-700 shrink-0 stroke-[2.5]" />
-                      <span className="text-blue-950 font-black">Mobile:</span>
-                      <span className="font-mono font-black text-black truncate">{phone}</span>
+                      <div className="min-w-0 flex-1 flex items-center gap-1">
+                        <span className="text-blue-950 font-black">Mobile:</span>
+                        <span className="font-mono font-black text-black">{phone}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1007,26 +1023,34 @@ export default function MemberCard({
             </div>
 
             <div className="flex-1 min-w-0 space-y-1 pl-1">
-              <h2 className="text-lg font-black text-[#0A192F] truncate leading-tight tracking-tight">{fullName}</h2>
-              <div className="text-[11.5px] flex items-center gap-1.5 truncate">
-                <Zap className="w-3.5 h-3.5 text-blue-700 shrink-0 stroke-[2.5]" />
-                <span className="text-blue-950 font-black">Post:</span>
-                <span className="font-extrabold text-black truncate">{post}</span>
+              <h2 className="text-base font-black text-[#0A192F] leading-tight tracking-tight">{fullName}</h2>
+              <div className="text-[11px] flex items-start gap-1.5 leading-snug">
+                <Zap className="w-3.5 h-3.5 text-blue-700 shrink-0 mt-0.5 stroke-[2.5]" />
+                <div className="min-w-0 flex-1">
+                  <span className="text-blue-950 font-black mr-1">Post:</span>
+                  <span className="font-extrabold text-black break-words">{post}</span>
+                </div>
               </div>
-              <div className="text-[11px] flex items-center gap-1.5 truncate">
-                <Building className="w-3.5 h-3.5 text-blue-700 shrink-0 stroke-[2.5]" />
-                <span className="text-blue-950 font-black">Office:</span>
-                <span className="font-extrabold text-black truncate">{officeAddress}</span>
+              <div className="text-[10.5px] flex items-start gap-1.5 leading-snug">
+                <Building className="w-3.5 h-3.5 text-blue-700 shrink-0 mt-0.5 stroke-[2.5]" />
+                <div className="min-w-0 flex-1">
+                  <span className="text-blue-950 font-black mr-1">Office:</span>
+                  <span className="font-extrabold text-black break-words">{officeAddress}</span>
+                </div>
               </div>
-              <div className="text-[11px] flex items-center gap-1.5 truncate">
+              <div className="text-[11px] flex items-center gap-1.5 leading-snug">
                 <MapPin className="w-3.5 h-3.5 text-emerald-700 shrink-0 stroke-[2.5]" />
-                <span className="text-blue-950 font-black">District:</span>
-                <span className="font-black text-black truncate">{district}</span>
+                <div className="min-w-0 flex-1 flex items-center gap-1">
+                  <span className="text-blue-950 font-black">District:</span>
+                  <span className="font-black text-black">{district}</span>
+                </div>
               </div>
-              <div className="text-[11.5px] flex items-center gap-1.5 truncate">
+              <div className="text-[11px] flex items-center gap-1.5 leading-snug">
                 <Phone className="w-3.5 h-3.5 text-blue-700 shrink-0 stroke-[2.5]" />
-                <span className="text-blue-950 font-black">Mobile:</span>
-                <span className="font-mono font-black text-black truncate">{phone}</span>
+                <div className="min-w-0 flex-1 flex items-center gap-1">
+                  <span className="text-blue-950 font-black">Mobile:</span>
+                  <span className="font-mono font-black text-black">{phone}</span>
+                </div>
               </div>
             </div>
           </div>

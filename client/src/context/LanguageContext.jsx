@@ -36,9 +36,13 @@ export const translations = {
     en: "MP State Electricity Board Reserved Category Officers & Employees Union",
     hi: "मध्य प्रदेश विद्युत मंडल आरक्षित वर्ग अधिकारी कर्मचारी संघ"
   },
+  "Uniting Power Engineers & Employees for": {
+    en: "Uniting Power Engineers & Employees for",
+    hi: "विद्युत इंजीनियरों और कर्मचारियों का संगठन"
+  },
   "Uniting Power Engineers & Field Staff for": {
-    en: "Uniting Power Engineers & Field Staff for",
-    hi: "विद्युत इंजीनियरों और क्षेत्रीय कर्मचारियों का संगठन"
+    en: "Uniting Power Engineers & Employees for",
+    hi: "विद्युत इंजीनियरों और कर्मचारियों का संगठन"
   },
   "Safety, Dignity & Rights": {
     en: "Safety, Dignity & Rights",

@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import EventCommentsModal from '../components/EventCommentsModal';
 import EventShareModal from '../components/EventShareModal';
+import { formatMemberId } from '../utils/memberCardHelpers';
 
 export default function Events() {
   const { user } = useAuth();
@@ -817,7 +818,7 @@ export default function Events() {
                 <div>
                   <span className="text-[10px] text-slate-400 block font-medium">Delegate Member</span>
                   <span className="font-bold text-white block truncate">{user?.profile?.full_name || user?.email}</span>
-                  <span className="text-[10px] font-mono text-amber-400">{user?.member_id || `ID: ${user?.id}`}</span>
+                  <span className="text-[10px] font-mono text-amber-400">{formatMemberId(user?.member_id, user?.id || 1)}</span>
                 </div>
                 <div>
                   <span className="text-[10px] text-slate-400 block font-medium">Discom Circle</span>

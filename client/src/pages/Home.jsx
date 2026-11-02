@@ -127,7 +127,7 @@ export default function Home() {
               </div>
 
               <h1 className="text-3xl sm:text-4xl lg:text-[2.6rem] font-extrabold text-slate-900 tracking-tight leading-[1.18]">
-                {t('Uniting Power Engineers & Field Staff for')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-600 via-blue-600 to-cyan-600">{t('Safety, Dignity & Rights')}</span>
+                {t('Uniting Power Engineers & Employees for')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-600 via-blue-600 to-cyan-600">{t('Safety, Dignity & Rights')}</span>
               </h1>
 
               <p className="text-xs sm:text-sm text-slate-600 max-w-2xl mx-auto lg:mx-0 font-normal leading-relaxed">

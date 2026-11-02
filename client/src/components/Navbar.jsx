@@ -1,3 +1,4 @@
+import { formatMemberId } from '../utils/memberCardHelpers';
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -385,7 +386,7 @@ export default function Navbar() {
                         {user.profile?.full_name?.split(' ')[0] || 'Member'}
                       </span>
                       <span className="text-[9px] text-sky-700 font-bold block">
-                        {isAdmin ? 'ADMIN' : (user.member_id || 'MEMBER')}
+                        {isAdmin ? (user.member_id ? formatMemberId(user.member_id, 1) : 'ADMIN') : formatMemberId(user.member_id, user.id)}
                       </span>
                     </div>
                     <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
@@ -594,7 +595,7 @@ export default function Navbar() {
                     {user.profile?.full_name || 'Member'}
                   </span>
                   <span className="text-xs text-amber-800 font-bold block">
-                    {isAdmin ? 'UNION SUPER ADMIN' : (user.member_id || 'MEMBER')}
+                    {isAdmin ? `ADMIN • ${formatMemberId(user.member_id, 1)}` : formatMemberId(user.member_id, user.id)}
                   </span>
                 </div>
               </div>

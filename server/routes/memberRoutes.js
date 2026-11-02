@@ -2,7 +2,7 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import { inMemoryStore, query, saveUsersBackup } from '../config/db.js';
 import { authenticateToken, requireAdmin } from '../middleware/authMiddleware.js';
-import { getNextMemberId } from '../utils/memberIdHelper.js';
+import { getNextMemberId, normalizeMemberId } from '../utils/memberIdHelper.js';
 
 const router = express.Router();
 
@@ -13,7 +13,7 @@ router.get('/', (req, res) => {
     success: true,
     members: activeUsers.map(u => ({
       id: u.id,
-      member_id: u.member_id,
+      member_id: normalizeMemberId(u.member_id, u.id),
       employee_id: u.member_id,
       email: u.email,
       role: u.role,
@@ -125,7 +125,7 @@ router.get('/admin/list', authenticateToken, requireAdmin, (req, res) => {
       email: u.email,
       role: u.role,
       status: u.status,
-      member_id: u.member_id,
+      member_id: normalizeMemberId(u.member_id, u.id),
       profile: u.profile
     }))
   });

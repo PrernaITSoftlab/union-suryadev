@@ -57,3 +57,26 @@ export async function getNextMemberId(inMemoryStore, query = null) {
 
   return candidateId;
 }
+
+export function normalizeMemberId(id, fallbackIndex = 1) {
+  if (!id) {
+    return `MPAVAKS-${String(fallbackIndex).padStart(4, '0')}`;
+  }
+  const str = String(id).trim();
+  if (str.toUpperCase().startsWith('UNION-ADMIN-')) {
+    const num = str.replace(/^UNION-ADMIN-/i, '');
+    const cleanNum = parseInt(num, 10);
+    return `MPAVAKS-${String(isNaN(cleanNum) ? fallbackIndex : cleanNum).padStart(4, '0')}`;
+  }
+  if (str.toUpperCase().startsWith('UNION-')) {
+    const num = str.replace(/^UNION-/i, '');
+    const cleanNum = parseInt(num, 10);
+    return `MPAVAKS-${String(isNaN(cleanNum) ? fallbackIndex : cleanNum).padStart(4, '0')}`;
+  }
+  if (!str.toUpperCase().startsWith('MPAVAKS-')) {
+    const num = str.replace(/\D/g, '') || String(fallbackIndex);
+    const cleanNum = parseInt(num, 10);
+    return `MPAVAKS-${String(isNaN(cleanNum) ? fallbackIndex : cleanNum).padStart(4, '0')}`;
+  }
+  return str;
+}

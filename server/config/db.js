@@ -110,6 +110,13 @@ export const loadUsersBackup = () => {
       const data = fs.readFileSync(USERS_BACKUP_FILE, 'utf-8');
       const parsed = JSON.parse(data);
       if (Array.isArray(parsed) && parsed.length > 0) {
+        parsed.forEach(u => {
+          if (u.member_id && u.member_id.startsWith('UNION-ADMIN-')) {
+            u.member_id = u.member_id.replace(/^UNION-ADMIN-/i, 'MPAVAKS-');
+          } else if (u.member_id && u.member_id.startsWith('UNION-')) {
+            u.member_id = u.member_id.replace(/^UNION-/i, 'MPAVAKS-');
+          }
+        });
         inMemoryStore.users = parsed;
         console.log(`📁 Loaded ${parsed.length} users with photos from disk storage (users_backup.json).`);
       }
@@ -139,6 +146,17 @@ if (process.env.DATABASE_URL) {
 
         // Hydrate from PostgreSQL Database so profile photos and updates persist across server/page restarts
         try {
+          try {
+            await client.query(`
+              UPDATE users SET member_id = 'MPAVAKS-0004' WHERE id = 2 AND member_id = 'MPAVAKS-0001';
+              UPDATE users SET member_id = 'MPAVAKS-0001' WHERE (role = 'admin' OR id = 1) AND (member_id LIKE 'UNION-%' OR member_id = 'UNION-ADMIN-001' OR member_id IS NULL);
+              UPDATE users SET member_id = REPLACE(member_id, 'UNION-ADMIN-', 'MPAVAKS-') WHERE member_id LIKE 'UNION-ADMIN-%';
+              UPDATE users SET member_id = REPLACE(member_id, 'UNION-', 'MPAVAKS-') WHERE member_id LIKE 'UNION-%';
+            `);
+          } catch (migErr) {
+            console.warn('⚠️ Automated PostgreSQL Member ID check:', migErr.message);
+          }
+
           const dbUsers = await client.query(`
             SELECT u.id, u.email, u.password_hash, u.role, u.status, u.member_id,
                    p.id as profile_id, p.full_name, p.father_husband_name, p.dob, p.gender,
@@ -157,7 +175,13 @@ if (process.env.DATABASE_URL) {
               password_hash: r.password_hash,
               role: r.role,
               status: r.status,
-              member_id: r.member_id,
+              member_id: (r.member_id && r.member_id.startsWith('UNION-ADMIN-'))
+                ? r.member_id.replace(/^UNION-ADMIN-/i, 'MPAVAKS-')
+                : (r.member_id && r.member_id.startsWith('UNION-'))
+                ? r.member_id.replace(/^UNION-/i, 'MPAVAKS-')
+                : (!r.member_id && r.role === 'admin')
+                ? 'MPAVAKS-0001'
+                : r.member_id,
               profile: {
                 id: r.profile_id || r.id,
                 user_id: r.id,

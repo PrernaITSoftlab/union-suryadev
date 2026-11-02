@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import { formatMemberId } from '../utils/memberCardHelpers';
 import api from '../services/api';
 import {
   MessageSquare,
@@ -245,7 +246,7 @@ export default function GroupChat() {
       sender_name: user?.profile?.full_name || user?.email?.split('@')[0] || 'You',
       sender_avatar: user?.profile?.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80',
       sender_designation: user?.profile?.union_designation || user?.profile?.designation || 'Member',
-      sender_member_id: user?.member_id || '',
+      sender_member_id: formatMemberId(user?.member_id, user?.id || 1),
       message_text: trimmed,
       is_system: false,
       is_mine: true,
@@ -658,7 +659,7 @@ export default function GroupChat() {
                       {user?.profile?.full_name || user?.email?.split('@')[0] || 'Member'}
                     </p>
                     <p className="text-[10px] text-slate-500 truncate">
-                      {user?.profile?.union_designation || user?.profile?.designation || user?.member_id || 'Union Member'}
+                      {user?.profile?.union_designation || user?.profile?.designation || formatMemberId(user?.member_id, user?.id || 1)}
                     </p>
                   </div>
                 </div>
@@ -1340,7 +1341,7 @@ export default function GroupChat() {
                               )}
                             </div>
                             <p className="text-[11px] text-slate-500 truncate">
-                              {m.designation || 'Member'} • {m.member_id || m.circle || 'Union'}
+                              {m.designation || 'Member'} • {formatMemberId(m.member_id, m.id)}
                             </p>
                           </div>
                         </div>

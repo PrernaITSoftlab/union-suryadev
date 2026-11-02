@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import ProfilePhotoUploader from '../components/ProfilePhotoUploader';
 import ProfilePhotoModal from '../components/ProfilePhotoModal';
+import { formatMemberId } from '../utils/memberCardHelpers';
 
 export default function AdminDashboard() {
   const { user, settings, updateProfile, updateProfilePhoto } = useAuth();
@@ -177,7 +178,12 @@ export default function AdminDashboard() {
         if (res.data.success) setApplications(res.data.applications);
       } else if (activeModule === 'members') {
         const res = await api.get(`/members/admin/list${statusFilter !== 'all' ? `?status=${statusFilter}` : ''}`);
-        if (res.data.success) setMembers(res.data.members);
+        if (res.data.success) {
+          setMembers(res.data.members.map(m => ({
+            ...m,
+            member_id: formatMemberId(m.member_id, m.id)
+          })));
+        }
       } else if (activeModule === 'events') {
         const res = await api.get(`/events/list?_t=${Date.now()}`);
         if (res.data.success) setEvents(res.data.events);
@@ -1356,7 +1362,7 @@ export default function AdminDashboard() {
                   <tbody className="divide-y divide-slate-100 font-mono">
                     {members.map(m => (
                       <tr key={m.id} className="hover:bg-slate-50">
-                        <td className="p-4 font-bold text-amber-800">{m.member_id}</td>
+                        <td className="p-4 font-bold text-amber-800">{formatMemberId(m.member_id, m.id)}</td>
                         <td className="p-4 font-sans">
                           <span className="font-bold text-slate-900 block">{m.profile?.full_name}</span>
                           <span className="text-[11px] text-slate-500">{m.email}</span>
@@ -2132,7 +2138,7 @@ export default function AdminDashboard() {
                   <input
                     type="text"
                     required
-                    value={createUserModal.member_id}
+                    value={formatMemberId(createUserModal.member_id)}
                     onChange={(e) => setCreateUserModal({ ...createUserModal, member_id: e.target.value })}
                     className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2 text-amber-800 font-mono font-bold"
                   />
@@ -2594,7 +2600,7 @@ export default function AdminDashboard() {
                 </div>
                 <div className="flex justify-between border-b border-slate-100 pb-1.5">
                   <span className="text-slate-500 font-sans">Login ID / Member ID:</span>
-                  <strong className="text-amber-800 font-bold">{generatedCredentialsModal.member_id}</strong>
+                  <strong className="text-amber-800 font-bold">{formatMemberId(generatedCredentialsModal.member_id)}</strong>
                 </div>
                 <div className="flex justify-between border-b border-slate-100 pb-1.5">
                   <span className="text-slate-500 font-sans">Registered Email:</span>
@@ -2614,7 +2620,7 @@ export default function AdminDashboard() {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => {
-                  navigator.clipboard.writeText(`MPVMAVAKS Union Credentials:\nLogin ID / Member ID: ${generatedCredentialsModal.member_id}\nEmail: ${generatedCredentialsModal.email}\nTemp Password: ${generatedCredentialsModal.temp_password}`);
+                  navigator.clipboard.writeText(`MPVMAVAKS Union Credentials:\nLogin ID / Member ID: ${formatMemberId(generatedCredentialsModal.member_id)}\nEmail: ${generatedCredentialsModal.email}\nTemp Password: ${generatedCredentialsModal.temp_password}`);
                   alert('Credentials copied to clipboard!');
                 }}
                 className="flex-1 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs transition-colors"

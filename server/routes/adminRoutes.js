@@ -1,3 +1,4 @@
+import { normalizeMemberId } from '../utils/memberIdHelper.js';
 import express from 'express';
 import { inMemoryStore } from '../config/db.js';
 import { EventService } from '../services/eventService.js';
@@ -55,7 +56,8 @@ router.get('/members', authenticateToken, requireAdmin, (req, res) => {
       email: u.email,
       role: u.role,
       status: u.status,
-      employee_id: u.member_id,
+      employee_id: normalizeMemberId(u.member_id, u.id),
+      member_id: normalizeMemberId(u.member_id, u.id),
       profile: u.profile
     }))
   });

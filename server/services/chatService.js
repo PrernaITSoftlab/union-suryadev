@@ -1,3 +1,4 @@
+import { normalizeMemberId } from '../utils/memberIdHelper.js';
 import { pool, inMemoryStore } from '../config/db.js';
 import { ensureChatSchemaAndSeed, saveChatBackup } from '../db/syncChatDb.js';
 
@@ -32,7 +33,7 @@ class ChatService {
       id: u.id,
       email: u.email,
       role: u.role,
-      member_id: u.member_id || '',
+      member_id: normalizeMemberId(u.member_id, u.id),
       full_name: u.profile?.full_name || u.email?.split('@')[0] || 'Member',
       avatar_url: u.profile?.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80',
       designation: u.profile?.union_designation || u.profile?.designation || 'Member',

@@ -128,7 +128,7 @@ export default function Login({ defaultAdmin = false }) {
               <input
                 type="text"
                 required
-                placeholder={isAdminMode ? "UNION-ADMIN-001 or admin@mpvmavaksunion.org" : "MPAVAKS-0001 or member@mpvmavaksunion.org"}
+                placeholder={isAdminMode ? "MPAVAKS-0001 or admin@mpvmavaksunion.org" : "MPAVAKS-0001 or member@mpvmavaksunion.org"}
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
                 className="w-full bg-slate-50 border border-slate-300 rounded-xl pl-10 pr-4 py-3 text-xs text-slate-900 focus:outline-none focus:border-sky-500 font-medium"

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import api from '../services/api';
+import { formatMemberId } from '../utils/memberCardHelpers';
 
 const AuthContext = createContext();
 
@@ -8,7 +9,14 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
     try {
       const cached = localStorage.getItem('union_user');
-      return cached ? JSON.parse(cached) : null;
+      if (cached) {
+        const u = JSON.parse(cached);
+        if (u) {
+          u.member_id = formatMemberId(u.member_id, u.id || 1);
+        }
+        return u;
+      }
+      return null;
     } catch (e) {
       return null;
     }
@@ -39,8 +47,10 @@ export const AuthProvider = ({ children }) => {
       try {
         const res = await api.get('/auth/me');
         if (res.data.success && res.data.user) {
-          setUser(res.data.user);
-          localStorage.setItem('union_user', JSON.stringify(res.data.user));
+          const u = res.data.user;
+          u.member_id = formatMemberId(u.member_id, u.id || 1);
+          setUser(u);
+          localStorage.setItem('union_user', JSON.stringify(u));
         } else {
           localStorage.removeItem('union_token');
           localStorage.removeItem('union_user');
@@ -65,9 +75,11 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     const res = await api.post('/auth/login', { email, password });
     if (res.data.success) {
+      const u = res.data.user;
+      u.member_id = formatMemberId(u.member_id, u.id || 1);
       localStorage.setItem('union_token', res.data.token);
-      localStorage.setItem('union_user', JSON.stringify(res.data.user));
-      setUser(res.data.user);
+      localStorage.setItem('union_user', JSON.stringify(u));
+      setUser(u);
     }
     return res.data;
   };

@@ -35,7 +35,7 @@ export const INITIAL_USERS = [
     email: "admin@mpvmavaksunion.org",
     role: "admin",
     status: "active",
-    member_id: "UNION-ADMIN-001",
+    member_id: "MPAVAKS-0001",
     password_hash: "$2a$10$qj2RvgdMviuo0LHW2HTTH..Qz84GYpymkukKTmaGLU7XDjHGIR/v.", // admin123
 
     profile: {
@@ -70,7 +70,7 @@ export const INITIAL_USERS = [
     email: "member@mpvmavaksunion.org",
     role: "user",
     status: "active",
-    member_id: "MPAVAKS-0001",
+    member_id: "MPAVAKS-0004",
     password_hash: "$2a$10$emVn1lVyurmFdl1nPO7SnOnsb7fzzmsZyHBT3TyDbPqjnkiKDASPK", // member123
 
     profile: {

@@ -1,3 +1,4 @@
+import { normalizeMemberId } from '../utils/memberIdHelper.js';
 import { pool, inMemoryStore, saveRegistrationsBackup } from '../config/db.js';
 import {
   ensureEventsSchemaAndSeed,
@@ -1141,7 +1142,7 @@ export const EventService = {
           member_email: targetUser?.email || '',
           member_phone: targetUser?.profile?.phone || '',
           member_avatar: targetUser?.profile?.avatar_url || '',
-          employee_id: targetUser?.member_id || `MEM-${r.user_id}`,
+          employee_id: normalizeMemberId(targetUser?.member_id, r.user_id),
           member_circle: targetUser?.profile?.circle || 'Indore Circle',
           member_designation: targetUser?.profile?.designation || 'Member'
         };

@@ -32,6 +32,12 @@ export async function initializeDatabase() {
     await client.query(sql);
     console.log('✅ PostgreSQL Schema initialized successfully!');
 
+    // Ensure existing rows are migrated to clean MPAVAKS- IDs
+    await client.query("UPDATE users SET member_id = 'MPAVAKS-0004' WHERE id = 2 AND member_id = 'MPAVAKS-0001'");
+    await client.query("UPDATE users SET member_id = 'MPAVAKS-0001' WHERE (role = 'admin' OR id = 1) AND (member_id LIKE 'UNION-%' OR member_id = 'UNION-ADMIN-001' OR member_id IS NULL)");
+    await client.query("UPDATE users SET member_id = REPLACE(member_id, 'UNION-ADMIN-', 'MPAVAKS-') WHERE member_id LIKE 'UNION-ADMIN-%'");
+    await client.query("UPDATE users SET member_id = REPLACE(member_id, 'UNION-', 'MPAVAKS-') WHERE member_id LIKE 'UNION-%'");
+
     // Seed Dummy Member & Admin Users into PostgreSQL Users Table
     for (const u of INITIAL_USERS) {
       await client.query(`

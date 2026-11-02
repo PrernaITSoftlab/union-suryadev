@@ -1,3 +1,4 @@
+import { normalizeMemberId } from '../utils/memberIdHelper.js';
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
@@ -174,7 +175,7 @@ router.post('/login', async (req, res, next) => {
         email: user.email,
         role: user.role,
         status: user.status,
-        member_id: user.member_id,
+        member_id: normalizeMemberId(user.member_id, user.id),
         profile: user.profile
       }
     });
@@ -264,7 +265,7 @@ router.get('/me', authenticateToken, async (req, res) => {
         email: user.email,
         role: user.role,
         status: user.status,
-        member_id: user.member_id,
+        member_id: normalizeMemberId(user.member_id, user.id),
         profile: user.profile
       }
     });

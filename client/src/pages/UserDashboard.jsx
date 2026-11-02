@@ -11,6 +11,7 @@ import {
 import MemberCard from '../components/MemberCard';
 import ProfilePhotoUploader from '../components/ProfilePhotoUploader';
 import ProfilePhotoModal from '../components/ProfilePhotoModal';
+import { formatMemberId } from '../utils/memberCardHelpers';
 
 export default function UserDashboard() {
   const { user, updateProfile, updateProfilePhoto } = useAuth();
@@ -217,7 +218,7 @@ export default function UserDashboard() {
               </div>
               <p className="text-xs text-amber-800 font-extrabold mt-0.5">{user?.profile?.union_designation || 'Union Member'} • {user?.profile?.designation}</p>
               <div className="flex items-center justify-center sm:justify-start gap-4 text-xs font-mono text-slate-600 mt-2 font-medium">
-                <span>Member ID: <strong className="text-slate-900 font-extrabold">{user?.member_id || 'MPAVAKS-0001'}</strong></span>
+                <span>Member ID: <strong className="text-slate-900 font-extrabold">{formatMemberId(user?.member_id, user?.id || 1)}</strong></span>
                 <span>•</span>
                 <span>Circle: <strong className="text-slate-900 font-extrabold">{user?.profile?.circle || 'Indore'}</strong></span>
               </div>
@@ -545,7 +546,7 @@ export default function UserDashboard() {
                 <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
                   <div className="flex justify-between border-b border-slate-200 pb-2">
                     <span className="text-slate-500">Member ID (Admin Controlled):</span>
-                    <span className="text-amber-700 font-extrabold">{user?.member_id}</span>
+                    <span className="text-amber-700 font-extrabold">{formatMemberId(user?.member_id, user?.id || 1)}</span>
                   </div>
                   <div className="flex justify-between border-b border-slate-200 pb-2">
                     <span className="text-slate-500">Discom Company:</span>
@@ -812,7 +813,7 @@ export default function UserDashboard() {
                     <div>
                       <h3 className="font-bold text-sm text-slate-900">{m.full_name}</h3>
                       <span className="text-xs text-amber-800 font-bold block">{m.union_designation || m.designation}</span>
-                      <span className="text-[10px] font-mono text-slate-500">{m.member_id} • {m.circle}</span>
+                      <span className="text-[10px] font-mono text-slate-500">{formatMemberId(m.member_id, m.id)} • {m.circle}</span>
                     </div>
                   </div>
 
@@ -1271,7 +1272,7 @@ export default function UserDashboard() {
                 >
                   <option value="">-- Choose Member --</option>
                   {directory.filter(m => m.id !== user?.id).map(m => (
-                    <option key={m.id} value={m.id}>{m.full_name} ({m.member_id} - {m.circle})</option>
+                    <option key={m.id} value={m.id}>{m.full_name} ({formatMemberId(m.member_id, m.id)} - {m.circle})</option>
                   ))}
                 </select>
               </div>
@@ -1434,7 +1435,7 @@ export default function UserDashboard() {
                 <div>
                   <span className="text-[10px] text-slate-400 block font-medium">Delegate Member</span>
                   <span className="font-bold text-white block truncate">{user?.profile?.full_name || user?.email}</span>
-                  <span className="text-[10px] font-mono text-amber-400">{user?.member_id || `ID: ${user?.id}`}</span>
+                  <span className="text-[10px] font-mono text-amber-400">{formatMemberId(user?.member_id, user?.id || 1)}</span>
                 </div>
                 <div>
                   <span className="text-[10px] text-slate-400 block font-medium">Discom Circle</span>

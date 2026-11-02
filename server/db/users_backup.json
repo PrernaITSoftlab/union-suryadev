@@ -5,7 +5,7 @@
     "password_hash": "$2a$10$qj2RvgdMviuo0LHW2HTTH..Qz84GYpymkukKTmaGLU7XDjHGIR/v.",
     "role": "admin",
     "status": "active",
-    "member_id": "UNION-ADMIN-001",
+    "member_id": "MPAVAKS-0001",
     "profile": {
       "id": 1,
       "user_id": 1,
@@ -43,7 +43,7 @@
     "password_hash": "$2a$10$emVn1lVyurmFdl1nPO7SnOnsb7fzzmsZyHBT3TyDbPqjnkiKDASPK",
     "role": "user",
     "status": "active",
-    "member_id": "MPAVAKS-0001",
+    "member_id": "MPAVAKS-0004",
     "profile": {
       "id": 2,
       "user_id": 2,

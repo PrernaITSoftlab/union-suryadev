@@ -90,3 +90,28 @@ export function getBarcodePattern(text) {
 
   return bars;
 }
+
+/**
+ * Normalizes and formats any member or admin ID to the official MPAVAKS-XXXX format.
+ * Automatically cleans any legacy UNION-ADMIN-001 or UNION- prefixes.
+ */
+export function formatMemberId(id, fallbackIndex = 1) {
+  if (!id) return `MPAVAKS-${String(fallbackIndex).padStart(4, '0')}`;
+  const str = String(id).trim();
+  if (str.toUpperCase().startsWith('UNION-ADMIN-')) {
+    const num = str.replace(/^UNION-ADMIN-/i, '');
+    const cleanNum = parseInt(num, 10);
+    return `MPAVAKS-${String(isNaN(cleanNum) ? fallbackIndex : cleanNum).padStart(4, '0')}`;
+  }
+  if (str.toUpperCase().startsWith('UNION-')) {
+    const num = str.replace(/^UNION-/i, '');
+    const cleanNum = parseInt(num, 10);
+    return `MPAVAKS-${String(isNaN(cleanNum) ? fallbackIndex : cleanNum).padStart(4, '0')}`;
+  }
+  if (!str.toUpperCase().startsWith('MPAVAKS-')) {
+    const num = str.replace(/\D/g, '') || String(fallbackIndex);
+    const cleanNum = parseInt(num, 10);
+    return `MPAVAKS-${String(isNaN(cleanNum) ? fallbackIndex : cleanNum).padStart(4, '0')}`;
+  }
+  return str;
+}
