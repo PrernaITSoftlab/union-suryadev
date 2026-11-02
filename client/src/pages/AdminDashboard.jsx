@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import {
-  LayoutDashboard, UserCheck, Users, Calendar, CreditCard, AlertTriangle, FileText,
+  LayoutDashboard, UserCheck, Users, Calendar, CreditCard, AlertTriangle, FileText, ShieldCheck,
   Send, PhoneCall, Settings, CheckCircle2, XCircle, Eye, UserPlus, Check, X, Search,
   Filter, Sparkles, RefreshCw, ChevronRight, Edit3, ShieldAlert, Award, Download,
   Camera, UploadCloud, Trash2, Plus, ExternalLink, Image as ImageIcon, User, MessageSquare
@@ -29,6 +29,45 @@ export default function AdminDashboard() {
   const [stories, setStories] = useState([]);
   const [contactRequests, setContactRequests] = useState([]);
   const [systemSettingsForm, setSystemSettingsForm] = useState(settings || {});
+
+
+  const [searchParams] = useSearchParams();
+
+  // Board of Union & Executive Leadership state
+  const [boardMembersList, setBoardMembersList] = useState([]);
+  const [boardSearch, setBoardSearch] = useState('');
+  const [boardCategoryFilter, setBoardCategoryFilter] = useState('all');
+  const [createBoardModal, setCreateBoardModal] = useState(false);
+  const [editBoardModal, setEditBoardModal] = useState(null);
+  const [boardSubmitting, setBoardSubmitting] = useState(false);
+  const boardPhotoInputRef = useRef(null);
+
+  const initialBoardForm = {
+    nameEn: '',
+    nameHi: '',
+    titleEn: '',
+    titleHi: '',
+    category: 'central',
+    isTopHead: false,
+    badge: '',
+    image: '',
+    phone: '',
+    email: 'mpmavaks@gmail.com',
+    circle: 'State Executive Committee',
+    roleEn: '',
+    roleHi: '',
+    bioEn: '',
+    bioHi: '',
+    display_order: 1
+  };
+  const [boardForm, setBoardForm] = useState(initialBoardForm);
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab === 'board' || tab === 'board_of_union') {
+      setActiveModule('board_of_union');
+    }
+  }, [searchParams]);
 
   // Notices / Orders & Photos state
   const [ordersList, setOrdersList] = useState([]);
@@ -161,7 +200,10 @@ export default function AdminDashboard() {
   const fetchModuleData = async () => {
     setLoading(true);
     try {
-      if (activeModule === 'analytics') {
+if (activeModule === 'board_of_union') {
+        const res = await api.get('/board/list');
+        if (res.data && res.data.success) setBoardMembersList(res.data.boardMembers || []);
+      } else if (activeModule === 'analytics') {
         const res = await api.get('/admin/dashboard-analytics');
         if (res.data.success) setAnalytics(res.data);
       } else if (activeModule === 'orders') {
@@ -328,6 +370,92 @@ export default function AdminDashboard() {
       setPhotoForm(prev => ({ ...prev, image_url: reader.result }));
     };
     reader.readAsDataURL(file);
+  };
+
+
+  // Board of Union Management Handlers
+  const handleBoardPhotoUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setBoardForm(prev => ({ ...prev, image: reader.result }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCreateBoardMember = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    if (!boardForm.nameEn.trim() || !boardForm.titleEn.trim()) {
+      alert('Please provide at least Name (English) and Designation / Title (English).');
+      return;
+    }
+    setBoardSubmitting(true);
+    try {
+      const res = await api.post('/board', boardForm);
+      if (res.data && res.data.success) {
+        setFeedback({ success: 'Board member added successfully!' });
+        setCreateBoardModal(false);
+        setBoardForm(initialBoardForm);
+        fetchModuleData();
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to add board member.');
+    } finally {
+      setBoardSubmitting(false);
+    }
+  };
+
+  const handleUpdateBoardMember = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    if (!editBoardModal) return;
+    if (!boardForm.nameEn.trim() || !boardForm.titleEn.trim()) {
+      alert('Please provide at least Name (English) and Designation / Title (English).');
+      return;
+    }
+    setBoardSubmitting(true);
+    try {
+      const res = await api.put(`/board/${editBoardModal.id}`, boardForm);
+      if (res.data && res.data.success) {
+        setFeedback({ success: 'Board member updated successfully!' });
+        setEditBoardModal(null);
+        setBoardForm(initialBoardForm);
+        fetchModuleData();
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to update board member.');
+    } finally {
+      setBoardSubmitting(false);
+    }
+  };
+
+  const handleDeleteBoardMember = async (id, name) => {
+    if (!window.confirm(`Are you sure you want to remove "${name || 'this leader'}" from Board of Union?`)) return;
+    try {
+      const res = await api.delete(`/board/${id}`);
+      if (res.data && res.data.success) {
+        setFeedback({ success: res.data.message || 'Board member removed successfully!' });
+        fetchModuleData();
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to delete board member.');
+    }
+  };
+
+  const handleToggleTopHead = async (member) => {
+    try {
+      const updatedIsTopHead = !member.isTopHead;
+      const res = await api.put(`/board/${member.id}`, {
+        ...member,
+        isTopHead: updatedIsTopHead
+      });
+      if (res.data && res.data.success) {
+        setFeedback({ success: `${member.nameEn} top officer status updated!` });
+        fetchModuleData();
+      }
+    } catch (err) {
+      alert('Failed to update top officer status.');
+    }
   };
 
   // Orders CRUD
@@ -691,6 +819,7 @@ export default function AdminDashboard() {
             { id: 'analytics', label: 'Analytics Hub', icon: LayoutDashboard },
             { id: 'chat', label: 'Union Group Chat', icon: MessageSquare, isExternal: true },
             { id: 'admin_profile', label: 'Admin Profile & Photo', icon: User },
+            { id: 'board_of_union', label: 'Board of Union & Leadership', icon: ShieldCheck },
             { id: 'orders', label: 'Correspondence & Circulars (PDF)', icon: FileText },
             { id: 'photos', label: 'Photo Gallery', icon: Camera },
             { id: 'pending_approvals', label: 'Pending Member Approvals', icon: UserCheck },
@@ -847,6 +976,327 @@ export default function AdminDashboard() {
                 </button>
               </div>
             </form>
+          </div>
+        )}
+
+        
+        {/* MODULE: BOARD OF UNION & EXECUTIVE LEADERSHIP MANAGEMENT */}
+        {activeModule === 'board_of_union' && (
+          <div className="space-y-6">
+            {/* Header Banner */}
+            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm">
+              <div className="space-y-1 max-w-3xl">
+                <div className="flex items-center gap-2 text-sky-600 font-extrabold text-xs uppercase tracking-wider">
+                  <ShieldCheck className="w-4 h-4" />
+                  <span>Executive Governance & Cadre Leadership</span>
+                </div>
+                <h2 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2.5">
+                  <span>Board of Union & Executive Leadership Management</span>
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-500 font-medium leading-relaxed">
+                  Manage the 18 executive leaders, patrons, regional heads, and advisory council. Add new leaders, edit credentials, toggle top officers, and delete members. Changes synchronize in real-time across the public portal and database.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3 w-full sm:w-auto shrink-0">
+                <button
+                  onClick={() => {
+                    setBoardForm({
+                      nameEn: '',
+                      nameHi: '',
+                      titleEn: '',
+                      titleHi: '',
+                      category: 'central',
+                      isTopHead: false,
+                      badge: '',
+                      image: '',
+                      phone: '',
+                      email: 'mpmavaks@gmail.com',
+                      circle: 'State Executive Committee',
+                      roleEn: '',
+                      roleHi: '',
+                      bioEn: '',
+                      bioHi: '',
+                      display_order: boardMembersList.length + 1
+                    });
+                    setCreateBoardModal(true);
+                  }}
+                  className="px-5 py-3 rounded-2xl bg-gradient-to-r from-sky-600 to-blue-700 hover:from-sky-500 hover:to-blue-600 text-white font-extrabold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-sky-600/20 transition-all hover:scale-[1.02] active:scale-[0.98] w-full sm:w-auto"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>+ Add New Board Leader</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Header Statistics Summary */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+              <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total Officers</span>
+                <div className="flex items-baseline justify-between mt-2">
+                  <span className="text-2xl font-black text-slate-900">{boardMembersList.length}</span>
+                  <span className="text-[10px] font-bold text-sky-600 bg-sky-50 px-2 py-0.5 rounded-full">Heads</span>
+                </div>
+              </div>
+
+              <div className="bg-white p-4 rounded-2xl border border-amber-200/80 shadow-xs flex flex-col justify-between bg-amber-50/20">
+                <span className="text-[11px] font-bold text-amber-800 uppercase tracking-wider">Top Apex Heads</span>
+                <div className="flex items-baseline justify-between mt-2">
+                  <span className="text-2xl font-black text-amber-700">
+                    {boardMembersList.filter(m => m.isTopHead).length}
+                  </span>
+                  <span className="text-[10px] font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full">★ Showcase</span>
+                </div>
+              </div>
+
+              <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Central Executive</span>
+                <div className="flex items-baseline justify-between mt-2">
+                  <span className="text-2xl font-black text-slate-900">
+                    {boardMembersList.filter(m => m.category === 'central').length}
+                  </span>
+                  <span className="text-[10px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">Central</span>
+                </div>
+              </div>
+
+              <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Regional Heads</span>
+                <div className="flex items-baseline justify-between mt-2">
+                  <span className="text-2xl font-black text-emerald-700">
+                    {boardMembersList.filter(m => m.category === 'regional').length}
+                  </span>
+                  <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full">Divisions</span>
+                </div>
+              </div>
+
+              <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-between">
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Patrons & Advisory</span>
+                <div className="flex items-baseline justify-between mt-2">
+                  <span className="text-2xl font-black text-purple-700">
+                    {boardMembersList.filter(m => m.category === 'patron' || m.category === 'advisory').length}
+                  </span>
+                  <span className="text-[10px] font-bold text-purple-800 bg-purple-50 px-2 py-0.5 rounded-full">Council</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Filter and Search Bar */}
+            <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+              <div className="relative flex-grow max-w-md">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Search by name, title, circle, or phone..."
+                  value={boardSearch}
+                  onChange={(e) => setBoardSearch(e.target.value)}
+                  className="w-full pl-9 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
+                />
+                {boardSearch && (
+                  <button
+                    onClick={() => setBoardSearch('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {/* Category Pills */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
+                {[
+                  { id: 'all', label: 'All Officers' },
+                  { id: 'central', label: 'Central Executive' },
+                  { id: 'patron', label: 'Union Patrons' },
+                  { id: 'regional', label: 'Regional Heads' },
+                  { id: 'advisory', label: 'Advisory Council' }
+                ].map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => setBoardCategoryFilter(cat.id)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                      boardCategoryFilter === cat.id
+                        ? 'bg-sky-600 text-white shadow-xs'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Board Members Directory Cards Grid */}
+            <div className="space-y-4">
+              {(() => {
+                const filtered = boardMembersList.filter((m) => {
+                  const matchesCat = boardCategoryFilter === 'all' || m.category === boardCategoryFilter;
+                  const q = boardSearch.toLowerCase().trim();
+                  if (!q) return matchesCat;
+                  const text = (
+                    (m.nameEn || '') + ' ' +
+                    (m.nameHi || '') + ' ' +
+                    (m.titleEn || '') + ' ' +
+                    (m.titleHi || '') + ' ' +
+                    (m.circle || '') + ' ' +
+                    (m.phone || '') + ' ' +
+                    (m.badge || '')
+                  ).toLowerCase();
+                  return matchesCat && text.includes(q);
+                });
+
+                if (filtered.length === 0) {
+                  return (
+                    <div className="bg-white rounded-3xl border border-slate-200 p-12 text-center space-y-3 shadow-sm">
+                      <ShieldCheck className="w-10 h-10 text-slate-300 mx-auto" />
+                      <h3 className="text-base font-extrabold text-slate-700">No Board Leaders Found</h3>
+                      <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                        {boardSearch ? 'No officers match your search query.' : 'No board leaders exist under this category.'}
+                      </p>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {filtered.map((leader) => {
+                      const catBadgeClasses = {
+                        central: 'bg-sky-100 text-sky-800 border-sky-200',
+                        patron: 'bg-amber-100 text-amber-900 border-amber-300',
+                        regional: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+                        advisory: 'bg-purple-100 text-purple-800 border-purple-200'
+                      }[leader.category] || 'bg-slate-100 text-slate-800 border-slate-200';
+
+                      return (
+                        <div
+                          key={leader.id}
+                          className={`bg-white rounded-3xl p-5 border shadow-xs hover:shadow-md transition-all flex flex-col justify-between space-y-4 relative group ${
+                            leader.isTopHead ? 'border-sky-300 ring-2 ring-sky-100' : 'border-slate-200'
+                          }`}
+                        >
+                          <div className="space-y-3">
+                            {/* Card Top Pill Row */}
+                            <div className="flex items-center justify-between gap-2 flex-wrap">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 font-mono">
+                                  #{leader.id}
+                                </span>
+                                <span className={`text-[9px] font-black uppercase px-2.5 py-0.5 rounded-full border ${catBadgeClasses}`}>
+                                  {leader.category}
+                                </span>
+                              </div>
+
+                              <button
+                                onClick={() => handleToggleTopHead(leader)}
+                                title={leader.isTopHead ? 'Featured in Top 4 Apex Heads' : 'Click to mark as Top Apex Head'}
+                                className={`text-[10px] font-extrabold px-2.5 py-1 rounded-full border transition-all flex items-center gap-1 ${
+                                  leader.isTopHead
+                                    ? 'bg-amber-400 text-slate-950 border-amber-500 shadow-xs'
+                                    : 'bg-slate-100 text-slate-500 border-slate-200 hover:bg-amber-100 hover:text-amber-900'
+                                }`}
+                              >
+                                <Award className="w-3 h-3" />
+                                <span>{leader.isTopHead ? '★ Top Head' : '+ Top Head'}</span>
+                              </button>
+                            </div>
+
+                            {/* Leader Photo & Identity */}
+                            <div className="flex items-start gap-3.5 pt-1">
+                              <img
+                                src={leader.image || '/images/board/v-s-mehto.jpg'}
+                                alt={leader.nameEn}
+                                onError={(e) => {
+                                  e.target.onerror = null;
+                                  e.target.src = '/images/board/v-s-mehto.jpg';
+                                }}
+                                className="w-16 h-16 sm:w-18 sm:h-18 rounded-2xl object-cover object-top border-2 border-sky-400 shadow-sm shrink-0"
+                              />
+                              <div className="min-w-0 space-y-0.5">
+                                <h3 className="font-extrabold text-slate-900 text-base leading-snug truncate" title={leader.nameEn}>
+                                  {leader.nameEn}
+                                </h3>
+                                <p className="text-xs font-semibold text-slate-500 truncate" title={leader.nameHi}>
+                                  {leader.nameHi}
+                                </p>
+                                <p className="text-xs font-black text-sky-700 pt-0.5 leading-snug line-clamp-2" title={leader.titleEn}>
+                                  {leader.titleEn}
+                                </p>
+                                {leader.titleHi && (
+                                  <p className="text-[11px] font-medium text-slate-500 italic truncate" title={leader.titleHi}>
+                                    {leader.titleHi}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Circle & Contact Details */}
+                            <div className="pt-2 border-t border-slate-100 space-y-1.5 text-xs text-slate-600 font-mono">
+                              <div className="flex items-center gap-2 text-slate-700">
+                                <span className="font-bold text-sky-600">Circle:</span>
+                                <span className="truncate">{leader.circle || 'State Committee'}</span>
+                              </div>
+                              <div className="flex items-center justify-between text-slate-600">
+                                <span className="truncate">📞 {leader.phone || 'N/A'}</span>
+                                <span className="truncate text-[10px] text-slate-400">✉ {leader.email || 'mpmavaks@gmail.com'}</span>
+                              </div>
+                            </div>
+
+                            {/* Bio / Quote Snippet */}
+                            {(leader.bioEn || leader.bioHi) && (
+                              <p className="text-[11px] text-slate-500 italic leading-relaxed line-clamp-2 pt-1 border-t border-slate-50">
+                                "{leader.bioEn || leader.bioHi}"
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Action Buttons */}
+                          <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                            <span className="text-[10px] text-slate-400 font-mono font-semibold">
+                              Order: {leader.display_order ?? leader.id}
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => {
+                                  setEditBoardModal(leader);
+                                  setBoardForm({
+                                    nameEn: leader.nameEn || '',
+                                    nameHi: leader.nameHi || '',
+                                    titleEn: leader.titleEn || '',
+                                    titleHi: leader.titleHi || '',
+                                    category: leader.category || 'central',
+                                    isTopHead: Boolean(leader.isTopHead),
+                                    badge: leader.badge || '',
+                                    image: leader.image || '',
+                                    phone: leader.phone || '',
+                                    email: leader.email || '',
+                                    circle: leader.circle || '',
+                                    roleEn: leader.roleEn || '',
+                                    roleHi: leader.roleHi || '',
+                                    bioEn: leader.bioEn || '',
+                                    bioHi: leader.bioHi || '',
+                                    display_order: leader.display_order ?? leader.id
+                                  });
+                                }}
+                                className="px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-xs font-bold flex items-center gap-1 transition-colors"
+                              >
+                                <Edit3 className="w-3.5 h-3.5" />
+                                <span>Edit</span>
+                              </button>
+                              <button
+                                onClick={() => handleDeleteBoardMember(leader.id, leader.nameEn)}
+                                className="p-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 transition-colors"
+                                title="Delete Board Leader"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+            </div>
           </div>
         )}
 
@@ -2873,6 +3323,262 @@ export default function AdminDashboard() {
                   className="flex-1 py-3 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold shadow-md"
                 >
                   {editPhotoModal ? 'Update Photo' : 'Upload Photo'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      
+      {/* CREATE / EDIT BOARD OF UNION MEMBER MODAL */}
+      {(createBoardModal || editBoardModal) && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white border border-slate-200 rounded-3xl max-w-2xl w-full p-6 sm:p-8 space-y-6 shadow-2xl animate-in zoom-in-95 my-8">
+            <div className="flex justify-between items-center border-b border-slate-100 pb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-sky-100 text-sky-700">
+                  <ShieldCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-black text-slate-900">
+                    {editBoardModal ? 'Edit Board Leader Profile' : 'Add New Board Leader'}
+                  </h3>
+                  <p className="text-xs text-slate-500 font-medium">
+                    Configure leadership identity, designation, category, contact, and bio.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => { setCreateBoardModal(false); setEditBoardModal(null); }}
+                className="text-slate-400 hover:text-slate-700 p-1 rounded-lg hover:bg-slate-100"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form
+              onSubmit={editBoardModal ? handleUpdateBoardMember : handleCreateBoardMember}
+              className="space-y-5 text-xs font-semibold text-slate-700"
+            >
+              {/* Photo Section */}
+              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
+                <label className="block font-bold text-slate-800">Leader Profile Photo</label>
+                <div className="flex items-center gap-4">
+                  <img
+                    src={boardForm.image || '/images/board/v-s-mehto.jpg'}
+                    alt="Preview"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = '/images/board/v-s-mehto.jpg';
+                    }}
+                    className="w-16 h-16 rounded-2xl object-cover object-top border-2 border-sky-400 shadow-sm shrink-0"
+                  />
+                  <div className="space-y-1.5 flex-grow">
+                    <input
+                      type="file"
+                      ref={boardPhotoInputRef}
+                      onChange={handleBoardPhotoUpload}
+                      accept="image/*"
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => boardPhotoInputRef.current && boardPhotoInputRef.current.click()}
+                      className="px-3.5 py-2 rounded-xl bg-white border border-slate-300 hover:bg-slate-100 text-slate-800 font-bold text-xs flex items-center gap-1.5 shadow-xs"
+                    >
+                      <Camera className="w-4 h-4 text-sky-600" />
+                      <span>{boardForm.image ? 'Change Photo from Device' : 'Upload Photo from Device'}</span>
+                    </button>
+                    <input
+                      type="text"
+                      placeholder="Or enter direct image path / URL (e.g. /images/board/leader.jpg)"
+                      value={boardForm.image}
+                      onChange={(e) => setBoardForm({ ...boardForm, image: e.target.value })}
+                      className="w-full bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-[11px] text-slate-700 font-mono"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Apex Head Checkbox */}
+              <div className="flex items-center gap-3 p-3.5 bg-amber-50/70 border border-amber-200 rounded-2xl">
+                <input
+                  type="checkbox"
+                  id="isTopHead"
+                  checked={boardForm.isTopHead}
+                  onChange={(e) => setBoardForm({ ...boardForm, isTopHead: e.target.checked })}
+                  className="w-4 h-4 rounded text-sky-600 focus:ring-sky-500 border-slate-300"
+                />
+                <label htmlFor="isTopHead" className="text-xs font-bold text-slate-900 cursor-pointer select-none">
+                  ⭐ Feature as Top Provincial Apex Head (Highlighted in top hero banner on Board of Union page)
+                </label>
+              </div>
+
+              {/* Names: English & Hindi */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-bold text-slate-800 mb-1">Full Name (English) *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Er. Suryadev Jaysingh"
+                    value={boardForm.nameEn}
+                    onChange={(e) => setBoardForm({ ...boardForm, nameEn: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-900 font-medium"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-800 mb-1">Full Name (Hindi)</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. इंजी सूर्यदेव जयसिंह"
+                    value={boardForm.nameHi}
+                    onChange={(e) => setBoardForm({ ...boardForm, nameHi: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-900 font-medium"
+                  />
+                </div>
+              </div>
+
+              {/* Title / Designation: English & Hindi */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-bold text-slate-800 mb-1">Title / Designation (English) *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Prantiya Adhyaksha (State President)"
+                    value={boardForm.titleEn}
+                    onChange={(e) => setBoardForm({ ...boardForm, titleEn: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-900 font-medium"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-800 mb-1">Title / Designation (Hindi)</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. प्रांतीय अध्यक्ष"
+                    value={boardForm.titleHi}
+                    onChange={(e) => setBoardForm({ ...boardForm, titleHi: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-900 font-medium"
+                  />
+                </div>
+              </div>
+
+              {/* Category, Badge & Display Order */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label className="block font-bold text-slate-800 mb-1">Governance Category</label>
+                  <select
+                    value={boardForm.category}
+                    onChange={(e) => setBoardForm({ ...boardForm, category: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-900 font-bold"
+                  >
+                    <option value="central">Central Executive</option>
+                    <option value="patron">Union Patron</option>
+                    <option value="regional">Regional Head</option>
+                    <option value="advisory">Advisory Council</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-800 mb-1">Badge Label</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. State President"
+                    value={boardForm.badge}
+                    onChange={(e) => setBoardForm({ ...boardForm, badge: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-900 font-medium"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-800 mb-1">Display Order</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={boardForm.display_order}
+                    onChange={(e) => setBoardForm({ ...boardForm, display_order: Number(e.target.value) })}
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-900 font-medium"
+                  />
+                </div>
+              </div>
+
+              {/* Circle & Contact Info */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label className="block font-bold text-slate-800 mb-1">Circle / Jurisdiction</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. State Executive Committee"
+                    value={boardForm.circle}
+                    onChange={(e) => setBoardForm({ ...boardForm, circle: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-900 font-medium"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-800 mb-1">Phone Number</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. +91 94249 44041"
+                    value={boardForm.phone}
+                    onChange={(e) => setBoardForm({ ...boardForm, phone: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-900 font-medium"
+                  />
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-800 mb-1">Email Address</label>
+                  <input
+                    type="email"
+                    placeholder="e.g. mpmavaks@gmail.com"
+                    value={boardForm.email}
+                    onChange={(e) => setBoardForm({ ...boardForm, email: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-slate-900 font-medium"
+                  />
+                </div>
+              </div>
+
+              {/* Bio Summary: English & Hindi */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-bold text-slate-800 mb-1">Bio Summary (English)</label>
+                  <textarea
+                    rows="2"
+                    placeholder="Short description of leadership role and advocacy..."
+                    value={boardForm.bioEn}
+                    onChange={(e) => setBoardForm({ ...boardForm, bioEn: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2 text-slate-900 font-medium"
+                  ></textarea>
+                </div>
+                <div>
+                  <label className="block font-bold text-slate-800 mb-1">Bio Summary (Hindi)</label>
+                  <textarea
+                    rows="2"
+                    placeholder="नेतृत्व भूमिका एवं कर्मचारी कल्याण संबंधी संक्षिप्त विवरण..."
+                    value={boardForm.bioHi}
+                    onChange={(e) => setBoardForm({ ...boardForm, bioHi: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2 text-slate-900 font-medium"
+                  ></textarea>
+                </div>
+              </div>
+
+              {/* Submit / Cancel Buttons */}
+              <div className="flex items-center gap-3 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => { setCreateBoardModal(false); setEditBoardModal(null); }}
+                  className="flex-1 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={boardSubmitting}
+                  className="flex-1 py-3 rounded-2xl bg-sky-600 hover:bg-sky-500 text-white font-extrabold text-xs shadow-md transition-all flex items-center justify-center gap-2"
+                >
+                  {boardSubmitting ? (
+                    <span>Saving Leader...</span>
+                  ) : (
+                    <span>{editBoardModal ? 'Update Board Member' : 'Add Board Member'}</span>
+                  )}
                 </button>
               </div>
             </form>

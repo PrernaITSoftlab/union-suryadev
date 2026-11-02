@@ -407,19 +407,9 @@ export default function MemberCard({
       {/* Main Interactive Card Showcase Container */}
       <div className="flex flex-col lg:flex-row items-center justify-center gap-8 py-4">
 
-        {/* 3D Flip Card Container */}
-        <div
-          className="w-full max-w-[480px] cursor-pointer group"
-          style={{ perspective: '1200px' }}
-          onClick={() => setIsFlipped(!isFlipped)}
-        >
-          <div
-            className="w-full transition-all duration-700 relative min-h-[255px] sm:min-h-0 sm:aspect-[85.6/54]"
-            style={{
-              transformStyle: 'preserve-3d',
-              transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)'
-            }}
-          >
+        {/* Official Digital Member ID Card */}
+        <div className="w-full max-w-[480px]">
+          <div className="w-full relative min-h-[255px] sm:min-h-0 sm:aspect-[85.6/54]">
 
             {/* ================= FRONT SIDE (Interactive Display) ================= */}
             <div
@@ -576,95 +566,6 @@ export default function MemberCard({
                 </div>
               </div>
             </div>
-
-            {/* ================= BACK SIDE (Interactive Display) ================= */}
-            <div
-              className="w-full min-h-[255px] sm:min-h-0 sm:aspect-[85.6/54] rounded-2xl p-3 sm:p-4.5 text-slate-900 bg-white border-2 border-slate-300 flex flex-col justify-between select-none shadow-2xl absolute inset-0 overflow-hidden"
-              style={{
-                backfaceVisibility: 'hidden',
-                WebkitBackfaceVisibility: 'hidden',
-                transform: 'rotateY(180deg)'
-              }}
-            >
-              {/* Magnetic Stripe */}
-              <div className="-mx-3 sm:-mx-4.5 -mt-3 sm:-mt-4.5 h-7 sm:h-8 bg-slate-900 flex items-center justify-between px-3 sm:px-4">
-                <span className="text-[8px] font-mono text-slate-400 tracking-widest">
-                  MPVMAVAKS SECURE CARD TRACK
-                </span>
-                <span className="text-[8.5px] font-mono text-amber-400 font-black">
-                  {memberId}
-                </span>
-              </div>
-
-              {/* Back Content Grid */}
-              <div className="grid grid-cols-2 gap-3 pt-2 text-[8.5px] sm:text-[9.5px]">
-                {/* Left Column: Member Confidential Info */}
-                <div className="space-y-1">
-                  <span className="text-[9.5px] font-black uppercase text-amber-900 tracking-wide block">
-                    Member Record
-                  </span>
-                  <div className="border-b border-slate-100 pb-0.5">
-                    <span className="text-slate-600 block text-[7.5px] font-bold">Father/Spouse:</span>
-                    <span className="font-black text-black truncate block text-[9.5px]">{fatherName}</span>
-                  </div>
-                  <div className="border-b border-slate-100 pb-0.5">
-                    <span className="text-slate-600 block text-[7.5px] font-bold">DOB / Blood Group:</span>
-                    <span className="font-mono font-black text-black text-[9.5px]">{formattedDob} • {bloodGroup}</span>
-                  </div>
-                  <div className="border-b border-slate-100 pb-0.5">
-                    <span className="text-slate-600 block text-[7.5px] font-bold">Emergency Contact:</span>
-                    <span className="font-mono font-black text-amber-900 text-[9.5px]">{emergencyPhone}</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-600 block text-[7.5px] font-bold">Circle Headquarters:</span>
-                    <span className="font-extrabold text-black truncate block text-[9.5px]">{address}</span>
-                  </div>
-                </div>
-
-                {/* Right Column: Union Rules & Seal */}
-                <div className="space-y-1 flex flex-col justify-between">
-                  <div>
-                    <span className="text-[9.5px] font-black uppercase text-slate-950 tracking-wide block">
-                      Official Declaration
-                    </span>
-                    <p className="text-[7.5px] text-slate-800 leading-tight mt-0.5 font-semibold">
-                      1. This card is non-transferable and remains the official property of MPVMAVAKS Union.
-                    </p>
-                    <p className="text-[7.5px] text-slate-800 leading-tight font-semibold">
-                      2. Entitles bearer to official representation, grievance defense, and union welfare fund.
-                    </p>
-                    <p className="text-[7.5px] text-slate-800 leading-tight font-semibold">
-                      3. If found, please return to: Central Secretariat, Govindpura, Bhopal.
-                    </p>
-                  </div>
-
-                  <div className="flex items-center justify-end gap-2 pt-1">
-                    <UnionSealStamp className="w-10 h-10 shrink-0 opacity-85" />
-                    <div className="text-right">
-                      <span className="font-serif italic font-black text-[9.5px] text-black block leading-tight">
-                        Rajesh Sharma
-                      </span>
-                      <span className="text-[7px] font-mono text-slate-700 uppercase block font-bold">
-                        Gen. Secretary
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Bottom Barcode & Helpline & Union Website */}
-              <div className="border-t border-slate-300 pt-1 flex items-center justify-between gap-3">
-                <div className="flex-1 max-w-[180px]">
-                  <BarcodeSvg value={memberId} height={32} />
-                </div>
-                <div className="text-right text-[8px] font-mono">
-                  <span className="block font-black text-black">Helpline: +91 94249 44041</span>
-                  <span className="block font-bold text-slate-800">mpmavaks@gmail.com</span>
-                  <span className="block font-black text-blue-700 underline text-[9px]">{unionWebsite}</span>
-                </div>
-              </div>
-            </div>
-
           </div>
         </div>
 
@@ -687,30 +588,11 @@ export default function MemberCard({
 
             <button
               type="button"
-              onClick={() => setIsFlipped(!isFlipped)}
-              className="w-full py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold flex items-center justify-between transition-colors"
-            >
-              <span>{isFlipped ? 'View Front Side' : 'Flip to View Back Side'}</span>
-              <RotateCw className="w-3.5 h-3.5 text-amber-600" />
-            </button>
-
-            <button
-              type="button"
               onClick={handleCopyId}
-              className="w-full py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold flex items-center justify-between transition-colors"
+              className="w-full py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold flex items-center justify-between transition-colors"
             >
               <span>{copiedId ? 'Copied to Clipboard!' : 'Copy Unique Member ID'}</span>
               {copiedId ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-slate-500" />}
-            </button>
-
-            <button
-              type="button"
-              onClick={handleDownloadPdf}
-              disabled={generatingPdf}
-              className="w-full py-2.5 px-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black flex items-center justify-center gap-2 shadow-sm transition-all"
-            >
-              <Download className="w-4 h-4" />
-              <span>{generatingPdf ? 'Generating PDF...' : 'Download Member Card PDF'}</span>
             </button>
           </div>
         </div>

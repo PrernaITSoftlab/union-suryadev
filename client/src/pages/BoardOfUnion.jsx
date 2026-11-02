@@ -1,13 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import api from '../services/api';
 import { 
-  Shield, Users, Award, MapPin, Mail, Phone, CheckCircle2, 
+  Shield, Users, Award, MapPin, Mail, Phone, CheckCircle2, Settings, 
   Search, Star, ChevronRight, UserCheck, Sparkles, Filter, Info, Building
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 
 export default function BoardOfUnion() {
-  const { settings } = useAuth();
+  const { user, settings } = useAuth();
+  const isAdmin = user?.role === 'admin';
   const { t, isHindi } = useLanguage();
   const [activeFilter, setActiveFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -341,8 +344,46 @@ export default function BoardOfUnion() {
     }
   ];
 
-  const filteredLeaders = leaders;
-  const top4Heads = leaders.filter(l => l.isTopHead);
+
+  const [leadersList, setLeadersList] = useState(leaders);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchBoard = async () => {
+      try {
+        setLoading(true);
+        const res = await api.get('/board/list');
+        if (res.data && res.data.success && Array.isArray(res.data.boardMembers) && res.data.boardMembers.length > 0) {
+          setLeadersList(res.data.boardMembers);
+        }
+      } catch (err) {
+        console.warn('Could not fetch dynamic board list, using fallback:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchBoard();
+  }, []);
+
+  const filteredLeaders = leadersList.filter((leader) => {
+    const matchesCategory = activeFilter === 'all' || leader.category === activeFilter;
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return matchesCategory;
+    const text = (
+      (leader.nameEn || '') + ' ' +
+      (leader.nameHi || '') + ' ' +
+      (leader.titleEn || '') + ' ' +
+      (leader.titleHi || '') + ' ' +
+      (leader.circle || '') + ' ' +
+      (leader.phone || '') + ' ' +
+      (leader.roleEn || '') + ' ' +
+      (leader.roleHi || '')
+    ).toLowerCase();
+    return matchesCategory && text.includes(q);
+  });
+
+  const top4Heads = leadersList.filter(l => l.isTopHead);
+
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 pb-20">
@@ -381,6 +422,17 @@ export default function BoardOfUnion() {
               <Building className="w-4 h-4 text-emerald-400" />
               <span>15 Discom Circles</span>
             </span>
+
+            {isAdmin && (
+              <Link
+                to="/admin?tab=board_of_union"
+                className="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black flex items-center gap-1.5 shadow-md transition-all hover:scale-105"
+              >
+                <Settings className="w-4 h-4 text-slate-950" />
+                <span>⚙️ Manage Board of Union (Admin)</span>
+              </Link>
+            )}
+
           </div>
 
         </div>
@@ -462,6 +514,61 @@ export default function BoardOfUnion() {
 
               </div>
             ))}
+          </div>
+        </div>
+
+        
+        {/* DIRECTORY SEARCH & CATEGORY FILTER TOOLBAR */}
+        <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+          <div className="relative flex-grow max-w-md">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder={isHindi ? 'नाम, पद, वृत्त या संपर्क से खोजें...' : 'Search by officer name, title, circle, or phone...'}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              >
+                <span className="text-xs">✕</span>
+              </button>
+            )}
+          </div>
+
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
+            {[
+              { id: 'all', labelEn: 'All Leaders', labelHi: 'सभी पदाधिकारी' },
+              { id: 'central', labelEn: 'Central Executive', labelHi: 'केंद्रीय कार्यसमिति' },
+              { id: 'patron', labelEn: 'Patrons', labelHi: 'संरक्षक मंडल' },
+              { id: 'regional', labelEn: 'Regional Heads', labelHi: 'संभागीय प्रमुख' },
+              { id: 'advisory', labelEn: 'Advisory Panel', labelHi: 'सलाहकार समिति' }
+            ].map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => setActiveFilter(cat.id)}
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+                  activeFilter === cat.id
+                    ? 'bg-sky-600 text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                {isHindi ? cat.labelHi : cat.labelEn}
+              </button>
+            ))}
+
+            {isAdmin && (
+              <Link
+                to="/admin?tab=board_of_union"
+                className="ml-2 px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center gap-1.5 shadow-xs whitespace-nowrap"
+              >
+                <Settings className="w-3.5 h-3.5" />
+                <span>+ Edit Board</span>
+              </Link>
+            )}
           </div>
         </div>
 

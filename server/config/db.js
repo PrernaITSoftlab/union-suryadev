@@ -27,6 +27,17 @@ dotenv.config({ path: path.join(__dirname, '../.env') });
 const USERS_BACKUP_FILE = path.join(__dirname, '../db/users_backup.json');
 const EVENTS_BACKUP_FILE = path.join(__dirname, '../db/events_backup.json');
 const REGISTRATIONS_BACKUP_FILE = path.join(__dirname, '../db/event_registrations_backup.json');
+const BOARD_BACKUP_FILE = path.join(__dirname, '../db/board_backup.json');
+
+const loadInitialBoard = () => {
+  try {
+    if (fs.existsSync(BOARD_BACKUP_FILE)) {
+      const data = JSON.parse(fs.readFileSync(BOARD_BACKUP_FILE, 'utf-8'));
+      if (Array.isArray(data) && data.length > 0) return data;
+    }
+  } catch (_) {}
+  return [];
+};
 
 const loadInitialEvents = () => {
   try {
@@ -71,6 +82,7 @@ export const inMemoryStore = {
   chatGroups: [],
   chatGroupMembers: [],
   chatMessages: [],
+  boardMembers: loadInitialBoard(),
   auditLogs: [
     {
       id: 1,
@@ -100,6 +112,15 @@ export const saveRegistrationsBackup = () => {
     fs.writeFileSync(REGISTRATIONS_BACKUP_FILE, JSON.stringify(inMemoryStore.eventRegistrations, null, 2), 'utf-8');
   } catch (err) {
     console.warn('⚠️ Could not save event_registrations_backup.json:', err.message);
+  }
+};
+
+// Save board members to local persistent storage (board_backup.json)
+export const saveBoardBackup = () => {
+  try {
+    fs.writeFileSync(BOARD_BACKUP_FILE, JSON.stringify(inMemoryStore.boardMembers, null, 2), 'utf-8');
+  } catch (err) {
+    console.warn('⚠️ Could not save board_backup.json:', err.message);
   }
 };
 

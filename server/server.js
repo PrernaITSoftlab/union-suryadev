@@ -18,6 +18,7 @@ import photoRoutes from './routes/photoRoutes.js';
 import strikeRoutes from './routes/strikeRoutes.js';
 import opportunityRoutes from './routes/opportunityRoutes.js';
 import chatRoutes from './routes/chatRoutes.js';
+import boardRoutes from './routes/boardRoutes.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 dotenv.config();
@@ -68,6 +69,7 @@ mountRoute('/photos', photoRoutes);
 mountRoute('/strike', strikeRoutes);
 mountRoute('/opportunities', opportunityRoutes);
 mountRoute('/chat', chatRoutes);
+mountRoute('/board', boardRoutes);
 
 // Health check endpoint (all paths)
 const healthHandler = (req, res) => {

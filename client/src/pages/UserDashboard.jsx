@@ -401,7 +401,7 @@ export default function UserDashboard() {
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div>
                 <h2 className="text-xl font-bold text-slate-900">Member Official Profile & ID Card</h2>
-                <p className="text-xs text-slate-500 font-medium">View and download your official digital union identity card and employment records</p>
+                <p className="text-xs text-slate-500 font-medium">View your official digital union identity card and employment records</p>
               </div>
               <button
                 onClick={() => setEditingProfile(!editingProfile)}

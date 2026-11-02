@@ -84,7 +84,6 @@ const EMPLOYEE_TYPES = [
 const CATEGORIES = [
   "ST",
   "SC",
-  "OBC",
   "Other"
 ];
 
@@ -132,7 +131,7 @@ export default function JoinNow() {
 
     // Employee class & category
     employee_type: EMPLOYEE_TYPES[0], // Regular
-    category: CATEGORIES[2], // OBC
+    category: CATEGORIES[0], // ST
     employee_class: EMPLOYEE_CLASSES[2], // Class 3
 
     cug_mobile: '',
@@ -327,7 +326,7 @@ export default function JoinNow() {
   };
 
   const cleanPhone = whatsappNo.replace(/[^0-9]/g, '');
-  const waMsg = encodeURIComponent(`*MPVMAVAKS UNION MEMBERSHIP REGISTRATION*\nName: ${formData.full_name}\nDistrict: ${formData.district_name}\nClass: ${formData.employee_class} (Fee: ₹${regFee})\nPlease verify my membership application. Thank you!`);
+  const waMsg = encodeURIComponent(`*MPVMAVAKS UNION MEMBERSHIP REGISTRATION*\nName: ${formData.full_name}\nDistrict: ${formData.district_name}\nClass: ${formData.employee_class} (Fee (membership+Donation): ₹${regFee})\nPlease verify my membership application. Thank you!`);
   const waLink = `https://wa.me/${cleanPhone.startsWith('91') ? cleanPhone : '91' + cleanPhone}?text=${waMsg}`;
 
   return (
@@ -344,7 +343,7 @@ export default function JoinNow() {
             Apply to join MPVMAVAKS UNION
           </h1>
           <p className="text-xs sm:text-sm text-slate-600 font-medium max-w-2xl mx-auto">
-            Please fill out all required fields marked with <span className="text-red-500 font-bold">*</span> accurately. Select your Employee Class to determine your registration fee (Class 1: ₹2000 | Class 2: ₹1500 | Class 3 (J.E.): ₹1000 | Class 4: ₹500).
+            Please fill out all required fields marked with <span className="text-red-500 font-bold">*</span> accurately. Select your Employee Class to determine your registration fee (membership+Donation) (Class 1: ₹2000 | Class 2: ₹1500 | Class 3 (J.E.): ₹1000 | Class 4: ₹500).
           </p>
         </div>
 
@@ -521,7 +520,7 @@ export default function JoinNow() {
                     5. Employee Class (कर्मचारी श्रेणी) <span className="text-red-500">*</span>
                   </label>
                   <span className="px-2.5 py-1 rounded-full bg-sky-600 text-white font-extrabold text-[11px] shadow-sm">
-                    Applicable Registration Fee: ₹{regFee}
+                    Applicable Registration Fee (membership+Donation): ₹{regFee}
                   </span>
                 </div>
 
@@ -547,7 +546,7 @@ export default function JoinNow() {
                         />
                         <span className="text-xs font-extrabold">{cls}</span>
                         <span className={`text-[10px] font-mono ${isSelected ? 'text-sky-100 font-bold' : 'text-sky-700 font-semibold'}`}>
-                          Fee: ₹{feeForCls}
+                          Fee (membership+Donation): ₹{feeForCls}
                         </span>
                       </label>
                     );
@@ -805,7 +804,7 @@ export default function JoinNow() {
               type="submit"
               className="w-full py-4 rounded-2xl font-bold text-xs sm:text-sm bg-sky-600 hover:bg-sky-500 text-white transition-all flex items-center justify-center gap-2 shadow-md"
             >
-              <span>Proceed to Registration QR Payment (₹{regFee}) & Receipt Upload</span>
+              <span>Proceed to Registration (Donation + membership) QR Payment (₹{regFee}) & Receipt Upload</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </form>
@@ -816,10 +815,10 @@ export default function JoinNow() {
           <form onSubmit={handleFinalSubmit} className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-10 space-y-8 shadow-sm">
 
             <div className="text-center space-y-2">
-              <span className="text-xs font-bold text-sky-700 uppercase tracking-widest">Step 2: Registration Verification</span>
+              <span className="text-xs font-bold text-sky-700 uppercase tracking-widest">Step 2: Registration (Donation + membership) Verification</span>
               <h2 className="text-2xl font-bold text-slate-900">Scan Union QR Code & Upload Payment Receipt</h2>
               <p className="text-xs text-slate-600 max-w-lg mx-auto font-medium">
-                Pay the annual union registration fee of <span className="text-sky-700 font-extrabold text-sm">₹{regFee}</span> ({formData.employee_class}) via UPI (GPay, PhonePe, Paytm, BHIM) and upload your payment receipt screenshot.
+                Pay the annual union registration fee (membership+Donation) of <span className="text-sky-700 font-extrabold text-sm">₹{regFee}</span> ({formData.employee_class}) via UPI (GPay, PhonePe, Paytm, BHIM) and upload your payment receipt screenshot.
               </p>
             </div>
 
@@ -833,7 +832,7 @@ export default function JoinNow() {
               <div className="flex flex-wrap justify-between gap-2 text-[11px] text-slate-600">
                 <div><span>Employee Type:</span> <strong className="text-slate-900">{formData.employee_type}</strong></div>
                 <div><span>Category:</span> <strong className="text-slate-900">{formData.category}</strong></div>
-                <div><span>Class & Fee:</span> <strong className="text-sky-700">{formData.employee_class} (₹{regFee})</strong></div>
+                <div><span>Class & Fee (membership+Donation):</span> <strong className="text-sky-700">{formData.employee_class} (₹{regFee})</strong></div>
               </div>
             </div>
 
