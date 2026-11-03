@@ -13,38 +13,43 @@ import { urlToBase64, generateMemberQrCode, getBarcodePattern, formatMemberId } 
 /**
  * High-definition SVG Barcode component
  */
-const BarcodeSvg = ({ value = 'MPAVAKS-0001', height = 36 }) => {
+const BarcodeSvg = ({ value = 'MPAVAKS-0001', height = 28, isDark = false, className = '' }) => {
   const bars = useMemo(() => getBarcodePattern(value), [value]);
-  let currentX = 10;
+  let currentX = 6;
   const barElements = [];
+  const barColor = isDark ? '#E2E8F0' : '#0F172A';
+  const textColor = isDark ? '#CBD5E1' : '#0F172A';
 
   bars.forEach((width, index) => {
-    // Alternate black bar and white space
+    // Alternate bar and space
     if (index % 2 === 0) {
       barElements.push(
         <rect
           key={index}
           x={currentX}
-          y="2"
-          width={width * 1.6}
-          height={height - 12}
-          fill="#0F172A"
+          y="1"
+          width={width * 1.3}
+          height={height - 9}
+          fill={barColor}
         />
       );
     }
-    currentX += width * 1.6;
+    currentX += width * 1.3;
   });
 
   return (
-    <div className="flex flex-col items-center">
+    <div className={`flex flex-col items-center justify-center ${className}`}>
       <svg
-        viewBox={`0 0 ${Math.max(currentX + 10, 160)} ${height}`}
-        className="w-full h-8"
+        viewBox={`0 0 ${Math.max(currentX + 6, 120)} ${height}`}
+        className="h-5 sm:h-6 w-24 sm:w-28"
         preserveAspectRatio="none"
       >
         {barElements}
       </svg>
-      <span className="font-mono text-[9px] tracking-[0.25em] text-slate-800 font-bold -mt-0.5">
+      <span
+        className="font-mono text-[7px] sm:text-[8px] tracking-[0.2em] font-extrabold -mt-0.5"
+        style={{ color: textColor }}
+      >
         {value}
       </span>
     </div>
@@ -132,7 +137,17 @@ export default function MemberCard({
   const circle = profile.circle || 'Ujjain Circle';
   const district = profile.district || profile.city || (circle ? circle.replace(/Circle|Corporate/gi, '').trim() : 'Ujjain');
   const officeAddress = profile.office_address || `${circle}, ${company}`;
-  const post = designation || unionDesignation || 'Line Superintendent Grade-I';
+  const unionPost =
+    profile.union_post ||
+    profile.category_person ||
+    profile.member_category ||
+    effectiveUser?.union_post ||
+    effectiveUser?.category_person ||
+    effectiveUser?.member_category ||
+    profile.union_designation ||
+    effectiveUser?.union_designation ||
+    'Ordinary Member (साधारण सदस्य)';
+  const post = unionPost;
   const phone = profile.phone || '+91 94250 88776';
   const emergencyPhone = profile.emergency_contact || '+91 98261 00000';
   const joiningDate = profile.joining_date || '2026-10-22';
@@ -451,21 +466,21 @@ export default function MemberCard({
                     className={`w-8 h-8 sm:w-10 sm:h-10 object-contain rounded-full p-0.5 border-2 shrink-0 ${cardTheme === 'gold' ? 'bg-white/10 border-amber-400/60' : 'bg-white border-sky-600 shadow-xs'}`}
                   />
                   <div>
-                    <h4 className={`text-[9.5px] sm:text-[11px] leading-tight uppercase tracking-tight font-black ${cardTheme === 'gold' ? 'text-amber-400' : 'text-[#0B2545]'}`}>
-                      म.प्र.वि.म. आरक्षित वर्ग अधिकारी / कर्मचारी संघ
+                    <h4 className={`text-[9px] sm:text-[10.5px] leading-tight tracking-tight font-black ${cardTheme === 'gold' ? 'text-amber-400' : 'text-[#0B2545]'}`}>
+                      मध्य प्रदेश विद्युत मंडल आरक्षित वर्ग अधिकारी / कर्मचारी संघ
                     </h4>
                     <h5 className={`text-[10.5px] sm:text-[12px] leading-tight tracking-wider uppercase font-black ${cardTheme === 'gold' ? 'text-white' : 'text-[#1E3A8A]'}`}>
                       MP Electricity Department
                     </h5>
                     <p className={`text-[7.5px] sm:text-[8.5px] font-mono tracking-wider font-bold ${cardTheme === 'gold' ? 'text-slate-300' : 'text-slate-700'}`}>
-                      M.P. West Zone Electricity Distribution Co. • Regd. No. 4404
+                      M.P. West Zone Electricity Distribution Co. • Regd. No. 4865
                     </p>
                   </div>
                 </div>
 
                 <div className="text-right shrink-0">
-                  <span className={`px-2 py-0.5 rounded-md text-[8.5px] sm:text-[10px] font-mono font-black tracking-widest uppercase block ${cardTheme === 'gold' ? 'bg-amber-500/20 border border-amber-500/40 text-amber-300' : 'bg-[#1E3A8A] text-white shadow-xs'}`}>
-                    DIGITAL ID
+                  <span className={`px-2 py-0.5 rounded-md text-[8.5px] sm:text-[10px] font-mono font-black tracking-wider uppercase block ${cardTheme === 'gold' ? 'bg-amber-500/20 border border-amber-500/40 text-amber-300' : 'bg-[#1E3A8A] text-white shadow-xs'}`}>
+                    Reg No.-4865
                   </span>
                   <span className={`text-[7px] sm:text-[7.5px] font-mono block mt-0.5 font-bold ${cardTheme === 'gold' ? 'text-slate-400' : 'text-slate-600'}`}>
                     CR80 STANDARD
@@ -495,17 +510,19 @@ export default function MemberCard({
                     <h2 className={`text-[13.5px] sm:text-base font-black leading-tight tracking-tight ${cardTheme === 'gold' ? 'text-white' : 'text-[#0A192F]'}`}>
                       {fullName}
                     </h2>
-                    <p className={`text-[10px] sm:text-[11px] font-black leading-tight ${cardTheme === 'gold' ? 'text-amber-400' : 'text-blue-900'}`}>
-                      {unionDesignation}
-                    </p>
+                    {unionDesignation && unionDesignation !== unionPost && (
+                      <p className={`text-[10px] sm:text-[11px] font-black leading-tight ${cardTheme === 'gold' ? 'text-amber-400' : 'text-blue-900'}`}>
+                        {unionDesignation}
+                      </p>
+                    )}
                   </div>
 
                   <div className={`space-y-0.5 text-[10px] sm:text-[11px] ${cardTheme === 'gold' ? 'text-slate-200' : 'text-black'}`}>
                     <div className="flex items-start gap-1 sm:gap-1.5 leading-snug">
                       <Zap className={`w-3.5 h-3.5 shrink-0 mt-0.5 stroke-[2.5] ${cardTheme === 'gold' ? 'text-amber-400' : 'text-blue-700'}`} />
                       <div className="min-w-0 flex-1">
-                        <span className={`font-black mr-1 ${cardTheme === 'gold' ? 'text-amber-300' : 'text-blue-950'}`}>Post:</span>
-                        <span className="font-extrabold break-words">{post}</span>
+                        <span className={`font-black mr-1 ${cardTheme === 'gold' ? 'text-amber-300' : 'text-blue-950'}`}>Post in Union:</span>
+                        <span className="font-extrabold break-words">{unionPost}</span>
                       </div>
                     </div>
                     <div className="flex items-start gap-1 sm:gap-1.5 leading-snug">
@@ -542,31 +559,39 @@ export default function MemberCard({
                       e.stopPropagation();
                       handleCopyId();
                     }}
-                    className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-[9.5px] sm:text-[11px] font-mono font-black tracking-wider flex items-center gap-1.5 transition-colors cursor-copy shadow-sm ${
+                    className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-[9px] sm:text-[10.5px] font-mono font-black tracking-wider flex items-center gap-1.5 transition-colors cursor-copy shadow-sm ${
                       cardTheme === 'gold'
                         ? 'bg-slate-900 border border-amber-400/50 text-amber-300 hover:bg-slate-800'
                         : 'bg-[#0F172A] text-white hover:bg-slate-800'
                     }`}
                     title="Click to copy Member ID"
                   >
-                    <span className="text-amber-400 font-bold text-[9px] sm:text-[9.5px]">ID NO:</span>
+                    <span className="text-amber-400 font-bold text-[8.5px] sm:text-[9px]">ID NO:</span>
                     <span className="text-white font-mono font-black tracking-wide">{memberId}</span>
                     {copiedId ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3 text-slate-300" />}
                   </div>
-                  <div className={`text-[8.5px] sm:text-[10px] font-mono font-bold block pl-0.5 ${cardTheme === 'gold' ? 'text-slate-300' : 'text-[#0F172A]'}`}>
+                  <div className={`text-[8px] sm:text-[9.5px] font-mono font-bold block pl-0.5 ${cardTheme === 'gold' ? 'text-slate-300' : 'text-[#0F172A]'}`}>
                     <span className="text-slate-700 font-bold">Issued on:</span> <span className="font-black text-black">{issuedOn}</span>
                   </div>
                 </div>
 
+                {/* Center Bottom: Barcode */}
+                <div className="flex flex-col items-center justify-center shrink-0 px-1">
+                  <BarcodeSvg value={memberId} height={28} isDark={cardTheme === 'gold'} />
+                </div>
+
                 {/* Right Bottom: EMV Smart Chip, QR Code & Signature */}
-                <div className="flex items-center gap-1.5 sm:gap-2">
+                <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                   <EmvChipSvg className="w-7 h-5 sm:w-8.5 sm:h-6 shrink-0" />
                   <div className="text-right">
-                    <span className={`text-[7px] sm:text-[7.5px] font-mono block leading-tight font-bold ${cardTheme === 'gold' ? 'text-slate-300' : 'text-slate-700'}`}>
+                    <span className={`text-[6px] sm:text-[6.5px] font-mono block leading-none font-bold uppercase ${cardTheme === 'gold' ? 'text-slate-400' : 'text-slate-600'}`}>
                       AUTH SIGN
                     </span>
-                    <span className={`text-[8px] sm:text-[8.5px] font-serif italic block font-black ${cardTheme === 'gold' ? 'text-amber-300' : 'text-black'}`}>
-                      Rajesh Sharma
+                    <span className={`text-[8px] sm:text-[9px] font-serif italic block font-black leading-tight ${cardTheme === 'gold' ? 'text-amber-300' : 'text-black'}`}>
+                      Er. Suryadev Jaysingh
+                    </span>
+                    <span className={`text-[6px] sm:text-[7px] font-mono block leading-none font-bold uppercase ${cardTheme === 'gold' ? 'text-amber-400' : 'text-blue-900'}`}>
+                      State President
                     </span>
                   </div>
                   {qrDataUrl && (
@@ -657,10 +682,10 @@ export default function MemberCard({
                     <UnionSealStamp className="w-8 h-8 sm:w-10 sm:h-10 opacity-90" />
                     <div className="text-right">
                       <span className={`font-serif italic font-black text-[9px] sm:text-[10.5px] block leading-tight ${cardTheme === 'gold' ? 'text-amber-300' : 'text-black'}`}>
-                        Rajesh Sharma
+                        Er. Suryadev Jaysingh
                       </span>
                       <span className={`text-[7px] sm:text-[7.5px] font-mono block uppercase font-bold ${cardTheme === 'gold' ? 'text-slate-400' : 'text-slate-700'}`}>
-                        Gen. Secretary
+                        State President
                       </span>
                     </div>
                   </div>
@@ -760,7 +785,7 @@ export default function MemberCard({
                   MP Electricity Department
                 </h2>
                 <p className="text-xs font-semibold text-slate-600">
-                  Regd. No. 4404 under Trade Unions Act 1926 • MP West Zone Electricity Distribution Discom
+                  Regd. No. 4865 under Trade Unions Act 1926 • MP West Zone Electricity Distribution Discom
                 </p>
               </div>
             </div>
@@ -798,8 +823,8 @@ export default function MemberCard({
                       className="w-9 h-9 object-contain rounded-full bg-white p-0.5 border-2 border-sky-600 shadow-xs"
                     />
                     <div>
-                      <h4 className="text-[10.5px] font-black text-[#0B2545] leading-tight uppercase tracking-tight">
-                        म.प्र.वि.म. आरक्षित वर्ग संघ
+                      <h4 className="text-[9.5px] font-black text-[#0B2545] leading-tight tracking-tight">
+                        मध्य प्रदेश विद्युत मंडल आरक्षित वर्ग अधिकारी / कर्मचारी संघ
                       </h4>
                       <h5 className="text-[11.5px] font-black text-[#1E3A8A] leading-tight uppercase tracking-wide">
                         MP Electricity Department
@@ -807,7 +832,7 @@ export default function MemberCard({
                     </div>
                   </div>
                   <span className="px-2 py-0.5 rounded-md bg-[#1E3A8A] text-white text-[9px] font-mono font-black tracking-wider uppercase shadow-xs">
-                    DIGITAL ID
+                    Reg No.-4865
                   </span>
                 </div>
 
@@ -827,11 +852,16 @@ export default function MemberCard({
                   {/* Details on right hand side */}
                   <div className="flex-1 min-w-0 space-y-1 pl-1">
                     <h2 className="text-[14px] font-black text-[#0A192F] leading-tight tracking-tight">{fullName}</h2>
+                    {unionDesignation && unionDesignation !== unionPost && (
+                      <p className="text-[9.5px] font-black text-blue-900 leading-tight">
+                        {unionDesignation}
+                      </p>
+                    )}
                     <div className="text-[10.5px] flex items-start gap-1 leading-snug">
                       <Zap className="w-3.5 h-3.5 text-blue-700 shrink-0 mt-0.5 stroke-[2.5]" />
                       <div className="min-w-0 flex-1">
-                        <span className="text-blue-950 font-black mr-1">Post:</span>
-                        <span className="font-extrabold text-black break-words">{post}</span>
+                        <span className="text-blue-950 font-black mr-1">Post in Union:</span>
+                        <span className="font-extrabold text-black break-words">{unionPost}</span>
                       </div>
                     </div>
                     <div className="text-[10px] flex items-start gap-1 leading-snug">
@@ -858,7 +888,7 @@ export default function MemberCard({
                   </div>
                 </div>
 
-                {/* Footer: ID No. & Issued on on left bottom; EMV chip, Auth sign, QR on right bottom */}
+                {/* Footer: ID No. & Issued on on left bottom; Barcode in center; EMV chip, Auth sign, QR on right bottom */}
                 <div className="flex items-end justify-between border-t-2 border-sky-400/80 pt-1.5">
                   <div className="space-y-0.5">
                     <div className="px-2.5 py-1 rounded-md bg-[#0F172A] text-white shadow-sm inline-flex items-center gap-1.5">
@@ -870,11 +900,17 @@ export default function MemberCard({
                     </div>
                   </div>
 
+                  {/* Center: Barcode */}
+                  <div className="flex flex-col items-center justify-center shrink-0 px-1">
+                    <BarcodeSvg value={memberId} height={28} isDark={false} />
+                  </div>
+
                   <div className="flex items-center gap-2">
                     <EmvChipSvg className="w-8 h-5.5 shrink-0" />
                     <div className="text-right">
-                      <span className="text-[7px] font-mono text-slate-700 block leading-tight font-bold">AUTH SIGN</span>
-                      <span className="text-[8.5px] font-serif italic text-black font-black block leading-tight">Rajesh Sharma</span>
+                      <span className="text-[6.5px] font-mono text-slate-600 block leading-none font-bold uppercase">AUTH SIGN</span>
+                      <span className="text-[8.5px] font-serif italic text-black font-black block leading-tight">Er. Suryadev Jaysingh</span>
+                      <span className="text-[6.5px] font-mono text-blue-900 block leading-none font-bold uppercase">State President</span>
                     </div>
                     {qrDataUrl && (
                       <img src={qrDataUrl} alt="QR" className="w-8 h-8 bg-white p-0.5 rounded border-2 border-sky-400 object-contain shadow-xs" />
@@ -952,10 +988,10 @@ export default function MemberCard({
                       <UnionSealStamp className="w-9 h-9 opacity-85" />
                       <div className="text-right">
                         <span className="font-serif italic font-black text-[9.5px] text-black block leading-tight">
-                          Rajesh Sharma
+                          Er. Suryadev Jaysingh
                         </span>
                         <span className="text-[7px] font-mono text-slate-700 block uppercase font-bold">
-                          Gen. Secretary
+                          State President
                         </span>
                       </div>
                     </div>
@@ -1014,19 +1050,19 @@ export default function MemberCard({
                 className="w-10 h-10 object-contain rounded-full bg-white p-0.5 border-2 border-sky-600 shadow-xs"
               />
               <div>
-                <h4 className="text-[11px] font-black text-[#0B2545] leading-tight uppercase tracking-tight">
-                  म.प्र.वि.म. आरक्षित वर्ग अधिकारी / कर्मचारी संघ
+                <h4 className="text-[10px] font-black text-[#0B2545] leading-tight tracking-tight">
+                  मध्य प्रदेश विद्युत मंडल आरक्षित वर्ग अधिकारी / कर्मचारी संघ
                 </h4>
                 <h5 className="text-[12px] font-black text-[#1E3A8A] leading-tight uppercase tracking-wide">
                   MP Electricity Department
                 </h5>
                 <p className="text-[8.5px] font-mono font-bold text-slate-700">
-                  M.P. West Zone Discom • Regd. No. 4404
+                  M.P. West Zone Discom • Regd. No. 4865
                 </p>
               </div>
             </div>
             <span className="px-2.5 py-0.5 rounded-md bg-[#1E3A8A] text-white text-[10px] font-mono font-black tracking-wider uppercase shadow-xs">
-              DIGITAL ID
+              Reg No.-4865
             </span>
           </div>
 
@@ -1044,11 +1080,16 @@ export default function MemberCard({
 
             <div className="flex-1 min-w-0 space-y-1 pl-1">
               <h2 className="text-base font-black text-[#0A192F] leading-tight tracking-tight">{fullName}</h2>
+              {unionDesignation && unionDesignation !== unionPost && (
+                <p className="text-[10px] font-black text-blue-900 leading-tight">
+                  {unionDesignation}
+                </p>
+              )}
               <div className="text-[11px] flex items-start gap-1.5 leading-snug">
                 <Zap className="w-3.5 h-3.5 text-blue-700 shrink-0 mt-0.5 stroke-[2.5]" />
                 <div className="min-w-0 flex-1">
-                  <span className="text-blue-950 font-black mr-1">Post:</span>
-                  <span className="font-extrabold text-black break-words">{post}</span>
+                  <span className="text-blue-950 font-black mr-1">Post in Union:</span>
+                  <span className="font-extrabold text-black break-words">{unionPost}</span>
                 </div>
               </div>
               <div className="text-[10.5px] flex items-start gap-1.5 leading-snug">
@@ -1075,7 +1116,7 @@ export default function MemberCard({
             </div>
           </div>
 
-          {/* Footer: ID No. & Issued on on left bottom; EMV chip, Auth sign, QR on right bottom */}
+          {/* Footer: ID No. & Issued on on left bottom; Barcode in center; EMV chip, Auth sign, QR on right bottom */}
           <div className="flex items-end justify-between border-t-2 border-sky-400/80 pt-2">
             <div className="space-y-0.5">
               <div className="px-2.5 py-1 rounded-md bg-[#0F172A] text-white shadow-sm inline-flex items-center gap-1.5">
@@ -1087,11 +1128,17 @@ export default function MemberCard({
               </div>
             </div>
 
+            {/* Center: Barcode */}
+            <div className="flex flex-col items-center justify-center shrink-0 px-1">
+              <BarcodeSvg value={memberId} height={30} isDark={false} />
+            </div>
+
             <div className="flex items-center gap-2">
               <EmvChipSvg className="w-9 h-6.5 shrink-0" />
               <div className="text-right">
-                <span className="text-[7.5px] font-mono text-slate-700 block leading-tight font-bold">AUTH SIGN</span>
-                <span className="text-[9px] font-serif italic text-black font-black block leading-tight">Rajesh Sharma</span>
+                <span className="text-[7px] font-mono text-slate-600 block leading-none font-bold uppercase">AUTH SIGN</span>
+                <span className="text-[9px] font-serif italic text-black font-black block leading-tight">Er. Suryadev Jaysingh</span>
+                <span className="text-[7px] font-mono text-blue-900 block leading-none font-bold uppercase">State President</span>
               </div>
               {qrDataUrl && (
                 <img src={qrDataUrl} alt="QR" className="w-8 h-8 bg-white p-0.5 rounded border-2 border-sky-400 object-contain shadow-xs" />
@@ -1159,10 +1206,10 @@ export default function MemberCard({
                 <UnionSealStamp className="w-10 h-10 opacity-85" />
                 <div className="text-right">
                   <span className="font-serif italic font-black text-[10px] text-black block leading-tight">
-                    Rajesh Sharma
+                    Er. Suryadev Jaysingh
                   </span>
                   <span className="text-[7.5px] font-mono text-slate-700 block uppercase font-bold">
-                    Gen. Secretary
+                    State President
                   </span>
                 </div>
               </div>
