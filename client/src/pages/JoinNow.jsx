@@ -94,6 +94,19 @@ const EMPLOYEE_CLASSES = [
   "Class 3 & 4"
 ];
 
+const PERSON_CATEGORIES = [
+  "Ordinary Member (साधारण सदस्य)",
+  "Life Member (आजीवन सदस्य)",
+  "Honorary Member (मानद सदस्य)",
+  "Temporary Member (अस्थायी सदस्य)",
+  "Associate Member (सहयोगी सदस्य)",
+  "Patron Member (संरक्षक सदस्य)",
+  "Founder Member (संस्थापक सदस्य)",
+  "Active Member (सक्रिय सदस्य)",
+  "Retired Member (सेवानिवृत्त सदस्य)",
+  "Special Invitee Member (विशेष आमंत्रित सदस्य)"
+];
+
 const POSTS = [
   "Junior Engineer (JE) / कनिष्ठ अभियंता",
   "Assistant Engineer (AE) / सहायक अभियंता",
@@ -132,6 +145,8 @@ export default function JoinNow() {
     // Employee class & category
     employee_type: EMPLOYEE_TYPES[0], // Regular
     category: CATEGORIES[0], // ST
+    category_person: PERSON_CATEGORIES[0], // Ordinary Member (साधारण सदस्य)
+    member_category: PERSON_CATEGORIES[0],
     employee_class: EMPLOYEE_CLASSES[2], // Class 3
 
     cug_mobile: '',
@@ -262,6 +277,7 @@ export default function JoinNow() {
     if (!formData.post_name) errors.post_name = 'Name of Post is required.';
     if (!formData.employee_type) errors.employee_type = 'Employee Type is required.';
     if (!formData.category) errors.category = 'Category is required.';
+    if (!formData.category_person) errors.category_person = 'Person Category is required.';
     if (!formData.employee_class) errors.employee_class = 'Employee Class is required.';
 
     const cleanCug = formData.cug_mobile.replace(/\D/g, '');
@@ -305,6 +321,8 @@ export default function JoinNow() {
     try {
       const payload = {
         ...formData,
+        category_person: formData.category_person,
+        member_category: formData.category_person,
         registration_fee: regFee,
         full_name: formData.full_name.trim(),
         father_name: formData.father_name.trim(),
@@ -513,11 +531,33 @@ export default function JoinNow() {
                 {fieldErrors.category && <p className="text-[11px] text-red-600 mt-1 font-semibold">{fieldErrors.category}</p>}
               </div>
 
+              {/* NEW FIELD: Person Category (Type of Member Joining) * */}
+              <div className="md:col-span-2">
+                <label className="block text-xs font-bold text-slate-800 mb-1">
+                  5. Person Category (सदस्यता श्रेणी / Type of Member Joining) <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={formData.category_person}
+                  onChange={(e) => {
+                    handleChange('category_person', e.target.value);
+                    handleChange('member_category', e.target.value);
+                  }}
+                  className={`w-full bg-slate-50 border ${fieldErrors.category_person ? 'border-red-500 bg-red-50/50' : 'border-slate-300'} rounded-xl px-3.5 py-2.5 text-xs text-slate-900 focus:outline-none focus:border-sky-500 font-medium shadow-sm`}
+                >
+                  {PERSON_CATEGORIES.map((cat, idx) => (
+                    <option key={idx} value={cat}>
+                      {idx + 1}. {cat}
+                    </option>
+                  ))}
+                </select>
+                {fieldErrors.category_person && <p className="text-[11px] text-red-600 mt-1 font-semibold">{fieldErrors.category_person}</p>}
+              </div>
+
               {/* NEW FIELD 3: Employee Class * (Dynamic Fee Rule: Class 1 = 2000rs | Class 2 = 1500rs | Class 3 (J.E.) = 1000rs | Class 4 = 500rs) */}
               <div className="md:col-span-2 p-4 rounded-2xl bg-sky-50/70 border border-sky-200 space-y-2">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <label className="block text-xs font-bold text-slate-900">
-                    5. Employee Class (कर्मचारी श्रेणी) <span className="text-red-500">*</span>
+                    6. Employee Class (कर्मचारी श्रेणी) <span className="text-red-500">*</span>
                   </label>
                   <span className="px-2.5 py-1 rounded-full bg-sky-600 text-white font-extrabold text-[11px] shadow-sm">
                     Applicable Registration Fee (membership+Donation): ₹{regFee}
@@ -555,10 +595,10 @@ export default function JoinNow() {
                 {fieldErrors.employee_class && <p className="text-[11px] text-red-600 mt-1 font-semibold">{fieldErrors.employee_class}</p>}
               </div>
 
-              {/* 6. Circle Name — text input */}
+              {/* 7. Circle Name — text input */}
               <div className="md:col-span-1">
                 <label className="block text-xs font-bold text-slate-800 mb-1">
-                  6. Circle Name
+                  7. Circle Name
                 </label>
                 <input
                   type="text"
@@ -569,10 +609,10 @@ export default function JoinNow() {
                 />
               </div>
 
-              {/* 7. Division Name — text input */}
+              {/* 8. Division Name — text input */}
               <div className="md:col-span-1">
                 <label className="block text-xs font-bold text-slate-800 mb-1">
-                  7. Division Name
+                  8. Division Name
                 </label>
                 <input
                   type="text"
@@ -583,10 +623,10 @@ export default function JoinNow() {
                 />
               </div>
 
-              {/* 8. Office Name (DC/Zone/etc.) * — text input */}
+              {/* 9. Office Name (DC/Zone/etc.) * — text input */}
               <div className="md:col-span-1">
                 <label className="block text-xs font-bold text-slate-800 mb-1">
-                  8. Office Name (DC/Zone/etc.) <span className="text-red-500">*</span>
+                  9. Office Name (DC/Zone/etc.) <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -598,10 +638,10 @@ export default function JoinNow() {
                 {fieldErrors.office_name && <p className="text-[11px] text-red-600 mt-1 font-semibold">{fieldErrors.office_name}</p>}
               </div>
 
-              {/* 9. Joining Year (किस वर्ष में नौकरी ज्वाइन की) — dropdown */}
+              {/* 10. Joining Year (किस वर्ष में नौकरी ज्वाइन की) — dropdown */}
               <div className="md:col-span-1">
                 <label className="block text-xs font-bold text-slate-800 mb-1">
-                  9. Joining Year (किस वर्ष में नौकरी ज्वाइन की)
+                  10. Joining Year (किस वर्ष में नौकरी ज्वाइन की)
                 </label>
                 <select
                   value={formData.joining_year}
@@ -615,10 +655,10 @@ export default function JoinNow() {
                 </select>
               </div>
 
-              {/* 10. Your Name * — text input */}
+              {/* 11. Your Name * — text input */}
               <div className="md:col-span-1">
                 <label className="block text-xs font-bold text-slate-800 mb-1">
-                  10. Your Name <span className="text-red-500">*</span>
+                  11. Your Name <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -630,10 +670,10 @@ export default function JoinNow() {
                 {fieldErrors.full_name && <p className="text-[11px] text-red-600 mt-1 font-semibold">{fieldErrors.full_name}</p>}
               </div>
 
-              {/* 11. Father’s Name * — text input */}
+              {/* 12. Father’s Name * — text input */}
               <div className="md:col-span-1">
                 <label className="block text-xs font-bold text-slate-800 mb-1">
-                  11. Father’s Name <span className="text-red-500">*</span>
+                  12. Father’s Name <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -645,10 +685,10 @@ export default function JoinNow() {
                 {fieldErrors.father_name && <p className="text-[11px] text-red-600 mt-1 font-semibold">{fieldErrors.father_name}</p>}
               </div>
 
-              {/* 12. Name of Post * — dropdown displaying downwards */}
+              {/* 13. Name of Post * — dropdown displaying downwards */}
               <div className="md:col-span-1 relative" ref={postDropdownRef}>
                 <label className="block text-xs font-bold text-slate-800 mb-1">
-                  12. Name of Post <span className="text-red-500">*</span>
+                  13. Name of Post <span className="text-red-500">*</span>
                 </label>
                 <button
                   type="button"
@@ -682,10 +722,10 @@ export default function JoinNow() {
                 {fieldErrors.post_name && <p className="text-[11px] text-red-600 mt-1 font-semibold">{fieldErrors.post_name}</p>}
               </div>
 
-              {/* 13. Post in Department (विभाग में पद) — text input */}
+              {/* 14. Post in Department (विभाग में पद) — text input */}
               <div className="md:col-span-1">
                 <label className="block text-xs font-bold text-slate-800 mb-1">
-                  13. Post in Department (विभाग में पद)
+                  14. Post in Department (विभाग में पद)
                 </label>
                 <input
                   type="text"
@@ -696,10 +736,10 @@ export default function JoinNow() {
                 />
               </div>
 
-              {/* 14. Post in Union (Member, etc.) (संगठन में पद) — text input */}
+              {/* 15. Post in Union (Member, etc.) (संगठन में पद) — text input */}
               <div className="md:col-span-1">
                 <label className="block text-xs font-bold text-slate-800 mb-1">
-                  14. Post in Union (Member, etc.) (संगठन में पद)
+                  15. Post in Union (Member, etc.) (संगठन में पद)
                 </label>
                 <input
                   type="text"
@@ -710,10 +750,10 @@ export default function JoinNow() {
                 />
               </div>
 
-              {/* 15. Mobile Number (CUG) (Official) — phone input */}
+              {/* 16. Mobile Number (CUG) (Official) — phone input */}
               <div className="md:col-span-1">
                 <label className="block text-xs font-bold text-slate-800 mb-1">
-                  15. Mobile Number (CUG) (Official)
+                  16. Mobile Number (CUG) (Official)
                 </label>
                 <input
                   type="tel"
@@ -726,10 +766,10 @@ export default function JoinNow() {
                 {fieldErrors.cug_mobile && <p className="text-[11px] text-red-600 mt-1 font-semibold">{fieldErrors.cug_mobile}</p>}
               </div>
 
-              {/* 16. Mobile Number (WhatsApp) (Personal) * — phone input */}
+              {/* 17. Mobile Number (WhatsApp) (Personal) * — phone input */}
               <div className="md:col-span-1">
                 <label className="block text-xs font-bold text-slate-800 mb-1">
-                  16. Mobile Number (WhatsApp) (Personal) <span className="text-red-500">*</span>
+                  17. Mobile Number (WhatsApp) (Personal) <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="tel"
@@ -742,10 +782,10 @@ export default function JoinNow() {
                 {fieldErrors.whatsapp_mobile && <p className="text-[11px] text-red-600 mt-1 font-semibold">{fieldErrors.whatsapp_mobile}</p>}
               </div>
 
-              {/* 17. Year of Membership * — radio/select */}
+              {/* 18. Year of Membership * — radio/select */}
               <div className="md:col-span-1">
                 <label className="block text-xs font-bold text-slate-800 mb-1">
-                  17. Year of Membership <span className="text-red-500">*</span>
+                  18. Year of Membership <span className="text-red-500">*</span>
                 </label>
                 <div className="flex flex-wrap items-center gap-3 pt-1">
                   {MEMBERSHIP_YEARS.map((yr) => (
@@ -765,10 +805,10 @@ export default function JoinNow() {
                 {fieldErrors.membership_year && <p className="text-[11px] text-red-600 mt-1 font-semibold">{fieldErrors.membership_year}</p>}
               </div>
 
-              {/* 18. Name (By reference) (रेफरेंस कराने वाले पदाधिकारी/सदस्य का नाम) * — text input */}
+              {/* 19. Name (By reference) (रेफरेंस कराने वाले पदाधिकारी/सदस्य का नाम) * — text input */}
               <div className="md:col-span-2">
                 <label className="block text-xs font-bold text-slate-800 mb-1">
-                  18. Name (By reference) (रेफरेंस कराने वाले पदाधिकारी/सदस्य का नाम) <span className="text-red-500">*</span>
+                  19. Name (By reference) (रेफरेंस कराने वाले पदाधिकारी/सदस्य का नाम) <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -832,6 +872,7 @@ export default function JoinNow() {
               <div className="flex flex-wrap justify-between gap-2 text-[11px] text-slate-600">
                 <div><span>Employee Type:</span> <strong className="text-slate-900">{formData.employee_type}</strong></div>
                 <div><span>Category:</span> <strong className="text-slate-900">{formData.category}</strong></div>
+                <div><span>Person Category:</span> <strong className="text-sky-800 font-bold">{formData.category_person}</strong></div>
                 <div><span>Class & Fee (membership+Donation):</span> <strong className="text-sky-700">{formData.employee_class} (₹{regFee})</strong></div>
               </div>
             </div>
@@ -1015,6 +1056,10 @@ export default function JoinNow() {
               <div className="flex justify-between">
                 <span className="text-slate-500">Cadre Class & Fee:</span>
                 <span className="text-sky-700 font-bold">{formData.employee_class} (₹{regFee})</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Person Category:</span>
+                <span className="text-sky-800 font-bold">{formData.category_person}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-500">Employee Type / Cat:</span>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import {
@@ -10,12 +10,31 @@ import {
 } from 'lucide-react';
 import ProfilePhotoUploader from '../components/ProfilePhotoUploader';
 import ProfilePhotoModal from '../components/ProfilePhotoModal';
+import MemberCard from '../components/MemberCard';
 import { formatMemberId } from '../utils/memberCardHelpers';
 
 export default function AdminDashboard() {
   const { user, settings, updateProfile, updateProfilePhoto } = useAuth();
   const navigate = useNavigate();
-  const [activeModule, setActiveModule] = useState('analytics');
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+
+  const [activeModule, setActiveModule] = useState(() => {
+    try {
+      const tab = new URLSearchParams(window.location.search).get('tab');
+      const path = window.location.pathname.replace('/admin', '').replace(/^\//, '');
+      if (tab === 'id_card' || tab === 'card' || tab === 'digital_id_card' || path === 'card' || path === 'id-card' || path === 'id_card') {
+        return 'id_card';
+      }
+      if (tab === 'board' || tab === 'board_of_union') return 'board_of_union';
+      if (tab === 'profile' || tab === 'admin_profile' || path === 'profile') return 'admin_profile';
+      if (tab === 'settings' || path === 'settings') return 'settings';
+      if (tab) return tab;
+    } catch (e) {
+      // fallback
+    }
+    return 'analytics';
+  });
 
   // State data
   const [analytics, setAnalytics] = useState(null);
@@ -30,8 +49,6 @@ export default function AdminDashboard() {
   const [contactRequests, setContactRequests] = useState([]);
   const [systemSettingsForm, setSystemSettingsForm] = useState(settings || {});
 
-
-  const [searchParams] = useSearchParams();
 
   // Board of Union & Executive Leadership state
   const [boardMembersList, setBoardMembersList] = useState([]);
@@ -64,10 +81,23 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     const tab = searchParams.get('tab');
-    if (tab === 'board' || tab === 'board_of_union') {
+    const path = location.pathname.replace('/admin', '').replace(/^\//, '');
+    if (tab === 'id_card' || tab === 'card' || tab === 'digital_id_card' || path === 'card' || path === 'id-card' || path === 'id_card') {
+      setActiveModule('id_card');
+    } else if (tab === 'board' || tab === 'board_of_union') {
       setActiveModule('board_of_union');
+    } else if (tab === 'profile' || tab === 'admin_profile' || path === 'profile') {
+      setActiveModule('admin_profile');
+    } else if (tab === 'settings' || path === 'settings') {
+      setActiveModule('settings');
+    } else if (tab && [
+      'analytics', 'chat', 'board_of_union', 'orders', 'photos', 
+      'pending_approvals', 'applications', 'members', 'events', 
+      'registrations', 'payments', 'announcements', 'contact', 'settings', 'id_card'
+    ].includes(tab)) {
+      setActiveModule(tab);
     }
-  }, [searchParams]);
+  }, [searchParams, location.pathname]);
 
   // Notices / Orders & Photos state
   const [ordersList, setOrdersList] = useState([]);
@@ -749,75 +779,87 @@ if (activeModule === 'board_of_union') {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+    <div className="min-h-screen bg-slate-50 text-slate-900 py-6 sm:py-8 overflow-x-hidden">
+      <div className="max-w-[1440px] w-full mx-auto px-3 sm:px-6 lg:px-8 space-y-6 sm:space-y-8">
 
         {/* Admin Header */}
-        <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
-          <div className="flex items-center gap-4 text-center sm:text-left">
+        <div className="bg-white border border-slate-200 rounded-3xl p-4 sm:p-6 lg:p-7 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 sm:gap-6 shadow-sm w-full">
+          <div className="flex items-center gap-3.5 sm:gap-4 text-left min-w-0">
             <div className="relative group shrink-0">
               <img
                 src={user?.profile?.avatar_url || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=400&q=80'}
                 alt="Admin Avatar"
-                className="w-16 h-16 rounded-2xl object-cover border-2 border-red-500 shadow-md group-hover:brightness-95 transition-all"
+                className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl object-cover border-2 border-red-500 shadow-md group-hover:brightness-95 transition-all"
               />
               <button
                 type="button"
                 onClick={() => setAdminPhotoModalOpen(true)}
-                className="absolute -bottom-1 -right-1 p-1.5 bg-red-600 hover:bg-red-500 text-white rounded-xl shadow-md border-2 border-white transition-all transform hover:scale-110 active:scale-95"
+                className="absolute -bottom-1 -right-1 p-1 sm:p-1.5 bg-red-600 hover:bg-red-500 text-white rounded-xl shadow-md border-2 border-white transition-all transform hover:scale-110 active:scale-95"
                 title="Upload / Change Admin Photo"
               >
                 <Camera className="w-3.5 h-3.5" />
               </button>
             </div>
-            <div>
-              <div className="flex items-center justify-center sm:justify-start gap-2">
-                <h1 className="text-2xl font-extrabold text-slate-900">MPVMAVAKS Union Admin Control Center</h1>
-                <span className="px-2.5 py-0.5 rounded-full bg-red-100 text-red-800 border border-red-300 text-[10px] font-extrabold uppercase">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
+                  MPVMAVAKS Union Admin Control Center
+                </h1>
+                <span className="px-2.5 py-0.5 rounded-full bg-red-100 text-red-800 border border-red-300 text-[10px] font-extrabold uppercase shrink-0">
                   SUPER ADMIN
                 </span>
               </div>
-              <p className="text-xs text-slate-500 font-medium mt-0.5">Logged in as {user?.profile?.full_name} ({user?.email})</p>
+              <p className="text-xs text-slate-500 font-medium mt-0.5 truncate">
+                Logged in as {user?.profile?.full_name} ({user?.email})
+              </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 w-full xl:w-auto justify-start xl:justify-end">
             <button
               onClick={() => navigate('/chat')}
-              className="px-4 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold flex items-center gap-2 shadow-sm transition-all"
+              className="px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold flex items-center gap-1.5 sm:gap-2 shadow-sm transition-all whitespace-nowrap"
             >
-              <MessageSquare className="w-4 h-4" />
+              <MessageSquare className="w-4 h-4 shrink-0" />
               <span>Group Chat</span>
             </button>
             <button
-              onClick={() => setEditAdminProfileModalOpen(true)}
-              className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold flex items-center gap-2 shadow-sm transition-all"
+              onClick={() => setActiveModule('id_card')}
+              className="px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold flex items-center gap-1.5 sm:gap-2 shadow-sm transition-all whitespace-nowrap"
             >
-              <Edit3 className="w-4 h-4" />
+              <CreditCard className="w-4 h-4 shrink-0" />
+              <span>Digital ID Card</span>
+            </button>
+            <button
+              onClick={() => setEditAdminProfileModalOpen(true)}
+              className="px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold flex items-center gap-1.5 sm:gap-2 border border-slate-300 transition-all whitespace-nowrap"
+            >
+              <Edit3 className="w-4 h-4 text-amber-700 shrink-0" />
               <span>Edit Profile</span>
             </button>
             <button
               onClick={fetchModuleData}
-              className="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors border border-slate-300"
+              className="p-2 sm:p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors border border-slate-300 shrink-0"
               title="Refresh Data"
             >
               <RefreshCw className="w-4 h-4" />
             </button>
             <button
               onClick={() => { setActiveModule('announcements'); setCreateAnnounceModal(true); }}
-              className="px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold flex items-center gap-2 shadow-sm"
+              className="px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold flex items-center gap-1.5 sm:gap-2 shadow-sm transition-all whitespace-nowrap"
             >
-              <AlertTriangle className="w-4 h-4" />
+              <AlertTriangle className="w-4 h-4 shrink-0" />
               <span>Issue Strike / Notice</span>
             </button>
           </div>
         </div>
 
         {/* Sidebar / Module Nav Tabs */}
-        <div className="flex flex-wrap items-center gap-2 pb-3 border-b border-slate-200">
+        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 pb-3 border-b border-slate-200 w-full">
           {[
             { id: 'analytics', label: 'Analytics Hub', icon: LayoutDashboard },
             { id: 'chat', label: 'Union Group Chat', icon: MessageSquare, isExternal: true },
+            { id: 'id_card', label: 'Digital ID Card', icon: CreditCard },
             { id: 'admin_profile', label: 'Admin Profile & Photo', icon: User },
             { id: 'board_of_union', label: 'Board of Union & Leadership', icon: ShieldCheck },
             { id: 'orders', label: 'Correspondence & Circulars (PDF)', icon: FileText },
@@ -850,14 +892,14 @@ if (activeModule === 'board_of_union') {
                     setStatusFilter('all');
                   }
                 }}
-                className={`px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${tab.id === 'chat'
+                className={`px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap shrink-0 ${tab.id === 'chat'
                     ? 'bg-sky-50 text-sky-700 border border-sky-200 hover:bg-sky-100'
                     : active
                     ? 'bg-amber-500 text-slate-950 shadow-sm ring-1 ring-amber-600/20'
                     : 'bg-white border border-slate-200 text-slate-700 hover:text-slate-900 hover:bg-slate-50'
                   }`}
               >
-                <Icon className={`w-4 h-4 shrink-0 ${tab.id === 'chat' ? 'text-sky-600' : ''}`} />
+                <Icon className={`w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 ${tab.id === 'chat' ? 'text-sky-600' : ''}`} />
                 <span>{tab.label}</span>
                 {tab.badge > 0 && (
                   <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-rose-600 text-white shadow-sm">
@@ -876,6 +918,37 @@ if (activeModule === 'board_of_union') {
           </div>
         )}
 
+        {/* MODULE: DIGITAL ID CARD */}
+        {activeModule === 'id_card' && (
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-10 space-y-8 shadow-sm">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div>
+                <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                  <CreditCard className="w-5 h-5 text-amber-600" />
+                  <span>Admin Official Profile & ID Card</span>
+                </h2>
+                <p className="text-xs text-slate-500 font-medium">
+                  View and download your official administrator digital union identity card and employment records
+                </p>
+              </div>
+              <button
+                onClick={() => setEditAdminProfileModalOpen(true)}
+                className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold flex items-center gap-2 shadow-sm"
+              >
+                <Edit3 className="w-4 h-4" />
+                <span>Edit Profile</span>
+              </button>
+            </div>
+
+            {/* Official Administrator Identity Card with Download PDF, Print, Flip, Themes */}
+            <div className="border-b border-slate-100 pb-6">
+              <MemberCard
+                member={user}
+              />
+            </div>
+          </div>
+        )}
+
         {/* MODULE: ADMIN PROFILE & PHOTO */}
         {activeModule === 'admin_profile' && (
           <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-10 space-y-8 shadow-sm">
@@ -890,6 +963,13 @@ if (activeModule === 'board_of_union') {
               <span className="px-3 py-1 rounded-full bg-red-100 text-red-800 border border-red-300 text-xs font-extrabold uppercase">
                 SUPER ADMIN
               </span>
+            </div>
+
+            {/* Official Administrator Identity Card */}
+            <div className="border-b border-slate-100 pb-6">
+              <MemberCard
+                member={user}
+              />
             </div>
 
             <form onSubmit={handleAdminProfileSubmit} className="space-y-6">
@@ -1577,6 +1657,9 @@ if (activeModule === 'board_of_union') {
                           <td className="p-4 font-bold text-amber-800">{app.application_no}</td>
                           <td className="p-4 font-sans">
                             <span className="font-bold text-slate-900 block">{app.full_name}</span>
+                            {(app.category_person || app.member_category) && (
+                              <span className="text-[10px] text-sky-700 font-bold block">{app.category_person || app.member_category}</span>
+                            )}
                             <span className="text-[11px] text-slate-500">{app.email}</span>
                             <span className="text-[10px] text-slate-400 block">{app.mobile}</span>
                           </td>
@@ -1704,7 +1787,12 @@ if (activeModule === 'board_of_union') {
                       applications.map(app => (
                         <tr key={app.id} className="hover:bg-slate-50">
                           <td className="p-4 font-bold text-amber-800">{app.application_no}</td>
-                          <td className="p-4 font-sans font-bold text-slate-900">{app.full_name}</td>
+                          <td className="p-4 font-sans">
+                            <span className="font-bold text-slate-900 block">{app.full_name}</span>
+                            {(app.category_person || app.member_category) && (
+                              <span className="text-[10px] text-sky-700 font-bold block">{app.category_person || app.member_category}</span>
+                            )}
+                          </td>
                           <td className="p-4 text-slate-700">
                             <div>{app.mobile}</div>
                             <div className="text-[10px] text-slate-500 font-sans">{app.email}</div>
@@ -2412,7 +2500,8 @@ if (activeModule === 'board_of_union') {
             </div>
 
             <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm">
-              <table className="w-full text-left text-xs">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
                 <thead className="bg-slate-50 text-slate-600 font-bold uppercase tracking-wider border-b border-slate-200">
                   <tr>
                     <th className="p-4">Type</th>
@@ -2501,6 +2590,7 @@ if (activeModule === 'board_of_union') {
                   )}
                 </tbody>
               </table>
+              </div>
             </div>
           </div>
         )}

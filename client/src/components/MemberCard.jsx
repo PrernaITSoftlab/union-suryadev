@@ -351,7 +351,7 @@ export default function MemberCard({
             className="px-3 py-2 rounded-xl bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all"
             title="Flip to see front/back side"
           >
-            <RotateCw className="w-3.5 h-3.5 text-amber-600 transition-transform" />
+            <RotateCw className={`w-3.5 h-3.5 text-amber-600 transition-transform duration-500 ${isFlipped ? 'rotate-180' : ''}`} />
             <span>{isFlipped ? 'View Front Side' : 'View Back Side'}</span>
           </button>
 
@@ -408,19 +408,29 @@ export default function MemberCard({
       <div className="flex flex-col lg:flex-row items-center justify-center gap-8 py-4">
 
         {/* Official Digital Member ID Card */}
-        <div className="w-full max-w-[480px]">
-          <div className="w-full relative min-h-[255px] sm:min-h-0 sm:aspect-[85.6/54]">
+        <div className="w-full max-w-[480px]" style={{ perspective: '1200px' }}>
+          <div
+            className="w-full relative min-h-[255px] sm:min-h-0 sm:aspect-[85.6/54] transition-transform duration-700 cursor-pointer"
+            onClick={() => setIsFlipped(!isFlipped)}
+            title="Click to flip card"
+            style={{
+              transformStyle: 'preserve-3d',
+              WebkitTransformStyle: 'preserve-3d',
+              transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
+            }}
+          >
 
             {/* ================= FRONT SIDE (Interactive Display) ================= */}
             <div
-              className={`w-full min-h-[255px] sm:min-h-0 sm:aspect-[85.6/54] rounded-2xl p-3 sm:p-4.5 flex flex-col justify-between relative overflow-hidden select-none shadow-xl transition-all ${
+              className={`w-full h-full min-h-[255px] sm:min-h-0 sm:aspect-[85.6/54] rounded-2xl p-3 sm:p-4.5 flex flex-col justify-between relative overflow-hidden select-none shadow-xl transition-all ${
                 cardTheme === 'gold'
                   ? 'bg-gradient-to-br from-[#070B19] via-[#0F172A] to-[#1E293B] border-2 border-amber-500/70 text-white shadow-amber-500/10'
                   : 'bg-gradient-to-br from-[#EBF5FB] via-[#E1EFFF] to-[#D5E8FD] border-2 border-sky-400 text-slate-900 shadow-sky-500/10'
-              }`}
+              } ${isFlipped ? 'pointer-events-none' : 'pointer-events-auto'}`}
               style={{
                 backfaceVisibility: 'hidden',
-                WebkitBackfaceVisibility: 'hidden'
+                WebkitBackfaceVisibility: 'hidden',
+                transform: 'rotateY(0deg)',
               }}
             >
               {/* Subtle Guilloche & Grid Watermark Pattern */}
@@ -528,7 +538,10 @@ export default function MemberCard({
                 {/* Left Bottom: ID No. & Issued on */}
                 <div className="space-y-0.5">
                   <div
-                    onClick={handleCopyId}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCopyId();
+                    }}
                     className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-[9.5px] sm:text-[11px] font-mono font-black tracking-wider flex items-center gap-1.5 transition-colors cursor-copy shadow-sm ${
                       cardTheme === 'gold'
                         ? 'bg-slate-900 border border-amber-400/50 text-amber-300 hover:bg-slate-800'
@@ -566,6 +579,121 @@ export default function MemberCard({
                 </div>
               </div>
             </div>
+
+            {/* ================= BACK SIDE (Interactive Display) ================= */}
+            <div
+              className={`absolute inset-0 w-full h-full min-h-[255px] sm:min-h-0 sm:aspect-[85.6/54] rounded-2xl p-3 sm:p-4.5 flex flex-col justify-between overflow-hidden select-none shadow-xl transition-all ${
+                cardTheme === 'gold'
+                  ? 'bg-gradient-to-br from-[#070B19] via-[#0F172A] to-[#1E293B] border-2 border-amber-500/70 text-white shadow-amber-500/10'
+                  : 'bg-gradient-to-br from-[#FFFFFF] via-[#F8FBFE] to-[#EBF4FC] border-2 border-sky-400 text-slate-900 shadow-sky-500/10'
+              } ${!isFlipped ? 'pointer-events-none' : 'pointer-events-auto'}`}
+              style={{
+                backfaceVisibility: 'hidden',
+                WebkitBackfaceVisibility: 'hidden',
+                transform: 'rotateY(180deg)',
+              }}
+            >
+              {/* Subtle Watermark Pattern */}
+              <div
+                className="absolute inset-0 opacity-[0.04] pointer-events-none network-bg-grid"
+                style={{ backgroundSize: '16px 16px' }}
+              />
+
+              {/* Magnetic Stripe */}
+              <div className={`-mx-3 sm:-mx-4.5 -mt-3 sm:-mt-4.5 h-6 sm:h-7.5 flex items-center justify-between px-3 sm:px-4.5 relative z-10 ${
+                cardTheme === 'gold' ? 'bg-[#050811] border-b border-amber-500/30' : 'bg-slate-950 border-b border-slate-800'
+              }`}>
+                <span className="text-[7px] sm:text-[8px] font-mono tracking-widest text-slate-400">
+                  MPVMAVAKS SECURE CARD TRACK
+                </span>
+                <span className="text-[8px] sm:text-[9.5px] font-mono text-amber-400 font-black">
+                  {memberId}
+                </span>
+              </div>
+
+              {/* Back Body Content */}
+              <div className="grid grid-cols-2 gap-2 sm:gap-3 text-[8px] sm:text-[9.5px] pt-1 sm:pt-1.5 relative z-10 my-auto">
+                {/* Column 1: Member Record */}
+                <div className="space-y-1">
+                  <span className={`text-[9px] sm:text-[10px] font-black uppercase block tracking-wide ${cardTheme === 'gold' ? 'text-amber-400' : 'text-blue-950'}`}>
+                    Member Record
+                  </span>
+                  <div>
+                    <span className={`block text-[7px] sm:text-[8px] font-bold ${cardTheme === 'gold' ? 'text-slate-400' : 'text-slate-600'}`}>Father/Spouse:</span>
+                    <span className={`font-black truncate block text-[8.5px] sm:text-[10px] ${cardTheme === 'gold' ? 'text-white' : 'text-black'}`}>{fatherName}</span>
+                  </div>
+                  <div>
+                    <span className={`block text-[7px] sm:text-[8px] font-bold ${cardTheme === 'gold' ? 'text-slate-400' : 'text-slate-600'}`}>DOB / Blood Group:</span>
+                    <span className={`font-mono font-black text-[8.5px] sm:text-[10px] ${cardTheme === 'gold' ? 'text-amber-300' : 'text-black'}`}>{formattedDob} • {bloodGroup}</span>
+                  </div>
+                  <div>
+                    <span className={`block text-[7px] sm:text-[8px] font-bold ${cardTheme === 'gold' ? 'text-slate-400' : 'text-slate-600'}`}>Emergency Phone:</span>
+                    <span className={`font-mono font-black text-[8.5px] sm:text-[10px] ${cardTheme === 'gold' ? 'text-emerald-400' : 'text-amber-900'}`}>{emergencyPhone}</span>
+                  </div>
+                  <div>
+                    <span className={`block text-[7px] sm:text-[8px] font-bold ${cardTheme === 'gold' ? 'text-slate-400' : 'text-slate-600'}`}>Circle Office:</span>
+                    <span className={`font-extrabold truncate block text-[8.5px] sm:text-[10px] ${cardTheme === 'gold' ? 'text-slate-200' : 'text-black'}`}>{address}</span>
+                  </div>
+                </div>
+
+                {/* Column 2: Rules & Authorization */}
+                <div className="space-y-1 flex flex-col justify-between">
+                  <div>
+                    <span className={`text-[9px] sm:text-[10px] font-black uppercase block tracking-wide ${cardTheme === 'gold' ? 'text-amber-400' : 'text-slate-950'}`}>
+                      Rules & Validity
+                    </span>
+                    <p className={`text-[7px] sm:text-[8px] leading-tight mt-0.5 font-semibold ${cardTheme === 'gold' ? 'text-slate-300' : 'text-slate-800'}`}>
+                      1. Official non-transferable property of MPVMAVAKS Union.
+                    </p>
+                    <p className={`text-[7px] sm:text-[8px] leading-tight font-semibold ${cardTheme === 'gold' ? 'text-slate-300' : 'text-slate-800'}`}>
+                      2. Entitles bearer to union advocacy, hazard coverage & welfare rights.
+                    </p>
+                    <p className={`text-[7px] sm:text-[8px] leading-tight font-semibold ${cardTheme === 'gold' ? 'text-slate-300' : 'text-slate-800'}`}>
+                      3. If found, please return to Secretariat, Govindpura, Bhopal.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-1.5 pt-0.5">
+                    <UnionSealStamp className="w-8 h-8 sm:w-10 sm:h-10 opacity-90" />
+                    <div className="text-right">
+                      <span className={`font-serif italic font-black text-[9px] sm:text-[10.5px] block leading-tight ${cardTheme === 'gold' ? 'text-amber-300' : 'text-black'}`}>
+                        Rajesh Sharma
+                      </span>
+                      <span className={`text-[7px] sm:text-[7.5px] font-mono block uppercase font-bold ${cardTheme === 'gold' ? 'text-slate-400' : 'text-slate-700'}`}>
+                        Gen. Secretary
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer: Address & Contact/Web */}
+              <div className={`border-t pt-1 sm:pt-1.5 flex items-center justify-between gap-3 relative z-10 ${
+                cardTheme === 'gold' ? 'border-amber-500/30' : 'border-sky-400/80'
+              }`}>
+                <div className="flex-1 min-w-0 pr-1">
+                  <div className="flex items-start gap-1 sm:gap-1.5">
+                    <MapPin className={`w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0 mt-0.5 ${cardTheme === 'gold' ? 'text-amber-400' : 'text-blue-700'}`} />
+                    <div className="min-w-0">
+                      <span className={`block font-black text-[7px] sm:text-[8px] uppercase tracking-wider leading-none ${cardTheme === 'gold' ? 'text-amber-300' : 'text-blue-950'}`}>
+                        Address:
+                      </span>
+                      <p className={`text-[7px] sm:text-[8px] leading-tight font-extrabold mt-0.5 ${cardTheme === 'gold' ? 'text-slate-200' : 'text-slate-800'}`}>
+                        138, Private Bijli Nagar Colony, Govindpura, Bhopal, Madhya Pradesh - 462023
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className={`text-right text-[7.5px] sm:text-[8.5px] font-mono leading-tight shrink-0 ${
+                  cardTheme === 'gold' ? 'text-slate-300' : 'text-slate-800'
+                }`}>
+                  <span className={`block font-black ${cardTheme === 'gold' ? 'text-white' : 'text-black'}`}>+91 94249 44041</span>
+                  <span className="block font-bold">mpmavaks@gmail.com</span>
+                  <span className={`block font-black underline text-[8.5px] sm:text-[9.5px] ${cardTheme === 'gold' ? 'text-amber-400' : 'text-blue-700'}`}>{unionWebsite}</span>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
 
@@ -834,12 +962,22 @@ export default function MemberCard({
                   </div>
                 </div>
 
-                {/* Footer Barcode & Union Website */}
-                <div className="border-t border-slate-300 pt-1 flex items-center justify-between gap-2">
-                  <div className="flex-1 max-w-[160px]">
-                    <BarcodeSvg value={memberId} height={28} />
+                {/* Footer Address & Union Website */}
+                <div className="border-t border-slate-300 pt-1 flex items-center justify-between gap-3">
+                  <div className="flex-1 min-w-0 pr-1">
+                    <div className="flex items-start gap-1">
+                      <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5 text-blue-700" />
+                      <div className="min-w-0">
+                        <span className="block font-black text-[7.5px] uppercase tracking-wider leading-none text-blue-950">
+                          Address:
+                        </span>
+                        <p className="text-[7.5px] leading-tight font-extrabold mt-0.5 text-slate-800">
+                          138, Private Bijli Nagar Colony, Govindpura, Bhopal, Madhya Pradesh - 462023
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-right text-[8px] font-mono">
+                  <div className="text-right text-[8px] font-mono shrink-0">
                     <span className="block font-black text-black">+91 94249 44041</span>
                     <span className="block font-bold text-slate-800">mpmavaks@gmail.com</span>
                     <span className="block font-black text-blue-700 underline text-[9px]">{unionWebsite}</span>
@@ -1031,12 +1169,22 @@ export default function MemberCard({
             </div>
           </div>
 
-          {/* Footer Barcode & Union Website */}
-          <div className="border-t border-slate-300 pt-1.5 flex items-center justify-between gap-2">
-            <div className="flex-1 max-w-[180px]">
-              <BarcodeSvg value={memberId} height={32} />
+          {/* Footer Address & Union Website */}
+          <div className="border-t border-slate-300 pt-1.5 flex items-center justify-between gap-3">
+            <div className="flex-1 min-w-0 pr-1">
+              <div className="flex items-start gap-1">
+                <MapPin className="w-3.5 h-3.5 shrink-0 mt-0.5 text-blue-700" />
+                <div className="min-w-0">
+                  <span className="block font-black text-[8px] uppercase tracking-wider leading-none text-blue-950">
+                    Address:
+                  </span>
+                  <p className="text-[8px] leading-tight font-extrabold mt-0.5 text-slate-800">
+                    138, Private Bijli Nagar Colony, Govindpura, Bhopal, Madhya Pradesh - 462023
+                  </p>
+                </div>
+              </div>
             </div>
-            <div className="text-right text-[8.5px] font-mono">
+            <div className="text-right text-[8.5px] font-mono shrink-0">
               <span className="block font-black text-black">+91 94249 44041</span>
               <span className="block font-bold text-slate-800">mpmavaks@gmail.com</span>
               <span className="block font-black text-blue-700 underline text-[10px]">{unionWebsite}</span>

@@ -16,7 +16,8 @@ router.post('/submit', async (req, res, next) => {
       membership_year, membership_fee_status, membership_receipt_date,
       membership_receipt_no, donation_amount, donation_receipt_date,
       donation_receipt_no, reference_name, transaction_id, payment_proof_url,
-      payment_date, payment_note, email, address, city, district, state, pin_code
+      payment_date, payment_note, email, address, city, district, state, pin_code,
+      employee_type, category, employee_class, category_person, member_category, registration_fee
     } = req.body;
 
     const applicantFullName = (full_name || '').trim();
@@ -57,6 +58,13 @@ router.post('/submit', async (req, res, next) => {
       donation_receipt_no: donation_receipt_no || '',
       reference_name: reference_name || '',
 
+      // Member Category & Person Category
+      employee_type: employee_type || 'Regular',
+      category: category || 'ST',
+      employee_class: employee_class || 'Class 3 (J.E.)',
+      category_person: category_person || member_category || 'Ordinary Member (साधारण सदस्य)',
+      member_category: member_category || category_person || 'Ordinary Member (साधारण सदस्य)',
+
       // General fields
       email: applicantEmail,
       address: address || '',
@@ -69,7 +77,7 @@ router.post('/submit', async (req, res, next) => {
       designation: post_name || 'Staff Member',
       union_info: `Reference: ${reference_name || 'N/A'}, District: ${district_name || 'N/A'}`,
       profile_photo_url: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=400&q=80',
-      registration_fee: inMemoryStore.systemSettings.registration_fee || 60,
+      registration_fee: registration_fee || inMemoryStore.systemSettings.registration_fee || 60,
       payment_status: transaction_id ? 'SUBMITTED' : 'PENDING',
       application_status: 'PENDING',
       transaction_id: transaction_id || '',
@@ -262,6 +270,11 @@ router.get('/:id/prefill-user', authenticateToken, requireAdmin, async (req, res
     occupation: app.occupation,
     company: app.company,
     designation: app.designation,
+    employee_type: app.employee_type,
+    category: app.category,
+    employee_class: app.employee_class,
+    category_person: app.category_person,
+    member_category: app.member_category,
     circle: `${app.city} Circle`,
     union_designation: 'Member',
     avatar_url: app.profile_photo_url,
@@ -375,6 +388,11 @@ router.post('/:id/approve-and-generate', authenticateToken, requireAdmin, async 
         occupation: app.occupation || 'Discom Service',
         company: app.company_name || app.company || 'MP West Zone Electricity Discom',
         designation: app.post_name || app.designation || 'Staff Member',
+        employee_type: app.employee_type || '',
+        category: app.category || '',
+        employee_class: app.employee_class || '',
+        category_person: app.category_person || app.member_category || 'Ordinary Member (साधारण सदस्य)',
+        member_category: app.member_category || app.category_person || 'Ordinary Member (साधारण सदस्य)',
         circle: app.circle_name || `${app.district_name || 'Indore'} Circle`,
         union_designation: app.union_post || 'Union Member',
         bio: `Member of MPVMAVAKS Union (${app.district_name || 'Indore'}).`,
