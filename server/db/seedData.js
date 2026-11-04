@@ -21,10 +21,14 @@ export const INITIAL_SYSTEM_SETTINGS = {
   payment_whatsapp_number: "+91 94249 44041",
   default_event_qr_url: "/images/payment-qr.png",
   about_summary: "Formed to uphold worker safety, fair pay scales, pension security, and technical excellence across 9 circles of Madhya Pradesh West Zone Electricity Distribution Discom.",
+  facebook_url: "https://www.facebook.com/share/14tpTFEHUp2/",
+  youtube_url: "https://youtube.com/@mpvmavaks?si=a1d8DZGazNo_Jfy-",
+  instagram_url: "https://www.instagram.com/mpvmavaks4865?rpxt=MXhpNWs0emRtcmU0bA==",
   social_links: {
-    facebook: "https://facebook.com",
+    facebook: "https://www.facebook.com/share/14tpTFEHUp2/",
+    youtube: "https://youtube.com/@mpvmavaks?si=a1d8DZGazNo_Jfy-",
+    instagram: "https://www.instagram.com/mpvmavaks4865?rpxt=MXhpNWs0emRtcmU0bA==",
     twitter: "https://twitter.com",
-    youtube: "https://youtube.com",
     whatsapp_group: "https://chat.whatsapp.com"
   }
 };

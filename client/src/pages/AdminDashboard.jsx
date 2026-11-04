@@ -2654,6 +2654,45 @@ if (activeModule === 'board_of_union') {
               </div>
             </div>
 
+            {/* Social Media Links */}
+            <div className="pt-4 border-t border-slate-100">
+              <h3 className="text-sm font-bold text-slate-900 mb-3">Official Social Media URLs</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Facebook Page / Share URL</label>
+                  <input
+                    type="url"
+                    placeholder="https://www.facebook.com/share/..."
+                    value={systemSettingsForm.facebook_url || ''}
+                    onChange={(e) => setSystemSettingsForm({ ...systemSettingsForm, facebook_url: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-slate-900 font-mono text-[11px]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">YouTube Channel URL</label>
+                  <input
+                    type="url"
+                    placeholder="https://youtube.com/@..."
+                    value={systemSettingsForm.youtube_url || ''}
+                    onChange={(e) => setSystemSettingsForm({ ...systemSettingsForm, youtube_url: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-slate-900 font-mono text-[11px]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-700 mb-1">Instagram Profile URL</label>
+                  <input
+                    type="url"
+                    placeholder="https://www.instagram.com/..."
+                    value={systemSettingsForm.instagram_url || ''}
+                    onChange={(e) => setSystemSettingsForm({ ...systemSettingsForm, instagram_url: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-slate-900 font-mono text-[11px]"
+                  />
+                </div>
+              </div>
+            </div>
+
             <button type="submit" className="px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs">
               Save Configuration Changes
             </button>
