@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import api from '../services/api';
 import { Calendar, Plus, Trash2, Users, Download, ArrowLeft, X, CheckCircle2, RefreshCw, Eye, ExternalLink, AlertCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -30,6 +30,7 @@ const AdminEvents = () => {
     requires_approval: true
   });
   const [submitting, setSubmitting] = useState(false);
+  const isCreatingEventRef = useRef(false);
 
   const fetchEvents = async () => {
     setLoading(true);
@@ -51,7 +52,8 @@ const AdminEvents = () => {
 
   const handleCreateEvent = async (e) => {
     e.preventDefault();
-    if (submitting) return;
+    if (isCreatingEventRef.current || submitting) return;
+    isCreatingEventRef.current = true;
     setSubmitting(true);
     try {
       const payload = {
@@ -62,14 +64,18 @@ const AdminEvents = () => {
         is_paid: Number(newEvent.event_fee) > 0
       };
       const res = await api.post('/admin/events', payload);
-      if (res.data.success) {
+      if (res.data && res.data.success) {
         setCreateModal(false);
         setNewEvent(prev => ({ ...prev, title: '', description: '', event_fee: '', is_paid: false }));
         await fetchEvents();
+      } else {
+        alert(res?.data?.message || 'Failed to create event');
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to create event');
+      console.error('Failed to create event:', err);
+      alert(err.response?.data?.message || err.message || 'Failed to create event');
     } finally {
+      isCreatingEventRef.current = false;
       setSubmitting(false);
     }
   };
@@ -201,8 +207,10 @@ const AdminEvents = () => {
         <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white max-w-lg w-full rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xl relative animate-in fade-in zoom-in-95 duration-200">
             <button
-              onClick={() => setCreateModal(false)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 p-1 rounded-lg transition-colors"
+              type="button"
+              onClick={() => { if (!submitting) setCreateModal(false); }}
+              disabled={submitting}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 disabled:opacity-50 disabled:cursor-not-allowed p-1 rounded-lg transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -344,10 +352,14 @@ const AdminEvents = () => {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed text-white font-extrabold shadow-md transition-colors flex items-center justify-center gap-2"
+                  className={`px-6 py-2.5 rounded-xl text-white font-extrabold shadow-md transition-all flex items-center justify-center gap-2 ${
+                    submitting
+                      ? 'bg-blue-400 opacity-75 cursor-not-allowed pointer-events-none'
+                      : 'bg-blue-600 hover:bg-blue-700 cursor-pointer'
+                  }`}
                 >
                   {submitting && <RefreshCw className="w-4 h-4 animate-spin text-white" />}
-                  <span>{submitting ? 'Publishing Event...' : 'Publish Event'}</span>
+                  <span>{submitting ? 'Creating Event...' : 'Create Event'}</span>
                 </button>
               </div>
             </form>

@@ -199,50 +199,56 @@ export const EventService = {
    * Create a new event
    */
   async createEvent(data, userId) {
-    await this.awaitInit();
-
-    const {
-      title, description, banner_url, event_type, start_date, end_date,
-      start_time, end_time, venue, address, capacity, registration_start_date,
-      registration_end_date, is_paid, event_fee, payment_qr_url, payment_instructions,
-      whatsapp_contact, visibility, status, requires_approval
-    } = data;
-
-    const defaultQr = inMemoryStore.systemSettings?.default_event_qr_url || "/images/payment-qr.png";
-    const finalStartDate = formatDbDate(start_date || data.event_date || data.date) || new Date().toISOString().split('T')[0];
-    const finalEndDate = formatDbDate(end_date || data.event_date || start_date || data.date) || finalStartDate;
-    const finalStartTime = start_time || data.event_time || data.time || '10:00 AM';
-    const finalEndTime = end_time || data.event_time_end || data.end_time || '05:00 PM';
-    const finalFee = Number(event_fee !== undefined ? event_fee : (data.fee || 0)) || 0;
-    const finalIsPaid = Boolean(is_paid) || finalFee > 0;
-    const finalRequiresApproval = requires_approval !== undefined ? Boolean(requires_approval) : true;
-    const finalVenue = (venue || data.location || 'Union Central Office').trim();
-    const finalBanner = banner_url || data.image || data.image_url || 'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=1200&q=80';
-    const finalRegStart = formatDbDate(registration_start_date || data.registration_start_date || start_date || data.event_date || data.date) || finalStartDate;
-    const finalRegEnd = formatDbDate(registration_end_date || data.registration_end_date || end_date || data.event_date || start_date || data.date) || finalEndDate;
-
-    // Deduplication check: if an identical event was created in the last 10 seconds, return it
-    const trimmedTitle = (title || '').trim();
-    const trimmedVenue = finalVenue;
-    const dedupKey = `${trimmedTitle.toLowerCase()}__${finalStartDate}__${trimmedVenue.toLowerCase()}`;
+    const rawTitle = (data?.title || '').trim();
+    const rawStartDate = formatDbDate(data?.start_date || data?.event_date || data?.date) || new Date().toISOString().split('T')[0];
+    const rawVenue = (data?.venue || data?.location || 'Union Central Office').trim();
+    const dedupKey = `${rawTitle.toLowerCase()}__${rawStartDate}__${rawVenue.toLowerCase()}`;
+    const simpleKey = `${rawTitle.toLowerCase()}__${rawStartDate}`;
 
     // 1. If an identical event creation is already in-flight, await and return its result
-    if (trimmedTitle && pendingEventCreations.has(dedupKey)) {
-      console.log(`⚠️ Deduplicating in-flight creation request for "${trimmedTitle}".`);
+    if (rawTitle && pendingEventCreations.has(dedupKey)) {
+      console.log(`⚠️ Deduplicating in-flight creation request for "${rawTitle}".`);
       return await pendingEventCreations.get(dedupKey);
+    }
+    if (rawTitle && pendingEventCreations.has(simpleKey)) {
+      console.log(`⚠️ Deduplicating in-flight creation request for "${rawTitle}" (simple key).`);
+      return await pendingEventCreations.get(simpleKey);
     }
 
     const executeCreation = async () => {
-      // 2. Deduplication check: if an identical event was created in the last 10 seconds, return it
+      await this.awaitInit();
+
+      const {
+        title, description, banner_url, event_type, start_date, end_date,
+        start_time, end_time, venue, address, capacity, registration_start_date,
+        registration_end_date, is_paid, event_fee, payment_qr_url, payment_instructions,
+        whatsapp_contact, visibility, status, requires_approval
+      } = data;
+
+      const defaultQr = inMemoryStore.systemSettings?.default_event_qr_url || "/images/payment-qr.png";
+      const finalStartDate = formatDbDate(start_date || data.event_date || data.date) || rawStartDate;
+      const finalEndDate = formatDbDate(end_date || data.event_date || start_date || data.date) || finalStartDate;
+      const finalStartTime = start_time || data.event_time || data.time || '10:00 AM';
+      const finalEndTime = end_time || data.event_time_end || data.end_time || '05:00 PM';
+      const finalFee = Number(event_fee !== undefined ? event_fee : (data.fee || 0)) || 0;
+      const finalIsPaid = Boolean(is_paid) || finalFee > 0;
+      const finalRequiresApproval = requires_approval !== undefined ? Boolean(requires_approval) : true;
+      const finalVenue = rawVenue;
+      const finalBanner = banner_url || data.image || data.image_url || 'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=1200&q=80';
+      const finalRegStart = formatDbDate(registration_start_date || data.registration_start_date || start_date || data.event_date || data.date) || finalStartDate;
+      const finalRegEnd = formatDbDate(registration_end_date || data.registration_end_date || end_date || data.event_date || start_date || data.date) || finalEndDate;
+      const trimmedTitle = rawTitle;
+      const trimmedVenue = finalVenue;
+
+      // 2. Deduplication check: if an identical event was created in the last 30 seconds, return it
       if (pool && trimmedTitle) {
         try {
           const dupCheck = await pool.query(
             `SELECT * FROM events 
              WHERE LOWER(TRIM(title)) = LOWER($1) 
-               AND LOWER(TRIM(venue)) = LOWER($2) 
-               AND created_at >= NOW() - INTERVAL '10 seconds'
+               AND created_at >= NOW() - INTERVAL '30 seconds'
              ORDER BY id DESC LIMIT 1`,
-            [trimmedTitle, trimmedVenue]
+            [trimmedTitle]
           );
           if (dupCheck.rows.length > 0) {
             console.log(`⚠️ Prevented duplicate event creation for "${trimmedTitle}". Returning recently created event.`);
@@ -256,8 +262,7 @@ export const EventService = {
       if (trimmedTitle) {
         const recentInMemory = (inMemoryStore.events || []).find(e => 
           e.title && e.title.trim().toLowerCase() === trimmedTitle.toLowerCase() &&
-          e.venue && e.venue.trim().toLowerCase() === trimmedVenue.toLowerCase() &&
-          (Date.now() - new Date(e.created_at || Date.now()).getTime()) < 10000
+          (Date.now() - new Date(e.created_at || Date.now()).getTime()) < 30000
         );
         if (recentInMemory) {
           console.log(`⚠️ Prevented duplicate event creation for "${trimmedTitle}" (in-memory). Returning recently created event.`);
@@ -364,18 +369,21 @@ export const EventService = {
     };
 
     const creationPromise = executeCreation();
-    if (trimmedTitle) {
+    if (rawTitle) {
       pendingEventCreations.set(dedupKey, creationPromise);
+      pendingEventCreations.set(simpleKey, creationPromise);
     }
 
     try {
       const result = await creationPromise;
       setTimeout(() => {
         pendingEventCreations.delete(dedupKey);
-      }, 5000);
+        pendingEventCreations.delete(simpleKey);
+      }, 10000);
       return result;
     } catch (err) {
       pendingEventCreations.delete(dedupKey);
+      pendingEventCreations.delete(simpleKey);
       throw err;
     }
   },

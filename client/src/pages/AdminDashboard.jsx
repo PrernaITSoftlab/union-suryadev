@@ -114,6 +114,7 @@ export default function AdminDashboard() {
   const [createEventModal, setCreateEventModal] = useState(false);
   const [editEventModal, setEditEventModal] = useState(null);
   const [publishingEvent, setPublishingEvent] = useState(false);
+  const isCreatingEventRef = useRef(false);
   const [createAnnounceModal, setCreateAnnounceModal] = useState(false);
   const [editAnnounceModal, setEditAnnounceModal] = useState(null);
 
@@ -659,7 +660,8 @@ if (activeModule === 'board_of_union') {
 
   const handleCreateEvent = async (e) => {
     e.preventDefault();
-    if (publishingEvent) return;
+    if (isCreatingEventRef.current || publishingEvent) return;
+    isCreatingEventRef.current = true;
     setPublishingEvent(true);
     try {
       const payload = {
@@ -668,8 +670,8 @@ if (activeModule === 'board_of_union') {
         is_paid: Number(eventForm.event_fee) > 0
       };
       const res = await api.post('/events/admin/create', payload);
-      if (res.data.success) {
-        setFeedback({ success: res.data.message });
+      if (res.data?.success) {
+        setFeedback({ success: res.data.message || 'Event created successfully!' });
         setCreateEventModal(false);
         setEventForm({
           title: '', description: '', banner_url: '', event_type: 'GENERAL',
@@ -678,18 +680,23 @@ if (activeModule === 'board_of_union') {
           payment_instructions: '', visibility: 'PUBLIC', status: 'REGISTRATION_OPEN',
           requires_approval: true
         });
-        fetchModuleData();
+        await fetchModuleData();
+      } else {
+        alert(res.data?.message || 'Failed to create event.');
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to create event.');
+      console.error('Failed to create event:', err);
+      alert(err.response?.data?.message || err.message || 'Failed to create event.');
     } finally {
+      isCreatingEventRef.current = false;
       setPublishingEvent(false);
     }
   };
 
   const handleUpdateEvent = async (e) => {
     e.preventDefault();
-    if (!editEventModal || publishingEvent) return;
+    if (!editEventModal || isCreatingEventRef.current || publishingEvent) return;
+    isCreatingEventRef.current = true;
     setPublishingEvent(true);
     try {
       const payload = {
@@ -698,14 +705,18 @@ if (activeModule === 'board_of_union') {
         is_paid: Number(eventForm.event_fee) > 0
       };
       const res = await api.put(`/events/admin/${editEventModal.id}`, payload);
-      if (res.data.success) {
-        setFeedback({ success: res.data.message });
+      if (res.data?.success) {
+        setFeedback({ success: res.data.message || 'Event updated successfully!' });
         setEditEventModal(null);
-        fetchModuleData();
+        await fetchModuleData();
+      } else {
+        alert(res.data?.message || 'Failed to update event.');
       }
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to update event.');
+      console.error('Failed to update event:', err);
+      alert(err.response?.data?.message || err.message || 'Failed to update event.');
     } finally {
+      isCreatingEventRef.current = false;
       setPublishingEvent(false);
     }
   };
@@ -2853,7 +2864,12 @@ if (activeModule === 'board_of_union') {
                 <Calendar className="w-5 h-5 text-sky-600" />
                 <span>{editEventModal ? 'Edit Event Details' : 'Create New Event / Agitation'}</span>
               </h3>
-              <button onClick={() => { if (!publishingEvent) { setCreateEventModal(false); setEditEventModal(null); } }} disabled={publishingEvent} className="text-slate-400 hover:text-slate-700 disabled:opacity-50">
+              <button
+                type="button"
+                onClick={() => { if (!publishingEvent) { setCreateEventModal(false); setEditEventModal(null); } }}
+                disabled={publishingEvent}
+                className="text-slate-400 hover:text-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -3094,10 +3110,14 @@ if (activeModule === 'board_of_union') {
                 <button
                   type="submit"
                   disabled={publishingEvent}
-                  className="flex-1 py-3 rounded-xl bg-sky-600 hover:bg-sky-500 disabled:bg-sky-400 disabled:cursor-not-allowed text-white font-bold shadow-md transition-all flex items-center justify-center gap-2"
+                  className={`flex-1 py-3 rounded-xl text-white font-bold shadow-md transition-all flex items-center justify-center gap-2 ${
+                    publishingEvent
+                      ? 'bg-sky-400 opacity-75 cursor-not-allowed pointer-events-none'
+                      : 'bg-sky-600 hover:bg-sky-500 cursor-pointer'
+                  }`}
                 >
                   {publishingEvent && <RefreshCw className="w-4 h-4 animate-spin text-white" />}
-                  <span>{publishingEvent ? (editEventModal ? 'Updating...' : 'Publishing Event...') : (editEventModal ? 'Update Event' : 'Publish Event')}</span>
+                  <span>{publishingEvent ? (editEventModal ? 'Updating Event...' : 'Creating Event...') : (editEventModal ? 'Update Event' : 'Create Event')}</span>
                 </button>
               </div>
             </form>
