@@ -8,18 +8,102 @@ const router = express.Router();
 
 // 0. General Members List (Public/Authenticated Fallback)
 router.get('/', (req, res) => {
-  const activeUsers = inMemoryStore.users.filter(u => u.status === 'active' && u.profile);
+  const { search, circle, designation, status, page, limit } = req.query;
+
+  // Filter members (default to all non-deleted members, or filter by requested status)
+  let members = inMemoryStore.users.filter(u => u && u.status !== 'deleted');
+
+  if (status && status !== 'all') {
+    members = members.filter(u => u.status && u.status.toLowerCase() === status.toLowerCase());
+  }
+
+  if (circle && circle !== 'All' && circle !== 'all') {
+    const cLower = circle.toLowerCase();
+    members = members.filter(u => {
+      const p = u.profile || {};
+      const uCircle = (p.circle || p.location || '').toLowerCase();
+      return uCircle.includes(cLower) || cLower.includes(uCircle);
+    });
+  }
+
+  if (designation && designation !== 'All' && designation !== 'all') {
+    const dLower = designation.toLowerCase();
+    members = members.filter(u => {
+      const p = u.profile || {};
+      const uDesig = (p.designation || p.title || p.union_designation || '').toLowerCase();
+      return uDesig.includes(dLower) || dLower.includes(uDesig);
+    });
+  }
+
+  if (search && search.trim()) {
+    const q = search.trim().toLowerCase();
+    members = members.filter(u => {
+      const p = u.profile || {};
+      const fullName = (p.full_name || u.full_name || '').toLowerCase();
+      const email = (u.email || '').toLowerCase();
+      const memberId = (u.member_id || '').toLowerCase();
+      const company = (p.company || p.department || '').toLowerCase();
+      const phone = (p.phone || '').replace(/\D/g, '');
+      const circleName = (p.circle || '').toLowerCase();
+      const desig = (p.designation || p.title || '').toLowerCase();
+      return fullName.includes(q) ||
+             email.includes(q) ||
+             memberId.includes(q) ||
+             company.includes(q) ||
+             circleName.includes(q) ||
+             desig.includes(q) ||
+             phone.includes(q);
+    });
+  }
+
+  const totalCount = members.length;
+  const pageNum = parseInt(page, 10);
+  const limitNum = parseInt(limit, 10);
+
+  let paginated = members;
+  if (!isNaN(limitNum) && limitNum > 0) {
+    const validPage = !isNaN(pageNum) && pageNum > 0 ? pageNum : 1;
+    const startIndex = (validPage - 1) * limitNum;
+    paginated = members.slice(startIndex, startIndex + limitNum);
+  }
+
+  const formattedMembers = paginated.map(u => {
+    const p = u.profile || {};
+    const normId = normalizeMemberId(u.member_id, u.id);
+    const fullName = p.full_name || u.full_name || 'Member';
+    const designation = p.designation || p.title || 'Staff Member';
+    const company = p.company || 'MP West Zone Electricity Discom';
+    const circle = p.circle || 'Indore Circle';
+
+    return {
+      id: u.id,
+      member_id: normId,
+      employee_id: normId,
+      email: u.email,
+      role: u.role || 'user',
+      status: u.status || 'active',
+      full_name: fullName,
+      designation: designation,
+      company: company,
+      circle: circle,
+      profile: {
+        ...p,
+        full_name: fullName,
+        designation: designation,
+        company: company,
+        circle: circle
+      }
+    };
+  });
+
   res.json({
     success: true,
-    members: activeUsers.map(u => ({
-      id: u.id,
-      member_id: normalizeMemberId(u.member_id, u.id),
-      employee_id: u.member_id,
-      email: u.email,
-      role: u.role,
-      status: u.status,
-      profile: u.profile
-    }))
+    total: totalCount,
+    count: formattedMembers.length,
+    page: !isNaN(pageNum) && pageNum > 0 ? pageNum : 1,
+    limit: !isNaN(limitNum) && limitNum > 0 ? limitNum : totalCount,
+    totalPages: !isNaN(limitNum) && limitNum > 0 ? Math.ceil(totalCount / limitNum) : 1,
+    members: formattedMembers
   });
 });
 
@@ -29,6 +113,7 @@ router.get('/my-profile', authenticateToken, (req, res) => {
   if (!user) {
     return res.status(404).json({ success: false, message: 'User profile not found' });
   }
+  const normId = normalizeMemberId(user.member_id, user.id);
   res.json({
     success: true,
     user: {
@@ -36,7 +121,7 @@ router.get('/my-profile', authenticateToken, (req, res) => {
       email: user.email,
       role: user.role,
       status: user.status,
-      member_id: user.member_id,
+      member_id: normId,
       profile: user.profile
     }
   });
@@ -44,89 +129,160 @@ router.get('/my-profile', authenticateToken, (req, res) => {
 
 // 1. Union Members Directory (Authenticated Members & Admin)
 router.get('/directory', authenticateToken, (req, res) => {
+  const { search, circle, designation, status, page, limit } = req.query;
 
-  const { search, circle, designation } = req.query;
+  // Filter non-deleted members
+  let activeUsers = inMemoryStore.users.filter(u => u && u.status !== 'deleted');
 
-  // Filter only active members for general directory
-  let activeUsers = inMemoryStore.users.filter(u => u.status === 'active' && u.profile);
-
-  if (search) {
-    const q = search.toLowerCase();
-    activeUsers = activeUsers.filter(u =>
-      u.profile.full_name.toLowerCase().includes(q) ||
-      (u.member_id && u.member_id.toLowerCase().includes(q)) ||
-      (u.profile.company && u.profile.company.toLowerCase().includes(q)) ||
-      (u.profile.city && u.profile.city.toLowerCase().includes(q)) ||
-      (u.profile.designation && u.profile.designation.toLowerCase().includes(q))
-    );
+  if (status && status !== 'all') {
+    activeUsers = activeUsers.filter(u => u.status && u.status.toLowerCase() === status.toLowerCase());
   }
 
-  if (circle) {
-    activeUsers = activeUsers.filter(u => u.profile.circle && u.profile.circle.toLowerCase() === circle.toLowerCase());
+  if (search && search.trim()) {
+    const q = search.trim().toLowerCase();
+    activeUsers = activeUsers.filter(u => {
+      const p = u.profile || {};
+      const fullName = (p.full_name || u.full_name || '').toLowerCase();
+      const memberId = (u.member_id || '').toLowerCase();
+      const company = (p.company || p.department || '').toLowerCase();
+      const city = (p.city || '').toLowerCase();
+      const desig = (p.designation || p.title || '').toLowerCase();
+      const phone = (p.phone || '').replace(/\D/g, '');
+      return fullName.includes(q) ||
+             memberId.includes(q) ||
+             company.includes(q) ||
+             city.includes(q) ||
+             desig.includes(q) ||
+             phone.includes(q);
+    });
+  }
+
+  if (circle && circle !== 'All' && circle !== 'all') {
+    const cLower = circle.toLowerCase();
+    activeUsers = activeUsers.filter(u => {
+      const p = u.profile || {};
+      const uCircle = (p.circle || p.location || '').toLowerCase();
+      return uCircle.includes(cLower) || cLower.includes(uCircle);
+    });
+  }
+
+  if (designation && designation !== 'All' && designation !== 'all') {
+    const dLower = designation.toLowerCase();
+    activeUsers = activeUsers.filter(u => {
+      const p = u.profile || {};
+      const uDesig = (p.designation || p.title || p.union_designation || '').toLowerCase();
+      return uDesig.includes(dLower) || dLower.includes(uDesig);
+    });
+  }
+
+  const totalCount = activeUsers.length;
+  const pageNum = parseInt(page, 10);
+  const limitNum = parseInt(limit, 10);
+
+  let paginated = activeUsers;
+  if (!isNaN(limitNum) && limitNum > 0) {
+    const validPage = !isNaN(pageNum) && pageNum > 0 ? pageNum : 1;
+    const startIndex = (validPage - 1) * limitNum;
+    paginated = activeUsers.slice(startIndex, startIndex + limitNum);
   }
 
   // Format directory cards according to privacy settings
-  const directory = activeUsers.map(u => {
-    const privacy = u.profile.contact_privacy || { showPhone: true, showEmail: true, showAddress: false };
+  const directory = paginated.map(u => {
+    const p = u.profile || {};
+    const privacy = p.contact_privacy || { showPhone: true, showEmail: true, showAddress: false };
+    const normId = normalizeMemberId(u.member_id, u.id);
     return {
       id: u.id,
-      member_id: u.member_id,
+      member_id: normId,
+      employee_id: normId,
       role: u.role,
       status: u.status,
-      full_name: u.profile.full_name,
-      avatar_url: u.profile.avatar_url,
-      designation: u.profile.designation,
-      company: u.profile.company,
-      circle: u.profile.circle,
-      union_designation: u.profile.union_designation,
-      city: u.profile.city,
-      state: u.profile.state,
+      full_name: p.full_name || u.full_name || 'Member',
+      avatar_url: p.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=400&q=80',
+      designation: p.designation || p.title || 'Staff Member',
+      company: p.company || 'MP West Zone Electricity Discom',
+      circle: p.circle || 'Indore Circle',
+      union_designation: p.union_designation || 'Union Member',
+      city: p.city || 'Indore',
+      state: p.state || 'Madhya Pradesh',
       email: privacy.showEmail ? u.email : undefined,
-      phone: privacy.showPhone ? u.profile.phone : undefined,
-      whatsapp: privacy.showPhone ? u.profile.whatsapp : undefined,
-      bio: u.profile.bio,
-      joining_date: u.profile.joining_date
+      phone: privacy.showPhone ? p.phone : undefined,
+      whatsapp: privacy.showPhone ? p.whatsapp : undefined,
+      bio: p.bio,
+      joining_date: p.joining_date
     };
   });
 
   res.json({
     success: true,
+    total: totalCount,
+    count: directory.length,
+    page: !isNaN(pageNum) && pageNum > 0 ? pageNum : 1,
+    limit: !isNaN(limitNum) && limitNum > 0 ? limitNum : totalCount,
+    totalPages: !isNaN(limitNum) && limitNum > 0 ? Math.ceil(totalCount / limitNum) : 1,
     members: directory
   });
 });
 
 // 2. Admin List Members (All Statuses)
 router.get('/admin/list', authenticateToken, requireAdmin, (req, res) => {
-  const { search, status, circle } = req.query;
+  const { search, status, circle, page, limit } = req.query;
   let members = [...inMemoryStore.users];
 
-  if (status) {
-    members = members.filter(u => u.status.toLowerCase() === status.toLowerCase());
+  if (status && status !== 'all') {
+    members = members.filter(u => u.status && u.status.toLowerCase() === status.toLowerCase());
   }
 
-  if (circle && circle !== 'all') {
-    members = members.filter(u => u.profile && u.profile.circle && u.profile.circle.toLowerCase().includes(circle.toLowerCase()));
+  if (circle && circle !== 'all' && circle !== 'All') {
+    const cLower = circle.toLowerCase();
+    members = members.filter(u => {
+      const p = u.profile || {};
+      const uCircle = (p.circle || '').toLowerCase();
+      return uCircle.includes(cLower) || cLower.includes(uCircle);
+    });
   }
 
-  if (search) {
-    const q = search.toLowerCase();
-    members = members.filter(u =>
-      (u.email && u.email.toLowerCase().includes(q)) ||
-      (u.member_id && u.member_id.toLowerCase().includes(q)) ||
-      (u.profile && u.profile.full_name.toLowerCase().includes(q)) ||
-      (u.profile && u.profile.phone && u.profile.phone.includes(q))
-    );
+  if (search && search.trim()) {
+    const q = search.trim().toLowerCase();
+    members = members.filter(u => {
+      const p = u.profile || {};
+      return (u.email && u.email.toLowerCase().includes(q)) ||
+             (u.member_id && u.member_id.toLowerCase().includes(q)) ||
+             (p.full_name && p.full_name.toLowerCase().includes(q)) ||
+             (u.full_name && u.full_name.toLowerCase().includes(q)) ||
+             (p.phone && p.phone.includes(q)) ||
+             (p.company && p.company.toLowerCase().includes(q));
+    });
+  }
+
+  const totalCount = members.length;
+  const pageNum = parseInt(page, 10);
+  const limitNum = parseInt(limit, 10);
+
+  let paginated = members;
+  if (!isNaN(limitNum) && limitNum > 0) {
+    const validPage = !isNaN(pageNum) && pageNum > 0 ? pageNum : 1;
+    const startIndex = (validPage - 1) * limitNum;
+    paginated = members.slice(startIndex, startIndex + limitNum);
   }
 
   res.json({
     success: true,
-    members: members.map(u => ({
+    total: totalCount,
+    count: paginated.length,
+    page: !isNaN(pageNum) && pageNum > 0 ? pageNum : 1,
+    limit: !isNaN(limitNum) && limitNum > 0 ? limitNum : totalCount,
+    totalPages: !isNaN(limitNum) && limitNum > 0 ? Math.ceil(totalCount / limitNum) : 1,
+    members: paginated.map(u => ({
       id: u.id,
       email: u.email,
       role: u.role,
       status: u.status,
       member_id: normalizeMemberId(u.member_id, u.id),
-      profile: u.profile
+      profile: {
+        ...(u.profile || {}),
+        full_name: u.profile?.full_name || u.full_name || 'Member'
+      }
     }))
   });
 });
@@ -333,19 +489,31 @@ const validatePhotoPayload = (avatarUrl) => {
 router.put('/profile/update', authenticateToken, async (req, res) => {
   try {
     const {
-      full_name, phone, whatsapp, address, city, district, state, pin_code,
-      bio, avatar_url, emergency_contact, contact_privacy, target_user_id
+      full_name, name, fullName, member_name, phone, whatsapp, address, city, district, state, pin_code,
+      bio, avatar_url, emergency_contact, contact_privacy, target_user_id, user_id, id,
+      designation, company, occupation, circle, union_designation, union_post, employee_type, employee_class, category
     } = req.body;
 
-    // If target_user_id provided and requester is Admin, edit target user; otherwise edit self
+    // If target user provided and requester is Admin, edit target user; otherwise edit self
     let userIdToEdit = req.user.id;
-    if (target_user_id && req.user.role === 'admin') {
-      userIdToEdit = Number(target_user_id);
+    const specifiedTarget = target_user_id || user_id || id;
+    if (specifiedTarget && req.user.role === 'admin') {
+      userIdToEdit = Number(specifiedTarget);
     }
 
     const user = inMemoryStore.users.find(u => u.id === userIdToEdit);
-    if (!user || !user.profile) {
+    if (!user) {
       return res.status(404).json({ success: false, message: 'Member profile not found.' });
+    }
+    if (!user.profile) {
+      user.profile = { id: user.id, user_id: user.id };
+    }
+
+    // Flexible extraction for name
+    const newName = (full_name !== undefined ? full_name : name !== undefined ? name : fullName !== undefined ? fullName : member_name !== undefined ? member_name : '').trim();
+    if (newName) {
+      user.profile.full_name = newName;
+      user.full_name = newName;
     }
 
     // Validate avatar_url if provided
@@ -357,25 +525,33 @@ router.put('/profile/update', authenticateToken, async (req, res) => {
       user.profile.avatar_url = photoValidation.url;
     }
 
-    if (full_name) user.profile.full_name = full_name;
-    if (phone) user.profile.phone = phone;
-    if (whatsapp) user.profile.whatsapp = whatsapp;
+    if (phone !== undefined) user.profile.phone = phone;
+    if (whatsapp !== undefined) user.profile.whatsapp = whatsapp;
     if (address !== undefined) user.profile.address = address;
     if (city !== undefined) user.profile.city = city;
     if (district !== undefined) user.profile.district = district;
     if (state !== undefined) user.profile.state = state;
     if (pin_code !== undefined) user.profile.pin_code = pin_code;
     if (bio !== undefined) user.profile.bio = bio;
+    if (designation !== undefined) user.profile.designation = designation;
+    if (company !== undefined) user.profile.company = company;
+    if (occupation !== undefined) user.profile.occupation = occupation;
+    if (circle !== undefined) user.profile.circle = circle;
+    if (union_designation !== undefined) user.profile.union_designation = union_designation;
+    if (union_post !== undefined) user.profile.union_post = union_post;
+    if (employee_type !== undefined) user.profile.employee_type = employee_type;
+    if (employee_class !== undefined) user.profile.employee_class = employee_class;
+    if (category !== undefined) user.profile.category = category;
     if (emergency_contact !== undefined) user.profile.emergency_contact = emergency_contact;
     if (contact_privacy) user.profile.contact_privacy = contact_privacy;
 
     // Admin restricted fields
     if (req.user.role === 'admin') {
-      if (req.body.designation) user.profile.designation = req.body.designation;
-      if (req.body.circle) user.profile.circle = req.body.circle;
-      if (req.body.union_designation) user.profile.union_designation = req.body.union_designation;
+      if (req.body.role) user.role = req.body.role;
+      if (req.body.status) user.status = req.body.status;
+      if (req.body.email) user.email = req.body.email.trim().toLowerCase();
       if (req.body.member_id) {
-        user.member_id = req.body.member_id;
+        user.member_id = req.body.member_id.trim();
         try {
           await query(`UPDATE users SET member_id = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`, [req.body.member_id, userIdToEdit]);
         } catch (dbErr) {
@@ -384,24 +560,31 @@ router.put('/profile/update', authenticateToken, async (req, res) => {
       }
     }
 
-    // Persist to Neon PostgreSQL Database
+    // Persist to Neon PostgreSQL Database with ON CONFLICT DO UPDATE
     try {
       await query(`
-        UPDATE member_profiles
-        SET full_name = COALESCE($1, full_name),
-            phone = COALESCE($2, phone),
-            whatsapp = COALESCE($3, whatsapp),
-            address = COALESCE($4, address),
-            city = COALESCE($5, city),
-            district = COALESCE($6, district),
-            state = COALESCE($7, state),
-            pin_code = COALESCE($8, pin_code),
-            bio = COALESCE($9, bio),
-            avatar_url = COALESCE($10, avatar_url),
-            emergency_contact = COALESCE($11, emergency_contact),
-            updated_at = CURRENT_TIMESTAMP
-        WHERE user_id = $12
+        INSERT INTO member_profiles (
+          user_id, full_name, phone, whatsapp, address, city, district, state, pin_code, bio, avatar_url, emergency_contact, designation, circle, union_designation, company, updated_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, CURRENT_TIMESTAMP)
+        ON CONFLICT (user_id) DO UPDATE SET
+          full_name = COALESCE(EXCLUDED.full_name, member_profiles.full_name),
+          phone = COALESCE(EXCLUDED.phone, member_profiles.phone),
+          whatsapp = COALESCE(EXCLUDED.whatsapp, member_profiles.whatsapp),
+          address = COALESCE(EXCLUDED.address, member_profiles.address),
+          city = COALESCE(EXCLUDED.city, member_profiles.city),
+          district = COALESCE(EXCLUDED.district, member_profiles.district),
+          state = COALESCE(EXCLUDED.state, member_profiles.state),
+          pin_code = COALESCE(EXCLUDED.pin_code, member_profiles.pin_code),
+          bio = COALESCE(EXCLUDED.bio, member_profiles.bio),
+          avatar_url = COALESCE(EXCLUDED.avatar_url, member_profiles.avatar_url),
+          emergency_contact = COALESCE(EXCLUDED.emergency_contact, member_profiles.emergency_contact),
+          designation = COALESCE(EXCLUDED.designation, member_profiles.designation),
+          circle = COALESCE(EXCLUDED.circle, member_profiles.circle),
+          union_designation = COALESCE(EXCLUDED.union_designation, member_profiles.union_designation),
+          company = COALESCE(EXCLUDED.company, member_profiles.company),
+          updated_at = CURRENT_TIMESTAMP
       `, [
+        userIdToEdit,
         user.profile.full_name,
         user.profile.phone,
         user.profile.whatsapp,
@@ -413,7 +596,10 @@ router.put('/profile/update', authenticateToken, async (req, res) => {
         user.profile.bio,
         user.profile.avatar_url,
         user.profile.emergency_contact,
-        userIdToEdit
+        user.profile.designation,
+        user.profile.circle,
+        user.profile.union_designation,
+        user.profile.company
       ]);
     } catch (dbErr) {
       console.warn('⚠️ Could not update member_profiles in DB:', dbErr.message);
@@ -421,6 +607,8 @@ router.put('/profile/update', authenticateToken, async (req, res) => {
 
     // Persist to local backup JSON
     saveUsersBackup();
+
+    const normalizedId = normalizeMemberId(user.member_id, user.id);
 
     res.json({
       success: true,
@@ -431,7 +619,8 @@ router.put('/profile/update', authenticateToken, async (req, res) => {
         email: user.email,
         role: user.role,
         status: user.status,
-        member_id: user.member_id,
+        member_id: normalizedId,
+        full_name: user.profile.full_name,
         profile: user.profile
       }
     });

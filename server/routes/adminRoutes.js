@@ -1,6 +1,6 @@
 import { normalizeMemberId } from '../utils/memberIdHelper.js';
 import express from 'express';
-import { inMemoryStore } from '../config/db.js';
+import { inMemoryStore, saveUsersBackup, query } from '../config/db.js';
 import { EventService } from '../services/eventService.js';
 import { authenticateToken, requireAdmin } from '../middleware/authMiddleware.js';
 
@@ -49,28 +49,151 @@ router.get('/audit-logs', authenticateToken, requireAdmin, (req, res) => {
 
 // 3. Admin Members List Alias (/api/admin/members)
 router.get('/members', authenticateToken, requireAdmin, (req, res) => {
+  const { search, status, circle, page, limit } = req.query;
+  let members = [...inMemoryStore.users];
+
+  if (status && status !== 'all') {
+    members = members.filter(u => u.status && u.status.toLowerCase() === status.toLowerCase());
+  }
+
+  if (circle && circle !== 'all' && circle !== 'All') {
+    const cLower = circle.toLowerCase();
+    members = members.filter(u => {
+      const p = u.profile || {};
+      const uCircle = (p.circle || '').toLowerCase();
+      return uCircle.includes(cLower) || cLower.includes(uCircle);
+    });
+  }
+
+  if (search && search.trim()) {
+    const q = search.trim().toLowerCase();
+    members = members.filter(u => {
+      const p = u.profile || {};
+      return (u.email && u.email.toLowerCase().includes(q)) ||
+             (u.member_id && u.member_id.toLowerCase().includes(q)) ||
+             (p.full_name && p.full_name.toLowerCase().includes(q)) ||
+             (u.full_name && u.full_name.toLowerCase().includes(q)) ||
+             (p.phone && p.phone.includes(q)) ||
+             (p.company && p.company.toLowerCase().includes(q));
+    });
+  }
+
+  const totalCount = members.length;
+  const pageNum = parseInt(page, 10);
+  const limitNum = parseInt(limit, 10);
+
+  let paginated = members;
+  if (!isNaN(limitNum) && limitNum > 0) {
+    const validPage = !isNaN(pageNum) && pageNum > 0 ? pageNum : 1;
+    const startIndex = (validPage - 1) * limitNum;
+    paginated = members.slice(startIndex, startIndex + limitNum);
+  }
+
   res.json({
     success: true,
-    members: inMemoryStore.users.map(u => ({
+    total: totalCount,
+    count: paginated.length,
+    page: !isNaN(pageNum) && pageNum > 0 ? pageNum : 1,
+    limit: !isNaN(limitNum) && limitNum > 0 ? limitNum : totalCount,
+    totalPages: !isNaN(limitNum) && limitNum > 0 ? Math.ceil(totalCount / limitNum) : 1,
+    members: paginated.map(u => ({
       id: u.id,
       email: u.email,
-      role: u.role,
-      status: u.status,
+      role: u.role || 'user',
+      status: u.status || 'active',
       employee_id: normalizeMemberId(u.member_id, u.id),
       member_id: normalizeMemberId(u.member_id, u.id),
-      profile: u.profile
+      full_name: u.profile?.full_name || u.full_name || 'Member',
+      profile: {
+        ...(u.profile || {}),
+        full_name: u.profile?.full_name || u.full_name || 'Member'
+      }
     }))
   });
 });
 
-// 4. Admin Change Member Role & Status (/api/admin/members/:id)
-router.put('/members/:id', authenticateToken, requireAdmin, (req, res) => {
-  const { status, role } = req.body;
+// 4. Admin Update Member Details & Name (/api/admin/members/:id)
+router.put('/members/:id', authenticateToken, requireAdmin, async (req, res) => {
+  const {
+    status, role, full_name, name, fullName, email,
+    designation, company, circle, union_designation, union_post,
+    phone, whatsapp, member_id, address, city, district, bio
+  } = req.body;
+
   const user = inMemoryStore.users.find(u => u.id === Number(req.params.id));
   if (!user) return res.status(404).json({ success: false, message: 'Member not found' });
+
+  if (!user.profile) {
+    user.profile = { id: user.id, user_id: user.id };
+  }
+
+  // Update name if supplied
+  const newName = (full_name !== undefined ? full_name : name !== undefined ? name : fullName !== undefined ? fullName : '').trim();
+  if (newName) {
+    user.profile.full_name = newName;
+    user.full_name = newName;
+  }
+
   if (status) user.status = status;
   if (role) user.role = role;
-  res.json({ success: true, message: 'Member updated successfully', user });
+  if (email) user.email = email.trim().toLowerCase();
+  if (member_id) user.member_id = member_id.trim();
+
+  if (designation !== undefined) user.profile.designation = designation;
+  if (company !== undefined) user.profile.company = company;
+  if (circle !== undefined) user.profile.circle = circle;
+  if (union_designation !== undefined) user.profile.union_designation = union_designation;
+  if (union_post !== undefined) user.profile.union_post = union_post;
+  if (phone !== undefined) user.profile.phone = phone;
+  if (whatsapp !== undefined) user.profile.whatsapp = whatsapp;
+  if (address !== undefined) user.profile.address = address;
+  if (city !== undefined) user.profile.city = city;
+  if (district !== undefined) user.profile.district = district;
+  if (bio !== undefined) user.profile.bio = bio;
+
+  // Persist to users_backup.json immediately
+  saveUsersBackup();
+
+  // Try PostgreSQL safely
+  try {
+    await query(`
+      INSERT INTO member_profiles (
+        user_id, full_name, phone, designation, circle, union_designation, company, updated_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP)
+      ON CONFLICT (user_id) DO UPDATE SET
+        full_name = COALESCE(EXCLUDED.full_name, member_profiles.full_name),
+        phone = COALESCE(EXCLUDED.phone, member_profiles.phone),
+        designation = COALESCE(EXCLUDED.designation, member_profiles.designation),
+        circle = COALESCE(EXCLUDED.circle, member_profiles.circle),
+        union_designation = COALESCE(EXCLUDED.union_designation, member_profiles.union_designation),
+        company = COALESCE(EXCLUDED.company, member_profiles.company),
+        updated_at = CURRENT_TIMESTAMP
+    `, [user.id, user.profile.full_name, user.profile.phone, user.profile.designation, user.profile.circle, user.profile.union_designation, user.profile.company]);
+
+    if (email || member_id || role || status) {
+      await query(`
+        UPDATE users 
+        SET email = COALESCE($1, email),
+            member_id = COALESCE($2, member_id),
+            role = COALESCE($3, role),
+            status = COALESCE($4, status),
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = $5
+      `, [user.email, user.member_id, user.role, user.status, user.id]);
+    }
+  } catch (dbErr) {
+    console.warn('⚠️ Could not update member in DB from admin route:', dbErr.message);
+  }
+
+  res.json({
+    success: true,
+    message: 'Member details and name updated successfully!',
+    user: {
+      ...user,
+      member_id: normalizeMemberId(user.member_id, user.id),
+      full_name: user.profile.full_name
+    }
+  });
 });
 
 // 5. Admin Get Events (/api/admin/events)

@@ -26,6 +26,7 @@ const Members = () => {
 
   const designations = [
     'All',
+    'Executive Director / SE',
     'Superintending Engineer (SE)',
     'Assistant Engineer (AE)',
     'Junior Engineer (JE)',
@@ -61,11 +62,21 @@ const Members = () => {
 
   const filteredMembers = members.filter(m => {
     const profile = m.profile || {};
-    const matchesCircle = selectedCircle === 'All' || profile.circle === selectedCircle;
-    const matchesDesignation = selectedDesignation === 'All' || profile.title === selectedDesignation;
-    const matchesSearch = (profile.full_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          (m.employee_id || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          (profile.department || '').toLowerCase().includes(searchQuery.toLowerCase());
+    const desig = profile.designation || profile.title || m.designation || '';
+    const company = profile.company || profile.department || m.company || '';
+    const name = profile.full_name || m.full_name || m.name || '';
+    const memberId = m.member_id || m.employee_id || '';
+    const circle = profile.circle || profile.location || m.circle || '';
+
+    const matchesCircle = selectedCircle === 'All' || circle === selectedCircle;
+    const matchesDesignation = selectedDesignation === 'All' || desig === selectedDesignation;
+    const query = searchQuery.trim().toLowerCase();
+    const matchesSearch = !query ||
+                          name.toLowerCase().includes(query) ||
+                          memberId.toLowerCase().includes(query) ||
+                          desig.toLowerCase().includes(query) ||
+                          company.toLowerCase().includes(query) ||
+                          circle.toLowerCase().includes(query);
     return matchesCircle && matchesDesignation && matchesSearch;
   });
 
@@ -88,6 +99,9 @@ const Members = () => {
 
         {/* Filter Controls Bar */}
         <div className="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+          <div className="flex items-center justify-between flex-wrap gap-2 text-xs text-slate-500 font-medium pb-1">
+            <span>Showing <strong className="text-blue-700">{filteredMembers.length}</strong> of <strong className="text-slate-900">{members.length}</strong> registered members</span>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             
             {/* Search Box */}
@@ -158,19 +172,25 @@ const Members = () => {
                     {/* Header Info */}
                     <div className="flex items-start gap-3">
                       <img
-                        src={p.avatar_url || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=400&q=80"}
-                        alt={p.full_name}
+                        src={p.avatar_url || member.avatar_url || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=400&q=80"}
+                        alt={p.full_name || member.full_name}
                         className="w-14 h-14 rounded-2xl object-cover ring-2 ring-blue-100 shrink-0"
                       />
                       <div className="space-y-1 min-w-0">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <h3 className="text-sm font-bold text-slate-900 truncate">{p.full_name}</h3>
+                          <h3 className="text-sm font-bold text-slate-900 truncate">
+                            {p.full_name || member.full_name || member.name || 'Member'}
+                          </h3>
                           <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase bg-blue-50 text-blue-700 border border-blue-200">
-                            {member.employee_id || `MPVMAVAKS-${member.id}`}
+                            {member.member_id || member.employee_id || `MPAVAKS-${String(member.id).padStart(4, '0')}`}
                           </span>
                         </div>
-                        <p className="text-xs font-bold text-blue-700 leading-snug">{p.title || 'Discom Employee'}</p>
-                        <p className="text-[11px] text-slate-500">{p.department || 'Operations'}</p>
+                        <p className="text-xs font-bold text-blue-700 leading-snug">
+                          {p.designation || p.title || member.designation || 'Discom Employee'}
+                        </p>
+                        <p className="text-[11px] text-slate-500">
+                          {p.company || p.department || member.company || 'Operations'}
+                        </p>
                       </div>
                     </div>
 
@@ -178,12 +198,12 @@ const Members = () => {
                     <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200 space-y-1.5 text-xs">
                       <div className="flex items-center gap-1.5 text-slate-700">
                         <MapPin className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                        <span className="font-semibold truncate">{p.circle || p.location || 'Indore Circle'}</span>
+                        <span className="font-semibold truncate">{p.circle || p.location || member.circle || 'Indore Circle'}</span>
                       </div>
-                      {p.union_designation && (
+                      {(p.union_designation || member.union_designation) && (
                         <div className="flex items-center gap-1.5 text-amber-700 font-bold">
                           <Zap className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                          <span>Union Role: {p.union_designation}</span>
+                          <span>Union Role: {p.union_designation || member.union_designation}</span>
                         </div>
                       )}
                     </div>

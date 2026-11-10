@@ -205,46 +205,50 @@ router.get('/me', authenticateToken, async (req, res) => {
 
       if (dbRes && dbRes.rows && dbRes.rows.length > 0) {
         const r = dbRes.rows[0];
+        const existingProfile = user?.profile || {};
         const profileObj = {
-          id: r.profile_id || r.id,
+          ...existingProfile,
+          id: r.profile_id || existingProfile.id || r.id,
           user_id: r.id,
-          full_name: r.full_name,
-          father_husband_name: r.father_husband_name,
-          dob: r.dob,
-          gender: r.gender,
-          avatar_url: r.avatar_url,
-          phone: r.phone,
-          whatsapp: r.whatsapp,
-          address: r.address,
-          city: r.city,
-          district: r.district,
-          state: r.state,
-          pin_code: r.pin_code,
-          occupation: r.occupation,
-          company: r.company,
-          designation: r.designation,
-          circle: r.circle,
-          union_designation: r.union_designation,
-          bio: r.bio,
-          emergency_contact: r.emergency_contact,
-          joining_date: r.joining_date,
-          is_public: r.is_public,
-          contact_privacy: r.contact_privacy
+          full_name: r.full_name || existingProfile.full_name || user?.full_name || 'Member',
+          father_husband_name: r.father_husband_name || existingProfile.father_husband_name || '',
+          dob: r.dob || existingProfile.dob || '',
+          gender: r.gender || existingProfile.gender || 'Male',
+          avatar_url: r.avatar_url || existingProfile.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=400&q=80',
+          phone: r.phone || existingProfile.phone || '',
+          whatsapp: r.whatsapp || existingProfile.whatsapp || '',
+          address: r.address || existingProfile.address || '',
+          city: r.city || existingProfile.city || 'Indore',
+          district: r.district || existingProfile.district || 'Indore',
+          state: r.state || existingProfile.state || 'Madhya Pradesh',
+          pin_code: r.pin_code || existingProfile.pin_code || '452001',
+          occupation: r.occupation || existingProfile.occupation || 'Discom Service',
+          company: r.company || existingProfile.company || 'MP West Zone Electricity Discom',
+          designation: r.designation || existingProfile.designation || 'Staff Member',
+          circle: r.circle || existingProfile.circle || 'Indore Circle',
+          union_designation: r.union_designation || existingProfile.union_designation || 'Union Member',
+          bio: r.bio || existingProfile.bio || '',
+          emergency_contact: r.emergency_contact || existingProfile.emergency_contact || '',
+          joining_date: r.joining_date || existingProfile.joining_date || '',
+          is_public: r.is_public !== undefined ? r.is_public : existingProfile.is_public !== undefined ? existingProfile.is_public : true,
+          contact_privacy: r.contact_privacy || existingProfile.contact_privacy || { showPhone: true, showEmail: true, showAddress: false }
         };
 
         if (user) {
-          user.email = r.email;
-          user.role = r.role;
-          user.status = r.status;
-          user.member_id = r.member_id;
+          user.email = r.email || user.email;
+          user.role = r.role || user.role;
+          user.status = r.status || user.status;
+          user.member_id = r.member_id || user.member_id;
+          user.full_name = profileObj.full_name;
           user.profile = profileObj;
         } else {
           user = {
             id: r.id,
             email: r.email,
-            role: r.role,
-            status: r.status,
+            role: r.role || 'user',
+            status: r.status || 'active',
             member_id: r.member_id,
+            full_name: profileObj.full_name,
             profile: profileObj
           };
           inMemoryStore.users.push(user);

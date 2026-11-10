@@ -130,7 +130,7 @@ export default function MemberCard({
 
   // Core Member Information
   const memberId = formatMemberId(effectiveUser?.member_id, effectiveUser?.id || 2);
-  const fullName = profile.full_name || 'Shri Vikramaditya Patel';
+  const fullName = profile.full_name || effectiveUser?.full_name || effectiveUser?.name || 'Union Member';
   const unionDesignation = profile.union_designation || 'Zonal Secretary (Ujjain Zone)';
   const designation = profile.designation || profile.occupation || 'Line Superintendent Grade-I';
   const company = profile.company || 'MP West Zone Electricity Discom';

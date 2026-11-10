@@ -28,6 +28,7 @@ const USERS_BACKUP_FILE = path.join(__dirname, '../db/users_backup.json');
 const EVENTS_BACKUP_FILE = path.join(__dirname, '../db/events_backup.json');
 const REGISTRATIONS_BACKUP_FILE = path.join(__dirname, '../db/event_registrations_backup.json');
 const BOARD_BACKUP_FILE = path.join(__dirname, '../db/board_backup.json');
+const APPLICATIONS_BACKUP_FILE = path.join(__dirname, '../db/membership_applications_backup.json');
 
 const loadInitialBoard = () => {
   try {
@@ -59,6 +60,16 @@ const loadInitialRegistrations = () => {
   return [...INITIAL_EVENT_REGISTRATIONS];
 };
 
+const loadInitialApplications = () => {
+  try {
+    if (fs.existsSync(APPLICATIONS_BACKUP_FILE)) {
+      const data = JSON.parse(fs.readFileSync(APPLICATIONS_BACKUP_FILE, 'utf-8'));
+      if (Array.isArray(data) && data.length > 0) return data;
+    }
+  } catch (_) {}
+  return [...INITIAL_MEMBERSHIP_APPLICATIONS];
+};
+
 const { Pool } = pg;
 
 let pool = null;
@@ -68,7 +79,7 @@ let isPgConnected = false;
 export const inMemoryStore = {
   systemSettings: { ...INITIAL_SYSTEM_SETTINGS },
   users: [...INITIAL_USERS],
-  membershipApplications: [...INITIAL_MEMBERSHIP_APPLICATIONS],
+  membershipApplications: loadInitialApplications(),
   events: loadInitialEvents(),
   eventRegistrations: loadInitialRegistrations(),
   payments: [...INITIAL_PAYMENTS],
@@ -106,6 +117,15 @@ export const saveUsersBackup = () => {
   }
 };
 
+// Save membership applications to local persistent storage
+export const saveApplicationsBackup = () => {
+  try {
+    fs.writeFileSync(APPLICATIONS_BACKUP_FILE, JSON.stringify(inMemoryStore.membershipApplications, null, 2), 'utf-8');
+  } catch (err) {
+    console.warn('⚠️ Could not save membership_applications_backup.json:', err.message);
+  }
+};
+
 // Save event registrations to local persistent storage (event_registrations_backup.json)
 export const saveRegistrationsBackup = () => {
   try {
@@ -138,7 +158,18 @@ export const loadUsersBackup = () => {
             u.member_id = u.member_id.replace(/^UNION-/i, 'MPAVAKS-');
           }
         });
+
+        // Merge with INITIAL_USERS to guarantee all registered members are present
+        const existingIds = new Set(parsed.map(u => u.id));
+        const existingEmails = new Set(parsed.map(u => (u.email || '').toLowerCase()));
+        for (const initU of INITIAL_USERS) {
+          if (!existingIds.has(initU.id) && !existingEmails.has((initU.email || '').toLowerCase())) {
+            parsed.push(initU);
+          }
+        }
+
         inMemoryStore.users = parsed;
+        saveUsersBackup();
         console.log(`📁 Loaded ${parsed.length} users with photos from disk storage (users_backup.json).`);
       }
     }
@@ -255,8 +286,9 @@ export const query = async (text, params) => {
       isPgConnected = true;
       return res;
     } catch (err) {
-      console.error('Database Query Error:', err.message);
-      throw err;
+      isPgConnected = false;
+      console.warn('⚠️ Database query fallback to in-memory store:', err.message);
+      return { rows: [], rowCount: 0 };
     }
   } else {
     return { rows: [], rowCount: 0 };

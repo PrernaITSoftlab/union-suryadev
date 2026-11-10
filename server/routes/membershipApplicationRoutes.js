@@ -1,6 +1,6 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
-import { inMemoryStore, query, saveUsersBackup } from '../config/db.js';
+import { inMemoryStore, query, saveUsersBackup, saveApplicationsBackup } from '../config/db.js';
 import { authenticateToken, requireAdmin } from '../middleware/authMiddleware.js';
 import { getNextMemberId } from '../utils/memberIdHelper.js';
 
@@ -91,6 +91,66 @@ router.post('/submit', async (req, res, next) => {
     };
 
     inMemoryStore.membershipApplications.unshift(newApplication);
+    saveApplicationsBackup();
+
+    // Auto-create/link registered member account in users store
+    let existingUser = inMemoryStore.users.find(u => u.email.toLowerCase() === applicantEmail.toLowerCase());
+    if (!existingUser) {
+      const generatedMemberId = await getNextMemberId(inMemoryStore, query);
+      const salt = await bcrypt.genSalt(10);
+      const password_hash = await bcrypt.hash('union123', salt);
+      const newUserId = inMemoryStore.users.length > 0 ? Math.max(...inMemoryStore.users.map(u => u.id || 0)) + 1 : 1;
+
+      const registeredUser = {
+        id: newUserId,
+        email: applicantEmail,
+        password_hash,
+        role: 'user',
+        status: 'active',
+        member_id: generatedMemberId,
+        full_name: applicantFullName,
+        created_at: new Date().toISOString(),
+        profile: {
+          id: newUserId,
+          user_id: newUserId,
+          full_name: applicantFullName,
+          father_husband_name: (father_name || father_husband_name || '').trim(),
+          phone: applicantMobile,
+          whatsapp: applicantMobile,
+          address: address || '',
+          city: district_name || city || 'Indore',
+          district: district_name || district || 'Indore',
+          state: state || 'Madhya Pradesh',
+          pin_code: pin_code || '452001',
+          occupation: 'Discom Service',
+          company: company_name || 'MP West Zone Electricity Discom',
+          designation: post_name || 'Staff Member',
+          employee_type: employee_type || 'Regular',
+          category: category || 'ST',
+          employee_class: employee_class || 'Class 3 (J.E.)',
+          category_person: category_person || member_category || 'Ordinary Member (साधारण सदस्य)',
+          member_category: member_category || category_person || 'Ordinary Member (साधारण सदस्य)',
+          circle: circle_name || `${district_name || 'Indore'} Circle`,
+          union_designation: union_post || 'Union Member',
+          union_post: union_post || 'Ordinary Member (साधारण सदस्य)',
+          bio: `Member of MPVMAVAKS Union (${district_name || 'Indore'}).`,
+          avatar_url: profile_photo_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=400&q=80',
+          joining_date: new Date().toISOString().split('T')[0],
+          is_public: true,
+          contact_privacy: { showPhone: true, showEmail: true, showAddress: false }
+        }
+      };
+      inMemoryStore.users.push(registeredUser);
+      saveUsersBackup();
+
+      try {
+        await query(`
+          INSERT INTO users (email, password_hash, role, status, member_id, created_at, updated_at)
+          VALUES ($1, $2, 'user', 'active', $3, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+          ON CONFLICT (email) DO NOTHING
+        `, [applicantEmail, password_hash, generatedMemberId]);
+      } catch (_) {}
+    }
 
     // Create Unified Payment record
     if (transaction_id) {
