@@ -3,7 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import pg from 'pg';
 import dotenv from 'dotenv';
-import { INITIAL_USERS, INITIAL_EVENTS } from './seedData.js';
+import { INITIAL_USERS, INITIAL_EVENTS, INITIAL_MEMBERSHIP_APPLICATIONS } from './seedData.js';
 
 dotenv.config();
 
@@ -113,6 +113,48 @@ export async function initializeDatabase() {
     }
     await client.query(`SELECT setval('events_id_seq', (SELECT COALESCE(MAX(id), 1) FROM events));`);
     console.log('✅ Initial events populated in database!');
+
+    // Seed Initial Membership Applications into PostgreSQL
+    for (const app of INITIAL_MEMBERSHIP_APPLICATIONS) {
+      await client.query(`
+        INSERT INTO membership_applications (
+          id, application_no, full_name, father_husband_name, father_name, mobile, whatsapp,
+          whatsapp_mobile, email, address, city, district, state, pin_code,
+          occupation, company, designation, company_name, district_name,
+          post_name, union_post, employee_type, category, employee_class,
+          category_person, member_category, profile_photo_url, registration_fee,
+          payment_status, application_status, transaction_id, payment_proof_url,
+          payment_date, payment_note, created_at, updated_at
+        ) VALUES (
+          $1, $2, $3, $4, $5, $6, $7,
+          $8, $9, $10, $11, $12, $13, $14,
+          $15, $16, $17, $18, $19,
+          $20, $21, $22, $23, $24,
+          $25, $26, $27, $28,
+          $29, $30, $31, $32,
+          $33, $34, $35, $36
+        ) ON CONFLICT (application_no) DO UPDATE SET
+          full_name = EXCLUDED.full_name,
+          payment_status = EXCLUDED.payment_status,
+          application_status = EXCLUDED.application_status,
+          updated_at = CURRENT_TIMESTAMP;
+      `, [
+        app.id, app.application_no, app.full_name, app.father_husband_name || app.father_name, app.father_name || app.father_husband_name,
+        app.mobile, app.whatsapp || app.mobile, app.whatsapp_mobile || app.mobile, app.email, app.address || '',
+        app.city || 'Indore', app.district || 'Indore', app.state || 'Madhya Pradesh', app.pin_code || '452001',
+        app.occupation || 'Discom Service', app.company || 'MP West Zone Electricity Discom',
+        app.designation || 'Staff Member', app.company_name || app.company || 'MP West Zone Electricity Discom',
+        app.district_name || app.district || 'Indore', app.post_name || app.designation || 'Junior Engineer (JE)',
+        app.union_post || 'Ordinary Member (साधारण सदस्य)', app.employee_type || 'Regular', app.category || 'ST',
+        app.employee_class || 'Class 3 (J.E.)', app.category_person || 'Ordinary Member (साधारण सदस्य)',
+        app.member_category || 'Ordinary Member (साधारण सदस्य)', app.profile_photo_url || '',
+        app.registration_fee || 500, app.payment_status || 'PENDING', app.application_status || 'PENDING',
+        app.transaction_id || '', app.payment_proof_url || '', app.payment_date || '2026-09-20',
+        app.payment_note || '', app.created_at || new Date().toISOString(), new Date().toISOString()
+      ]);
+    }
+    await client.query(`SELECT setval('membership_applications_id_seq', (SELECT COALESCE(MAX(id), 1) FROM membership_applications));`);
+    console.log('✅ Initial membership applications populated in database!');
 
     const res = await client.query(`
       SELECT table_name 

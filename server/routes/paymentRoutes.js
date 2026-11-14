@@ -1,5 +1,5 @@
 import express from 'express';
-import { inMemoryStore, pool, saveRegistrationsBackup } from '../config/db.js';
+import { inMemoryStore, pool, saveRegistrationsBackup, saveApplicationsBackup } from '../config/db.js';
 import { saveEventsToBackup } from '../db/syncEventsDb.js';
 import { authenticateToken, requireAdmin } from '../middleware/authMiddleware.js';
 
@@ -136,12 +136,13 @@ router.put('/admin/:id/verify', authenticateToken, requireAdmin, async (req, res
       app.payment_status = 'VERIFIED';
       app.verified_by = req.user.id;
       app.verified_at = new Date().toISOString();
+      saveApplicationsBackup();
     }
     if (pool) {
       try {
         await pool.query(`
           UPDATE membership_applications
-          SET payment_status = 'VERIFIED', verified_by = $1, verified_at = CURRENT_TIMESTAMP
+          SET payment_status = 'VERIFIED', verified_by = $1, verified_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
           WHERE id = $2
         `, [req.user.id, payment.membership_application_id]);
       } catch (_) {}
@@ -229,6 +230,17 @@ router.put('/admin/:id/reject', authenticateToken, requireAdmin, async (req, res
     const app = inMemoryStore.membershipApplications.find(a => a.id === payment.membership_application_id);
     if (app) {
       app.payment_status = 'REJECTED';
+      if (remarks) app.rejection_reason = remarks;
+      saveApplicationsBackup();
+    }
+    if (pool) {
+      try {
+        await pool.query(`
+          UPDATE membership_applications
+          SET payment_status = 'REJECTED', rejection_reason = COALESCE($1, rejection_reason), updated_at = CURRENT_TIMESTAMP
+          WHERE id = $2
+        `, [remarks || 'Payment rejected', payment.membership_application_id]);
+      } catch (_) {}
     }
   }
 

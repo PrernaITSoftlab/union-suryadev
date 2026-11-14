@@ -1,6 +1,6 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
-import { inMemoryStore, query, saveUsersBackup } from '../config/db.js';
+import { inMemoryStore, query, saveUsersBackup, saveApplicationsBackup } from '../config/db.js';
 import { authenticateToken, requireAdmin } from '../middleware/authMiddleware.js';
 import { getNextMemberId, normalizeMemberId } from '../utils/memberIdHelper.js';
 
@@ -10,11 +10,13 @@ const router = express.Router();
 router.get('/', (req, res) => {
   const { search, circle, designation, status, page, limit } = req.query;
 
-  // Filter members (default to all non-deleted members, or filter by requested status)
+  // Filter members (default to active members for public directory, or filter by requested status)
   let members = inMemoryStore.users.filter(u => u && u.status !== 'deleted');
 
   if (status && status !== 'all') {
     members = members.filter(u => u.status && u.status.toLowerCase() === status.toLowerCase());
+  } else if (!status) {
+    members = members.filter(u => u.status === 'active');
   }
 
   if (circle && circle !== 'All' && circle !== 'all') {
@@ -426,6 +428,15 @@ router.post('/admin/create', authenticateToken, requireAdmin, async (req, res, n
         app.payment_status = 'VERIFIED';
         app.verified_by = req.user.id;
         app.verified_at = new Date().toISOString();
+        saveApplicationsBackup();
+
+        try {
+          await query(`
+            UPDATE membership_applications 
+            SET application_status = 'APPROVED', payment_status = 'VERIFIED', verified_by = $1, verified_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+            WHERE id = $2
+          `, [req.user.id, app.id]);
+        } catch (_) {}
       }
     }
 

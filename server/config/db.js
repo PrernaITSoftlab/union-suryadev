@@ -126,6 +126,33 @@ export const saveApplicationsBackup = () => {
   }
 };
 
+// Load membership applications from local persistent storage on startup
+export const loadApplicationsBackup = () => {
+  try {
+    if (fs.existsSync(APPLICATIONS_BACKUP_FILE)) {
+      const data = fs.readFileSync(APPLICATIONS_BACKUP_FILE, 'utf-8');
+      const parsed = JSON.parse(data);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        // Merge with INITIAL_MEMBERSHIP_APPLICATIONS so default seeds are always present
+        const existingNos = new Set(parsed.map(a => a.application_no || a.id));
+        for (const initA of INITIAL_MEMBERSHIP_APPLICATIONS) {
+          if (!existingNos.has(initA.application_no) && !existingNos.has(initA.id)) {
+            parsed.push(initA);
+          }
+        }
+        inMemoryStore.membershipApplications = parsed;
+        saveApplicationsBackup();
+        console.log(`📁 Loaded ${parsed.length} membership applications from disk storage (membership_applications_backup.json).`);
+        return;
+      }
+    }
+    inMemoryStore.membershipApplications = [...INITIAL_MEMBERSHIP_APPLICATIONS];
+    saveApplicationsBackup();
+  } catch (err) {
+    console.warn('⚠️ Could not read membership_applications_backup.json:', err.message);
+  }
+};
+
 // Save event registrations to local persistent storage (event_registrations_backup.json)
 export const saveRegistrationsBackup = () => {
   try {
@@ -180,6 +207,7 @@ export const loadUsersBackup = () => {
 
 // Pre-load from disk backup if present
 loadUsersBackup();
+loadApplicationsBackup();
 
 if (process.env.DATABASE_URL) {
   try {
@@ -266,6 +294,274 @@ if (process.env.DATABASE_URL) {
           }
         } catch (dbErr) {
           console.warn('⚠️ Could not hydrate from DB:', dbErr.message);
+        }
+
+        // Ensure membership_applications table & columns exist and hydrate from PostgreSQL
+        try {
+          try {
+            await client.query(`
+              ALTER TABLE users DROP CONSTRAINT IF EXISTS users_status_check;
+              ALTER TABLE users ADD CONSTRAINT users_status_check CHECK (status IN ('active', 'pending', 'inactive', 'suspended', 'rejected', 'deleted'));
+
+              CREATE TABLE IF NOT EXISTS membership_applications (
+                id SERIAL PRIMARY KEY,
+                application_no VARCHAR(100) UNIQUE NOT NULL,
+                full_name VARCHAR(255) NOT NULL,
+                father_husband_name VARCHAR(255),
+                father_name VARCHAR(255),
+                dob DATE,
+                gender VARCHAR(20),
+                mobile VARCHAR(50) NOT NULL,
+                whatsapp VARCHAR(50),
+                cug_mobile VARCHAR(50),
+                whatsapp_mobile VARCHAR(50),
+                email VARCHAR(255) NOT NULL,
+                address TEXT,
+                city VARCHAR(100),
+                district VARCHAR(100),
+                state VARCHAR(100),
+                pin_code VARCHAR(20),
+                occupation VARCHAR(150),
+                company VARCHAR(255),
+                designation VARCHAR(150),
+                company_name VARCHAR(255),
+                district_name VARCHAR(100),
+                circle_name VARCHAR(100),
+                division_name VARCHAR(100),
+                office_name VARCHAR(100),
+                joining_year VARCHAR(50),
+                post_name VARCHAR(150),
+                dept_post VARCHAR(150),
+                union_post VARCHAR(150),
+                membership_year VARCHAR(50),
+                membership_fee_status VARCHAR(50),
+                membership_receipt_date VARCHAR(50),
+                membership_receipt_no VARCHAR(100),
+                donation_amount VARCHAR(50),
+                donation_receipt_date VARCHAR(50),
+                donation_receipt_no VARCHAR(100),
+                reference_name VARCHAR(255),
+                employee_type VARCHAR(100),
+                category VARCHAR(100),
+                employee_class VARCHAR(100),
+                category_person VARCHAR(150),
+                member_category VARCHAR(150),
+                union_info TEXT,
+                profile_photo_url TEXT,
+                identity_doc_url TEXT,
+                additional_doc_url TEXT,
+                emergency_contact VARCHAR(100),
+                registration_fee DECIMAL(10, 2) DEFAULT 500.00,
+                payment_status VARCHAR(50) DEFAULT 'PENDING',
+                application_status VARCHAR(50) DEFAULT 'PENDING',
+                transaction_id VARCHAR(100),
+                payment_proof_url TEXT,
+                payment_date DATE,
+                payment_note TEXT,
+                verified_by INT REFERENCES users (id),
+                verified_at TIMESTAMP WITH TIME ZONE,
+                rejection_reason TEXT,
+                generated_credentials JSONB,
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+              );
+
+              ALTER TABLE membership_applications ADD COLUMN IF NOT EXISTS company_name VARCHAR(255);
+              ALTER TABLE membership_applications ADD COLUMN IF NOT EXISTS district_name VARCHAR(100);
+              ALTER TABLE membership_applications ADD COLUMN IF NOT EXISTS circle_name VARCHAR(100);
+              ALTER TABLE membership_applications ADD COLUMN IF NOT EXISTS division_name VARCHAR(100);
+              ALTER TABLE membership_applications ADD COLUMN IF NOT EXISTS office_name VARCHAR(100);
+              ALTER TABLE membership_applications ADD COLUMN IF NOT EXISTS joining_year VARCHAR(50);
+              ALTER TABLE membership_applications ADD COLUMN IF NOT EXISTS father_name VARCHAR(255);
+              ALTER TABLE membership_applications ADD COLUMN IF NOT EXISTS post_name VARCHAR(150);
+              ALTER TABLE membership_applications ADD COLUMN IF NOT EXISTS dept_post VARCHAR(150);
+              ALTER TABLE membership_applications ADD COLUMN IF NOT EXISTS union_post VARCHAR(150);
+              ALTER TABLE membership_applications ADD COLUMN IF NOT EXISTS cug_mobile VARCHAR(50);
+              ALTER TABLE membership_applications ADD COLUMN IF NOT EXISTS whatsapp_mobile VARCHAR(50);
+              ALTER TABLE membership_applications ADD COLUMN IF NOT EXISTS membership_year VARCHAR(50);
+              ALTER TABLE membership_applications ADD COLUMN IF NOT EXISTS membership_fee_status VARCHAR(50);
+              ALTER TABLE membership_applications ADD COLUMN IF NOT EXISTS membership_receipt_date VARCHAR(50);
+              ALTER TABLE membership_applications ADD COLUMN IF NOT EXISTS membership_receipt_no VARCHAR(100);
+              ALTER TABLE membership_applications ADD COLUMN IF NOT EXISTS donation_amount VARCHAR(50);
+              ALTER TABLE membership_applications ADD COLUMN IF NOT EXISTS donation_receipt_date VARCHAR(50);
+              ALTER TABLE membership_applications ADD COLUMN IF NOT EXISTS donation_receipt_no VARCHAR(100);
+              ALTER TABLE membership_applications ADD COLUMN IF NOT EXISTS reference_name VARCHAR(255);
+              ALTER TABLE membership_applications ADD COLUMN IF NOT EXISTS employee_type VARCHAR(100);
+              ALTER TABLE membership_applications ADD COLUMN IF NOT EXISTS category VARCHAR(100);
+              ALTER TABLE membership_applications ADD COLUMN IF NOT EXISTS employee_class VARCHAR(100);
+              ALTER TABLE membership_applications ADD COLUMN IF NOT EXISTS category_person VARCHAR(150);
+              ALTER TABLE membership_applications ADD COLUMN IF NOT EXISTS member_category VARCHAR(150);
+              ALTER TABLE membership_applications ADD COLUMN IF NOT EXISTS generated_credentials JSONB;
+            `);
+          } catch (migErr) {
+            console.warn('⚠️ Automated PostgreSQL membership_applications schema check:', migErr.message);
+          }
+
+          const dbApps = await client.query(`
+            SELECT * FROM membership_applications ORDER BY id ASC;
+          `);
+
+          if (dbApps.rows.length > 0) {
+            const dbAppNos = new Set(dbApps.rows.map(r => r.application_no));
+            const existingMemory = inMemoryStore.membershipApplications || [];
+
+            const mappedDbApps = dbApps.rows.map(r => ({
+              id: r.id,
+              application_no: r.application_no,
+              full_name: r.full_name,
+              father_name: r.father_name || r.father_husband_name || '',
+              father_husband_name: r.father_husband_name || r.father_name || '',
+              dob: r.dob ? new Date(r.dob).toISOString().split('T')[0] : '',
+              gender: r.gender || '',
+              mobile: r.mobile || r.whatsapp_mobile || '',
+              whatsapp: r.whatsapp || r.whatsapp_mobile || '',
+              whatsapp_mobile: r.whatsapp_mobile || r.mobile || '',
+              cug_mobile: r.cug_mobile || '',
+              email: r.email,
+              address: r.address || '',
+              city: r.city || r.district_name || 'Indore',
+              district: r.district || r.district_name || 'Indore',
+              state: r.state || 'Madhya Pradesh',
+              pin_code: r.pin_code || '452001',
+              occupation: r.occupation || 'Discom Service',
+              company: r.company || r.company_name || 'MP West Zone Electricity Discom',
+              designation: r.designation || r.post_name || 'Staff Member',
+              company_name: r.company_name || r.company || 'MP West Zone Electricity Discom',
+              district_name: r.district_name || r.district || 'Indore',
+              circle_name: r.circle_name || '',
+              division_name: r.division_name || '',
+              office_name: r.office_name || '',
+              joining_year: r.joining_year || '',
+              post_name: r.post_name || r.designation || 'Junior Engineer (JE)',
+              dept_post: r.dept_post || '',
+              union_post: r.union_post || 'Ordinary Member (साधारण सदस्य)',
+              membership_year: r.membership_year || '2026',
+              membership_fee_status: r.membership_fee_status || '',
+              membership_receipt_date: r.membership_receipt_date || '',
+              membership_receipt_no: r.membership_receipt_no || '',
+              donation_amount: r.donation_amount || '',
+              donation_receipt_date: r.donation_receipt_date || '',
+              donation_receipt_no: r.donation_receipt_no || '',
+              reference_name: r.reference_name || '',
+              employee_type: r.employee_type || 'Regular',
+              category: r.category || 'ST',
+              employee_class: r.employee_class || 'Class 3 (J.E.)',
+              category_person: r.category_person || r.member_category || 'Ordinary Member (साधारण सदस्य)',
+              member_category: r.member_category || r.category_person || 'Ordinary Member (साधारण सदस्य)',
+              union_info: r.union_info || '',
+              profile_photo_url: r.profile_photo_url || '',
+              identity_doc_url: r.identity_doc_url || '',
+              additional_doc_url: r.additional_doc_url || '',
+              emergency_contact: r.emergency_contact || '',
+              registration_fee: Number(r.registration_fee) || 500,
+              payment_status: r.payment_status || 'PENDING',
+              application_status: r.application_status || 'PENDING',
+              transaction_id: r.transaction_id || '',
+              payment_proof_url: r.payment_proof_url || '',
+              payment_date: r.payment_date ? new Date(r.payment_date).toISOString().split('T')[0] : '',
+              payment_note: r.payment_note || '',
+              verified_by: r.verified_by,
+              verified_at: r.verified_at,
+              rejection_reason: r.rejection_reason || '',
+              generated_credentials: r.generated_credentials || null,
+              created_at: r.created_at ? new Date(r.created_at).toISOString() : new Date().toISOString()
+            }));
+
+            // Include any memory-stored applications not yet in DB
+            for (const memApp of existingMemory) {
+              if (memApp.application_no && !dbAppNos.has(memApp.application_no)) {
+                mappedDbApps.unshift(memApp);
+                try {
+                  await client.query(`
+                    INSERT INTO membership_applications (
+                      application_no, full_name, father_husband_name, father_name, mobile, whatsapp,
+                      whatsapp_mobile, email, address, city, district, state, pin_code,
+                      occupation, company, designation, company_name, district_name,
+                      post_name, union_post, employee_type, category, employee_class,
+                      category_person, member_category, profile_photo_url, registration_fee,
+                      payment_status, application_status, transaction_id, payment_proof_url,
+                      payment_date, payment_note, rejection_reason, created_at
+                    ) VALUES (
+                      $1, $2, $3, $4, $5, $6,
+                      $7, $8, $9, $10, $11, $12, $13,
+                      $14, $15, $16, $17, $18,
+                      $19, $20, $21, $22, $23,
+                      $24, $25, $26, $27,
+                      $28, $29, $30, $31,
+                      $32, $33, $34, $35
+                    ) ON CONFLICT (application_no) DO NOTHING;
+                  `, [
+                    memApp.application_no, memApp.full_name, memApp.father_husband_name || memApp.father_name,
+                    memApp.father_name || memApp.father_husband_name, memApp.mobile, memApp.whatsapp || memApp.mobile,
+                    memApp.whatsapp_mobile || memApp.mobile, memApp.email, memApp.address || '',
+                    memApp.city || 'Indore', memApp.district || 'Indore', memApp.state || 'Madhya Pradesh',
+                    memApp.pin_code || '452001', memApp.occupation || 'Discom Service',
+                    memApp.company || 'MP West Zone Electricity Discom', memApp.designation || 'Staff Member',
+                    memApp.company_name || memApp.company || 'MP West Zone Electricity Discom',
+                    memApp.district_name || memApp.district || 'Indore',
+                    memApp.post_name || memApp.designation || 'Junior Engineer (JE)',
+                    memApp.union_post || 'Ordinary Member (साधारण सदस्य)', memApp.employee_type || 'Regular',
+                    memApp.category || 'ST', memApp.employee_class || 'Class 3 (J.E.)',
+                    memApp.category_person || 'Ordinary Member (साधारण सदस्य)',
+                    memApp.member_category || 'Ordinary Member (साधारण सदस्य)', memApp.profile_photo_url || '',
+                    memApp.registration_fee || 500, memApp.payment_status || 'PENDING',
+                    memApp.application_status || 'PENDING', memApp.transaction_id || '',
+                    memApp.payment_proof_url || '', memApp.payment_date || '2026-09-20',
+                    memApp.payment_note || '', memApp.rejection_reason || '', memApp.created_at || new Date().toISOString()
+                  ]);
+                } catch (_) {}
+              }
+            }
+
+            inMemoryStore.membershipApplications = mappedDbApps;
+            saveApplicationsBackup();
+            console.log(`✅ Loaded ${mappedDbApps.length} membership applications from PostgreSQL.`);
+          } else {
+            console.log('⏳ Seeding initial membership applications into PostgreSQL...');
+            for (const app of inMemoryStore.membershipApplications) {
+              try {
+                await client.query(`
+                  INSERT INTO membership_applications (
+                    application_no, full_name, father_husband_name, father_name, mobile, whatsapp,
+                    whatsapp_mobile, email, address, city, district, state, pin_code,
+                    occupation, company, designation, company_name, district_name,
+                    post_name, union_post, employee_type, category, employee_class,
+                    category_person, member_category, profile_photo_url, registration_fee,
+                    payment_status, application_status, transaction_id, payment_proof_url,
+                    payment_date, payment_note, rejection_reason, created_at
+                  ) VALUES (
+                    $1, $2, $3, $4, $5, $6,
+                    $7, $8, $9, $10, $11, $12, $13,
+                    $14, $15, $16, $17, $18,
+                    $19, $20, $21, $22, $23,
+                    $24, $25, $26, $27,
+                    $28, $29, $30, $31,
+                    $32, $33, $34, $35
+                  ) ON CONFLICT (application_no) DO NOTHING;
+                `, [
+                  app.application_no, app.full_name, app.father_husband_name || app.father_name,
+                  app.father_name || app.father_husband_name, app.mobile, app.whatsapp || app.mobile,
+                  app.whatsapp_mobile || app.mobile, app.email, app.address || '',
+                  app.city || 'Indore', app.district || 'Indore', app.state || 'Madhya Pradesh',
+                  app.pin_code || '452001', app.occupation || 'Discom Service',
+                  app.company || 'MP West Zone Electricity Discom', app.designation || 'Staff Member',
+                  app.company_name || app.company || 'MP West Zone Electricity Discom',
+                  app.district_name || app.district || 'Indore',
+                  app.post_name || app.designation || 'Junior Engineer (JE)',
+                  app.union_post || 'Ordinary Member (साधारण सदस्य)', app.employee_type || 'Regular',
+                  app.category || 'ST', app.employee_class || 'Class 3 (J.E.)',
+                  app.category_person || 'Ordinary Member (साधारण सदस्य)',
+                  app.member_category || 'Ordinary Member (साधारण सदस्य)', app.profile_photo_url || '',
+                  app.registration_fee || 500, app.payment_status || 'PENDING',
+                  app.application_status || 'PENDING', app.transaction_id || '',
+                  app.payment_proof_url || '', app.payment_date || '2026-09-20',
+                  app.payment_note || '', app.rejection_reason || '', app.created_at || new Date().toISOString()
+                ]);
+              } catch (_) {}
+            }
+          }
+        } catch (appDbErr) {
+          console.warn('⚠️ Could not hydrate membership applications from DB:', appDbErr.message);
         }
 
         release();

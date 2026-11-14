@@ -11,7 +11,9 @@ CREATE TABLE IF NOT EXISTS users (
             'active',
             'pending',
             'inactive',
-            'suspended'
+            'suspended',
+            'rejected',
+            'deleted'
         )
     ),
     member_id VARCHAR(100) UNIQUE,
@@ -61,10 +63,13 @@ CREATE TABLE IF NOT EXISTS membership_applications (
     application_no VARCHAR(100) UNIQUE NOT NULL,
     full_name VARCHAR(255) NOT NULL,
     father_husband_name VARCHAR(255),
+    father_name VARCHAR(255),
     dob DATE,
     gender VARCHAR(20),
     mobile VARCHAR(50) NOT NULL,
     whatsapp VARCHAR(50),
+    cug_mobile VARCHAR(50),
+    whatsapp_mobile VARCHAR(50),
     email VARCHAR(255) NOT NULL,
     address TEXT,
     city VARCHAR(100),
@@ -74,6 +79,28 @@ CREATE TABLE IF NOT EXISTS membership_applications (
     occupation VARCHAR(150),
     company VARCHAR(255),
     designation VARCHAR(150),
+    company_name VARCHAR(255),
+    district_name VARCHAR(100),
+    circle_name VARCHAR(100),
+    division_name VARCHAR(100),
+    office_name VARCHAR(100),
+    joining_year VARCHAR(50),
+    post_name VARCHAR(150),
+    dept_post VARCHAR(150),
+    union_post VARCHAR(150),
+    membership_year VARCHAR(50),
+    membership_fee_status VARCHAR(50),
+    membership_receipt_date VARCHAR(50),
+    membership_receipt_no VARCHAR(100),
+    donation_amount VARCHAR(50),
+    donation_receipt_date VARCHAR(50),
+    donation_receipt_no VARCHAR(100),
+    reference_name VARCHAR(255),
+    employee_type VARCHAR(100),
+    category VARCHAR(100),
+    employee_class VARCHAR(100),
+    category_person VARCHAR(150),
+    member_category VARCHAR(150),
     union_info TEXT,
     profile_photo_url TEXT,
     identity_doc_url TEXT,
@@ -100,16 +127,11 @@ CREATE TABLE IF NOT EXISTS membership_applications (
     payment_date DATE,
     payment_note TEXT,
     verified_by INT REFERENCES users (id),
-    verified_at TIMESTAMP
-    WITH
-        TIME ZONE,
-        rejection_reason TEXT,
-        created_at TIMESTAMP
-    WITH
-        TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP
-    WITH
-        TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    verified_at TIMESTAMP WITH TIME ZONE,
+    rejection_reason TEXT,
+    generated_credentials JSONB,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 4. Events Table
