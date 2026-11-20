@@ -85,10 +85,9 @@ export const EventService = {
         eventsList = result.rows.map(normalizeEventRow);
         dbSuccess = true;
 
-        // Keep in-memory cache and backup updated with latest data from DB (clean of user-specific like flag)
+        // Keep in-memory cache updated with latest data from DB (clean of user-specific like flag)
         if (!status && !search && !type && !isPublicOnly) {
           inMemoryStore.events = eventsList.map(e => ({ ...e, is_liked: false }));
-          saveEventsToBackup(inMemoryStore.events);
         }
       } catch (dbErr) {
         console.warn('⚠️ Error querying PostgreSQL events, falling back to cache:', dbErr.message);
@@ -762,7 +761,6 @@ export const EventService = {
       created_at: new Date().toISOString()
     });
 
-    saveEventsToBackup(inMemoryStore.events);
     return newReg;
   },
 

@@ -35,7 +35,15 @@ export function loadRegistrationsFromBackup() {
 
 export function saveEventsToBackup(events) {
   try {
-    fs.writeFileSync(BACKUP_FILE, JSON.stringify(events, null, 2), 'utf-8');
+    if (!Array.isArray(events) || events.length === 0) return;
+    const content = JSON.stringify(events, null, 2);
+    if (fs.existsSync(BACKUP_FILE)) {
+      try {
+        const existing = fs.readFileSync(BACKUP_FILE, 'utf-8');
+        if (existing === content) return;
+      } catch (_) {}
+    }
+    fs.writeFileSync(BACKUP_FILE, content, 'utf-8');
   } catch (err) {
     console.warn('Could not write events backup file:', err.message);
   }
@@ -98,10 +106,59 @@ export async function ensureEventsSchemaAndSeed() {
     // 1. Ensure events and event_registrations schema, columns & constraints
     try {
       await pool.query(`
+        CREATE TABLE IF NOT EXISTS users (
+          id SERIAL PRIMARY KEY,
+          email VARCHAR(255) UNIQUE NOT NULL,
+          password_hash VARCHAR(255) NOT NULL,
+          role VARCHAR(50) DEFAULT 'user',
+          status VARCHAR(50) DEFAULT 'active',
+          member_id VARCHAR(100) UNIQUE,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        );
+
+        CREATE TABLE IF NOT EXISTS events (
+          id SERIAL PRIMARY KEY,
+          title VARCHAR(255) NOT NULL,
+          description TEXT NOT NULL,
+          banner_url TEXT,
+          event_type VARCHAR(50) DEFAULT 'GENERAL',
+          start_date DATE NOT NULL,
+          end_date DATE,
+          start_time VARCHAR(50) NOT NULL,
+          end_time VARCHAR(50),
+          venue VARCHAR(255) NOT NULL,
+          address TEXT,
+          capacity INT DEFAULT 500,
+          registered_count INT DEFAULT 0,
+          registration_start_date DATE,
+          registration_end_date DATE,
+          is_paid BOOLEAN DEFAULT false,
+          event_fee DECIMAL(10, 2) DEFAULT 0.00,
+          payment_qr_url TEXT,
+          payment_instructions TEXT,
+          whatsapp_contact VARCHAR(50),
+          visibility VARCHAR(50) DEFAULT 'PUBLIC',
+          status VARCHAR(50) DEFAULT 'REGISTRATION_OPEN',
+          requires_approval BOOLEAN DEFAULT true,
+          created_by INT,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        );
+
+        ALTER TABLE events ADD COLUMN IF NOT EXISTS requires_approval BOOLEAN DEFAULT true;
+        ALTER TABLE events ADD COLUMN IF NOT EXISTS event_type VARCHAR(50) DEFAULT 'GENERAL';
+        ALTER TABLE events ADD COLUMN IF NOT EXISTS visibility VARCHAR(50) DEFAULT 'PUBLIC';
+        ALTER TABLE events ADD COLUMN IF NOT EXISTS payment_qr_url TEXT;
+        ALTER TABLE events ADD COLUMN IF NOT EXISTS payment_instructions TEXT;
+        ALTER TABLE events ADD COLUMN IF NOT EXISTS whatsapp_contact VARCHAR(50);
+        ALTER TABLE events ADD COLUMN IF NOT EXISTS is_paid BOOLEAN DEFAULT false;
+        ALTER TABLE events ADD COLUMN IF NOT EXISTS event_fee DECIMAL(10, 2) DEFAULT 0.00;
+        ALTER TABLE events ADD COLUMN IF NOT EXISTS registered_count INT DEFAULT 0;
+
         ALTER TABLE events DROP CONSTRAINT IF EXISTS events_status_check;
         ALTER TABLE events ADD CONSTRAINT events_status_check 
           CHECK (status IN ('DRAFT', 'PUBLISHED', 'REGISTRATION_OPEN', 'REGISTRATION_CLOSED', 'COMPLETED', 'CANCELLED', 'UPCOMING'));
-        ALTER TABLE events ADD COLUMN IF NOT EXISTS requires_approval BOOLEAN DEFAULT true;
 
         CREATE TABLE IF NOT EXISTS event_registrations (
           id SERIAL PRIMARY KEY,
