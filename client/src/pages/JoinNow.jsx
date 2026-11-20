@@ -212,26 +212,77 @@ export default function JoinNow() {
     });
   };
 
-  const handleReceiptUpload = (e) => {
+  // Helper for client-side receipt image compression
+  const compressReceiptFile = (file, maxDim = 1200, quality = 0.82) => {
+    return new Promise((resolve) => {
+      if (!file.type.startsWith('image/')) {
+        // PDF or non-image file
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror = () => resolve('');
+        reader.readAsDataURL(file);
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          let { width, height } = img;
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.onerror = () => resolve(e.target.result);
+        img.src = e.target.result;
+      };
+      reader.onerror = () => resolve('');
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleReceiptUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      setFeedback({ error: 'Payment receipt file size must be less than 5MB.' });
+    if (file.size > 10 * 1024 * 1024) {
+      setFeedback({ error: 'Payment receipt file size must be less than 10MB.' });
       return;
     }
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
+    try {
+      const dataUrl = await compressReceiptFile(file);
       setFormData(prev => ({
         ...prev,
-        payment_proof_url: reader.result,
+        payment_proof_url: dataUrl,
         payment_receipt_filename: file.name,
         payment_receipt_filesize: (file.size / 1024).toFixed(1) + ' KB'
       }));
       setFeedback(null);
-    };
-    reader.readAsDataURL(file);
+    } catch (_) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData(prev => ({
+          ...prev,
+          payment_proof_url: reader.result,
+          payment_receipt_filename: file.name,
+          payment_receipt_filesize: (file.size / 1024).toFixed(1) + ' KB'
+        }));
+        setFeedback(null);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const removeReceipt = () => {
@@ -339,7 +390,13 @@ export default function JoinNow() {
         window.scrollTo({ top: 100, behavior: 'smooth' });
       }
     } catch (err) {
-      setFeedback({ error: err.response?.data?.message || 'Failed to submit application. Please try again.' });
+      console.error('Application submission error:', err);
+      const errMsg = err.response?.data?.message
+        || (err.code === 'ECONNABORTED' ? 'Request timed out. Please check your internet connection and try again.' : null)
+        || (!err.response ? 'Unable to connect to union server. Please make sure the server is running on port 5000.' : null)
+        || err.message
+        || 'Failed to submit application. Please try again.';
+      setFeedback({ error: errMsg });
     } finally {
       setSubmitting(false);
     }

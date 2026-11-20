@@ -145,7 +145,7 @@ router.post('/submit', async (req, res, next) => {
     saveApplicationsBackup();
 
     // Auto-create/link registered member account in users store with status: 'pending' (Awaiting Admin Approval)
-    let existingUser = inMemoryStore.users.find(u => u.email.toLowerCase() === applicantEmail.toLowerCase());
+    let existingUser = inMemoryStore.users.find(u => (u.email || '').toLowerCase() === applicantEmail.toLowerCase());
     let newUserId = existingUser ? existingUser.id : (inMemoryStore.users.length > 0 ? Math.max(...inMemoryStore.users.map(u => u.id || 0)) + 1 : 1);
     const salt = await bcrypt.genSalt(10);
     const password_hash = await bcrypt.hash('union123', salt);

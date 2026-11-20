@@ -224,6 +224,51 @@ if (process.env.DATABASE_URL) {
         isPgConnected = true;
         console.log('✅ Connected to PostgreSQL Database successfully.');
 
+        // Auto-check if schema is initialized on connected database
+        try {
+          const checkT = await client.query(`
+            SELECT count(*)::int AS count 
+            FROM information_schema.tables 
+            WHERE table_schema = 'public' AND table_name = 'users'
+          `);
+          if (checkT.rows[0].count === 0) {
+            console.log('⏳ First-time database setup: Initializing schema from schema.sql...');
+            const schemaPath = path.join(__dirname, '../db/schema.sql');
+            if (fs.existsSync(schemaPath)) {
+              const sql = fs.readFileSync(schemaPath, 'utf-8');
+              await client.query(sql);
+              console.log('✅ Schema auto-initialized successfully on connected database.');
+            }
+          }
+
+          // Ensure sequences are aligned with maximum IDs to avoid duplicate key violations
+          await client.query(`
+            DO $$
+            BEGIN
+              IF EXISTS (SELECT 1 FROM information_schema.sequences WHERE sequence_name = 'users_id_seq') THEN
+                PERFORM setval('users_id_seq', COALESCE((SELECT MAX(id) FROM users), 1));
+              END IF;
+              IF EXISTS (SELECT 1 FROM information_schema.sequences WHERE sequence_name = 'member_profiles_id_seq') THEN
+                PERFORM setval('member_profiles_id_seq', COALESCE((SELECT MAX(id) FROM member_profiles), 1));
+              END IF;
+              IF EXISTS (SELECT 1 FROM information_schema.sequences WHERE sequence_name = 'membership_applications_id_seq') THEN
+                PERFORM setval('membership_applications_id_seq', COALESCE((SELECT MAX(id) FROM membership_applications), 1));
+              END IF;
+              IF EXISTS (SELECT 1 FROM information_schema.sequences WHERE sequence_name = 'payments_id_seq') THEN
+                PERFORM setval('payments_id_seq', COALESCE((SELECT MAX(id) FROM payments), 1));
+              END IF;
+              IF EXISTS (SELECT 1 FROM information_schema.sequences WHERE sequence_name = 'events_id_seq') THEN
+                PERFORM setval('events_id_seq', COALESCE((SELECT MAX(id) FROM events), 1));
+              END IF;
+              IF EXISTS (SELECT 1 FROM information_schema.sequences WHERE sequence_name = 'event_registrations_id_seq') THEN
+                PERFORM setval('event_registrations_id_seq', COALESCE((SELECT MAX(id) FROM event_registrations), 1));
+              END IF;
+            END $$;
+          `);
+        } catch (initErr) {
+          console.warn('⚠️ Automated schema/sequence verification check:', initErr.message);
+        }
+
         // Hydrate from PostgreSQL Database so profile photos and updates persist across server/page restarts
         try {
           try {
