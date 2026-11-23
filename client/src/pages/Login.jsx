@@ -34,7 +34,7 @@ export default function Login({ defaultAdmin = false }) {
       }
     } catch (err) {
       if (!err.response) {
-        setError('Cannot reach API backend server. Please verify the backend server is running on port 5000.');
+        setError('Cannot reach API backend server. Please verify the backend server is running and reachable.');
       } else {
         const msg = err.response.data?.message;
         if (msg) {

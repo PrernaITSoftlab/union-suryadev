@@ -393,7 +393,7 @@ export default function JoinNow() {
       console.error('Application submission error:', err);
       const errMsg = err.response?.data?.message
         || (err.code === 'ECONNABORTED' ? 'Request timed out. Please check your internet connection and try again.' : null)
-        || (!err.response ? 'Unable to connect to union server. Please make sure the server is running on port 5000.' : null)
+        || (!err.response ? 'Unable to connect to union server. Please make sure the backend server is running and reachable.' : null)
         || err.message
         || 'Failed to submit application. Please try again.';
       setFeedback({ error: errMsg });

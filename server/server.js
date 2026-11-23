@@ -96,7 +96,11 @@ process.on('uncaughtException', (err) => {
 });
 
 // Listen on dual-stack IPv6 (::) and IPv4 (0.0.0.0/127.0.0.1)
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`⚡ MPVMAVAKS Union API Server running on port ${PORT}`);
   console.log(`🌐 Health check available at: http://localhost:${PORT}/api/health and http://127.0.0.1:${PORT}/api/health`);
+});
+
+server.on('error', (err) => {
+  console.error(`❌ Server failed to bind to port ${PORT}:`, err.message);
 });
