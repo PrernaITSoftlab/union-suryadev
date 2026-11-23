@@ -26,10 +26,49 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Enable CORS with full support for localhost, 127.0.0.1, Vercel, and Chrome Private Network Access
+// Origin authorization logic
+const defaultOrigins = [
+  'https://mpvmavaks.in',
+  'https://www.mpvmavaks.in',
+  'http://mpvmavaks.in',
+  'http://www.mpvmavaks.in',
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:5173'
+];
+
+const envOrigins = (process.env.ALLOWED_ORIGINS || '')
+  .split(',')
+  .map(o => o.trim().replace(/^["']|["']$/g, ''))
+  .filter(Boolean);
+
+const allowedOriginsSet = new Set([...defaultOrigins, ...envOrigins]);
+
+const isOriginAllowed = (origin) => {
+  if (!origin) return true; // allow same-origin, curl, server-to-server, mobile apps
+  if (allowedOriginsSet.has(origin)) return true;
+  try {
+    const parsed = new URL(origin);
+    const host = parsed.hostname;
+    // Explicitly allow mpvmavaks.in and all subdomains (e.g. www.mpvmavaks.in, api.mpvmavaks.in)
+    if (host === 'mpvmavaks.in' || host.endsWith('.mpvmavaks.in')) return true;
+    // Allow local development and LAN IP testing
+    if (host === 'localhost' || host === '127.0.0.1' || host === '::1') return true;
+    if (/^192\.168\./.test(host) || /^10\./.test(host) || /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(host) || host.endsWith('.local')) return true;
+    if (host.endsWith('.vercel.app') || host.endsWith('.onrender.com')) return true;
+  } catch (_) {}
+  return true; // Fallback permit in development
+};
+
+// Enable CORS with full support for mpvmavaks.in, localhost, LAN, Vercel, and Chrome Private Network Access
 app.use((req, res, next) => {
-  const origin = req.headers.origin || '*';
-  res.header('Access-Control-Allow-Origin', origin);
+  const origin = req.headers.origin;
+  if (origin && isOriginAllowed(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+  } else if (!origin) {
+    res.header('Access-Control-Allow-Origin', '*');
+  }
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Access-Control-Request-Private-Network');
   res.header('Access-Control-Allow-Credentials', 'true');
@@ -41,7 +80,15 @@ app.use((req, res, next) => {
   }
   next();
 });
-app.use(cors({ origin: true, credentials: true }));
+app.use(cors({
+  origin: (origin, callback) => {
+    if (isOriginAllowed(origin)) {
+      return callback(null, true);
+    }
+    return callback(null, true);
+  },
+  credentials: true
+}));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 

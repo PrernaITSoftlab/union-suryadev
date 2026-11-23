@@ -21,6 +21,15 @@ const getBaseUrl = () => {
     const isLoopback = isLoopbackHost(hostname);
     const isLan = isLanHost(hostname);
 
+    // If client is running on production domain (https://mpvmavaks.in):
+    const isProdDomain = hostname === 'mpvmavaks.in' || hostname.endsWith('.mpvmavaks.in');
+    if (isProdDomain) {
+      if (rawBaseUrl && !rawBaseUrl.startsWith('/') && !rawBaseUrl.includes('localhost') && !rawBaseUrl.includes('127.0.0.1')) {
+        return rawBaseUrl.endsWith('/api') ? rawBaseUrl : `${rawBaseUrl}/api`;
+      }
+      return '/api';
+    }
+
     // If client is running locally (localhost or smartphone on LAN):
     // 1. If loaded from Vite dev server / frontend (e.g. port 3000 or 5173),
     //    relative '/api' routes through Vite's dev server proxy to port 5000 seamlessly
