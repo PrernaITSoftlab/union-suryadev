@@ -87,6 +87,14 @@ app.get('/health', healthHandler);
 // Global Error Handler
 app.use(errorHandler);
 
+// Keep process resilient against transient unhandled database rejections or connection drops
+process.on('unhandledRejection', (reason) => {
+  console.warn('⚠️ Handled rejection (server kept alive):', reason?.message || reason);
+});
+process.on('uncaughtException', (err) => {
+  console.error('⚠️ Uncaught exception (server kept alive):', err?.message || err);
+});
+
 // Listen on dual-stack IPv6 (::) and IPv4 (0.0.0.0/127.0.0.1)
 app.listen(PORT, () => {
   console.log(`⚡ MPVMAVAKS Union API Server running on port ${PORT}`);

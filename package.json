@@ -2,7 +2,9 @@
   "name": "union-suyradev",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
+    "dev": "node scripts/dev.js",
     "install:all": "npm install && cd server && npm install && cd ../client && npm install",
     "start": "node server/server.js",
     "server": "cd server && npm run dev",

@@ -209,11 +209,20 @@ export const loadUsersBackup = () => {
 loadUsersBackup();
 loadApplicationsBackup();
 
-if (process.env.DATABASE_URL) {
+const cleanDatabaseUrl = (process.env.DATABASE_URL || '').trim().replace(/~+$/, '');
+
+if (cleanDatabaseUrl) {
   try {
     pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
-      ssl: process.env.DATABASE_URL.includes('localhost') ? false : { rejectUnauthorized: false }
+      connectionString: cleanDatabaseUrl,
+      ssl: cleanDatabaseUrl.includes('localhost') ? false : { rejectUnauthorized: false },
+      connectionTimeoutMillis: 5000,
+      idleTimeoutMillis: 30000
+    });
+
+    pool.on('error', (err) => {
+      console.warn('⚠️ Idle PostgreSQL pool client error (prevented crash):', err.message);
+      isPgConnected = false;
     });
 
     pool.connect(async (err, client, release) => {

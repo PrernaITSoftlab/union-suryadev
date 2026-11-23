@@ -43,30 +43,37 @@ api.interceptors.request.use((config) => {
 });
 
 // Smart Network Error Retry Interceptor:
-// If request to /api fails with Network Error (no response) on localhost, automatically retry against port 5000 directly
+// If request to /api fails with Network Error (no response) or Vite proxy failure (500/502/503/504) on localhost,
+// automatically retry against port 5000 directly
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-    if (!error.response && !originalRequest._retried && typeof window !== 'undefined') {
+    if (!originalRequest || originalRequest._retried || typeof window === 'undefined') {
+      return Promise.reject(error);
+    }
+
+    const isProxyDownError = error.response && [500, 502, 503, 504].includes(error.response.status) && (originalRequest.baseURL === '/api' || !originalRequest.baseURL);
+    const isNetworkError = !error.response;
+
+    if (isNetworkError || isProxyDownError) {
       originalRequest._retried = true;
       const hostname = window.location.hostname;
       const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1';
 
       if (isLocal) {
         // Try fallback to direct port 5000
-        const fallbackTarget = originalRequest.baseURL === '/api'
-          ? `http://127.0.0.1:5000/api`
-          : '/api';
+        const directTarget = rawBaseUrl || 'http://127.0.0.1:5000/api';
+        const fallbackTarget = directTarget.endsWith('/api') ? directTarget : `${directTarget}/api`;
 
         try {
           originalRequest.baseURL = fallbackTarget;
           return await axios(originalRequest);
         } catch (retryErr) {
           // If 127.0.0.1 also failed, try localhost:5000
-          if (!retryErr.response && fallbackTarget.includes('127.0.0.1')) {
+          if ((!retryErr.response || [500, 502, 503, 504].includes(retryErr.response.status)) && fallbackTarget.includes('127.0.0.1')) {
             try {
-              originalRequest.baseURL = `http://localhost:5000/api`;
+              originalRequest.baseURL = 'http://localhost:5000/api';
               return await axios(originalRequest);
             } catch (err3) {
               return Promise.reject(err3);
