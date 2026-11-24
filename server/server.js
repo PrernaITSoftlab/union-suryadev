@@ -38,7 +38,7 @@ const defaultOrigins = [
   'http://127.0.0.1:5173'
 ];
 
-const envOrigins = (process.env.ALLOWED_ORIGINS || '')
+const envOrigins = (process.env.ALLOWED_ORIGINS || 'https://mpvmavaks.in')
   .split(',')
   .map(o => o.trim().replace(/^["']|["']$/g, ''))
   .filter(Boolean);
