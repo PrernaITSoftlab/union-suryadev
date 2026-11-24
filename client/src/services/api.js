@@ -1,5 +1,6 @@
 import axios from 'axios';
 
+const CLOUD_API_URL = 'https://mpvmakas.onrender.com/api';
 let rawBaseUrl = (import.meta.env.VITE_API_URL || '').trim().replace(/\/+$/, '');
 
 const isLoopbackHost = (host) => {
@@ -21,24 +22,18 @@ const getBaseUrl = () => {
     const isLoopback = isLoopbackHost(hostname);
     const isLan = isLanHost(hostname);
 
-    // If client is running on production domain (https://mpvmavaks.in):
-    const isProdDomain = hostname === 'mpvmavaks.in' || hostname.endsWith('.mpvmavaks.in');
-    if (isProdDomain) {
+    // If client is running on production domain (https://mpvmavaks.in, Vercel, or custom domain):
+    // Use direct Render backend URL so requests never hit Vercel's 10-second serverless proxy timeout.
+    if (!isLoopback && !isLan) {
       if (rawBaseUrl && !rawBaseUrl.startsWith('/') && !rawBaseUrl.includes('localhost') && !rawBaseUrl.includes('127.0.0.1')) {
         return rawBaseUrl.endsWith('/api') ? rawBaseUrl : `${rawBaseUrl}/api`;
       }
-      return '/api';
+      return CLOUD_API_URL;
     }
 
-    // If client is running locally (localhost or smartphone on LAN):
-    // 1. If loaded from Vite dev server / frontend (e.g. port 3000 or 5173),
-    //    relative '/api' routes through Vite's dev server proxy to port 5000 seamlessly
-    //    without exposing internal loopback IPs to smartphones.
+    // In local development (PC or smartphone testing over LAN):
+    // Use relative '/api' which routes through Vite's dev server proxy to port 5000.
     if (isLoopback || isLan) {
-      if (rawBaseUrl && !rawBaseUrl.startsWith('/') && !rawBaseUrl.includes('localhost') && !rawBaseUrl.includes('127.0.0.1')) {
-        // Explicit remote URL provided (e.g. Render/production API)
-        return rawBaseUrl.endsWith('/api') ? rawBaseUrl : `${rawBaseUrl}/api`;
-      }
       return '/api';
     }
   }
@@ -47,29 +42,22 @@ const getBaseUrl = () => {
   if (rawBaseUrl) {
     if (typeof window !== 'undefined') {
       const hostname = window.location.hostname;
-      // If VITE_API_URL was baked in with 127.0.0.1 or localhost, but client is accessed from LAN (e.g. smartphone),
-      // rewrite loopback address to the actual device/host IP
       if (!isLoopbackHost(hostname) && (rawBaseUrl.includes('127.0.0.1') || rawBaseUrl.includes('localhost'))) {
-        const rewritten = rawBaseUrl
-          .replace('://127.0.0.1', `://${hostname}`)
-          .replace('://localhost', `://${hostname}`);
-        return rewritten.endsWith('/api') ? rewritten : `${rewritten}/api`;
+        return CLOUD_API_URL;
       }
     }
     return rawBaseUrl.endsWith('/api') ? rawBaseUrl : `${rawBaseUrl}/api`;
   }
 
-  return '/api';
+  return CLOUD_API_URL;
 };
 
 const api = axios.create({
   baseURL: getBaseUrl(),
   headers: {
-    'Content-Type': 'application/json',
-    'Cache-Control': 'no-cache, no-store, must-revalidate',
-    'Pragma': 'no-cache'
+    'Content-Type': 'application/json'
   },
-  timeout: 15000
+  timeout: 60000 // 60 seconds to allow Render free tier to wake from sleep seamlessly
 });
 
 // Add token interceptor
@@ -83,9 +71,9 @@ api.interceptors.request.use((config) => {
   return Promise.reject(error);
 });
 
-// Smart Network Error Retry Interceptor:
-// If request to /api fails with Network Error (no response) or Vite proxy failure (500/502/503/504),
-// automatically retry against port 5000 directly using the appropriate host (resolving localhost for PC, LAN IP for smartphones)
+// Smart Network & Gateway Timeout Retry Interceptor:
+// If request fails due to cold start timeout (ECONNABORTED), proxy error (500/502/503/504),
+// or connection drop, automatically retry with intelligent target switching.
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -94,33 +82,33 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    const isProxyDownError = error.response && [500, 502, 503, 504].includes(error.response.status) && (originalRequest.baseURL === '/api' || !originalRequest.baseURL);
+    const isProxyDownError = error.response && [500, 502, 503, 504].includes(error.response.status);
     const isNetworkError = !error.response;
+    const isTimeout = error.code === 'ECONNABORTED' || error.message?.includes('timeout');
 
-    if (isNetworkError || isProxyDownError) {
+    if (isNetworkError || isProxyDownError || isTimeout) {
       originalRequest._retried = true;
       const hostname = window.location.hostname;
       const isLoopback = isLoopbackHost(hostname);
       const isLan = isLanHost(hostname);
 
       if (isLoopback || isLan) {
-        // Fallback target: use host IP on smartphones so it doesn't query the smartphone's internal loopback
-        const targetHost = isLoopback ? '127.0.0.1' : hostname;
-        const fallbackTarget = `http://${targetHost}:5000/api`;
+        // In local development: if local port 5000 is not running, fall back to live Render backend
+        try {
+          originalRequest.baseURL = CLOUD_API_URL;
+          return await axios(originalRequest);
+        } catch (cloudErr) {
+          return Promise.reject(cloudErr);
+        }
+      } else {
+        // On production: if direct Render failed, try Vercel proxy '/api', or vice versa
+        const currentTarget = originalRequest.baseURL || '';
+        const alternateTarget = currentTarget.includes('onrender.com') ? '/api' : CLOUD_API_URL;
 
         try {
-          originalRequest.baseURL = fallbackTarget;
+          originalRequest.baseURL = alternateTarget;
           return await axios(originalRequest);
         } catch (retryErr) {
-          // If 127.0.0.1 also failed on PC, try localhost:5000
-          if (isLoopback && (!retryErr.response || [500, 502, 503, 504].includes(retryErr.response.status))) {
-            try {
-              originalRequest.baseURL = 'http://localhost:5000/api';
-              return await axios(originalRequest);
-            } catch (err3) {
-              return Promise.reject(err3);
-            }
-          }
           return Promise.reject(retryErr);
         }
       }

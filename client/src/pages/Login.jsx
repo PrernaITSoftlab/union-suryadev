@@ -24,7 +24,9 @@ export default function Login({ defaultAdmin = false }) {
     setError(null);
 
     try {
-      const res = await login(identifier, password);
+      const cleanId = (identifier || '').trim();
+      const cleanPass = (password || '').trim();
+      const res = await login(cleanId, cleanPass);
       if (res.success) {
         if (res.user.role === 'admin') {
           navigate('/admin/dashboard');
@@ -34,15 +36,21 @@ export default function Login({ defaultAdmin = false }) {
       }
     } catch (err) {
       if (!err.response) {
-        setError('Cannot reach API backend server. Please verify the backend server is running and reachable.');
+        if (err.code === 'ECONNABORTED' || err.message?.includes('timeout')) {
+          setError('Server is waking up from sleep (Render free tier). Please wait a moment and click Sign In again.');
+        } else {
+          setError('Cannot reach API backend server. Please verify your internet connection and try again.');
+        }
       } else {
         const msg = err.response.data?.message;
         if (msg) {
           setError(msg);
+        } else if (err.response.status === 401) {
+          setError('Invalid login credentials. Please check your Email / Member ID and password.');
         } else if (err.response.status === 404) {
-          setError('Backend endpoint not found (404). Please ensure backend is running and accessible.');
+          setError('Backend endpoint not found (404). Please ensure backend is running.');
         } else if (err.response.status >= 500) {
-          setError(`Server error (${err.response.status}). Please check server logs.`);
+          setError(`Server error (${err.response.status}). Please try again in a moment.`);
         } else {
           setError('Invalid login credentials. Please check your credentials and password.');
         }
@@ -128,6 +136,9 @@ export default function Login({ defaultAdmin = false }) {
               <input
                 type="text"
                 required
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck="false"
                 placeholder={isAdminMode ? "MPAVAKS-0001 or admin@mpvmavaksunion.org" : "MPAVAKS-0001 or member@mpvmavaksunion.org"}
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
@@ -145,6 +156,9 @@ export default function Login({ defaultAdmin = false }) {
               <input
                 type={showPassword ? 'text' : 'password'}
                 required
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck="false"
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -159,6 +173,23 @@ export default function Login({ defaultAdmin = false }) {
               </button>
             </div>
           </div>
+
+          {isAdminMode && (
+            <div className="flex items-center justify-between bg-sky-50/70 border border-sky-100 rounded-xl px-3 py-2 text-[11px] text-sky-800">
+              <span className="font-medium">Admin credentials:</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setIdentifier('admin@mpvmavaksunion.org');
+                  setPassword('admin123');
+                  setError(null);
+                }}
+                className="text-xs font-extrabold text-sky-700 hover:text-sky-900 underline"
+              >
+                Auto-fill Admin (admin123)
+              </button>
+            </div>
+          )}
 
           <button
             type="submit"

@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
 import { LanguageProvider } from './context/LanguageContext';
+import api from './services/api';
 
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -44,6 +45,11 @@ const ProtectedMemberRoute = ({ children }) => {
 };
 
 function AppContent() {
+  // Proactively ping health endpoint on initial app load to warm up backend if idle
+  useEffect(() => {
+    api.get('/health').catch(() => {});
+  }, []);
+
   return (
     <div className="flex flex-col min-h-screen bg-slate-50 text-slate-900 selection:bg-sky-500 selection:text-white font-sans overflow-x-hidden w-full max-w-full">
       <Navbar />
