@@ -174,22 +174,6 @@ export default function Login({ defaultAdmin = false }) {
             </div>
           </div>
 
-          {isAdminMode && (
-            <div className="flex items-center justify-between bg-sky-50/70 border border-sky-100 rounded-xl px-3 py-2 text-[11px] text-sky-800">
-              <span className="font-medium">Admin credentials:</span>
-              <button
-                type="button"
-                onClick={() => {
-                  setIdentifier('admin@mpvmavaksunion.org');
-                  setPassword('admin123');
-                  setError(null);
-                }}
-                className="text-xs font-extrabold text-sky-700 hover:text-sky-900 underline"
-              >
-                Auto-fill Admin (admin123)
-              </button>
-            </div>
-          )}
 
           <button
             type="submit"
